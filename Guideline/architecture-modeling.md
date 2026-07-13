@@ -436,3 +436,5 @@ Implementation Second.
 Architecture should drive implementation, not the other way around.
 
 Every UML diagram should communicate architectural intent rather than implementation details.
+
+Chỉ tạo một class mới khi nó đại diện cho một khái niệm (concept) hoặc một trách nhiệm (responsibility) độc lập của domain.

@@ -39,11 +39,19 @@ class MetadataValidator {
     
 }
 
+class MetadataRepository {
+    
+}
+
 class IMetadataFactory {
     
 }
 
 class IMetadataValidator {
+    
+}
+
+class IMetadataRepository {
     
 }
 
@@ -55,8 +63,15 @@ DatabaseFile *-- FileState
 
 MetadataFactory ..|> IMetadataFactory
 MetadataValidator ..|> IMetadataValidator
+MetadataRepository ..|> IMetadataRepository
 
 MetadataFactory --> DatabaseFile : creates
-MetadataManager --> DatabaseFile : manages
 MetadataValidator --> DatabaseFile : validates
+MetadataRepository --> DatabaseFile : persists
+
+MetadataManager --> IMetadataFactory : uses
+MetadataManager --> IMetadataValidator : uses
+MetadataManager --> IMetadataRepository : uses
+
+MetadataRepository --> IMetadataFactory : uses
 ```
