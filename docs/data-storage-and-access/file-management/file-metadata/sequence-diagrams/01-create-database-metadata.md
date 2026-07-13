@@ -22,11 +22,11 @@ classDiagram
 
 class CreateDatabaseMetadataRequest{
     +databaseName: String
-    +logicalFileName: String
-    +physicalPath: String
+    +filePath: String
+    +fileType: FileType
     +pageSize: Integer
     +initialSize: Long
-    +maximumSize: Long
+    +maxSize: Long
     +autoGrowthEnabled: Boolean
     +growthIncrement: Long
 }

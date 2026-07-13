@@ -12,20 +12,6 @@ Load an existing `DatabaseFile` aggregate from persistent storage, reconstruct a
 
 ---
 
-# Request DTO
-
-## LoadDatabaseMetadataRequest
-
-```mermaid
-classDiagram
-
-class LoadDatabaseMetadataRequest{
-    +fileIdentifier : UUID
-}
-```
-
----
-
 ## Preconditions
 
 - The target metadata file exists on disk.
@@ -57,7 +43,7 @@ sequenceDiagram
     participant DF as DatabaseFile
     participant IMV as IMetadataValidator
 
-    SE->>MM: loadMetadata(LoadDatabaseMetadataRequest)
+    SE->>MM: loadMetadata(FileIdentifier)
 
     MM->>IMR: findById(fileIdentifier)
 
@@ -96,7 +82,7 @@ sequenceDiagram
     participant IMR as IMetadataRepository
     participant Disk as Disk
 
-    SE->>MM: loadMetadata(LoadDatabaseMetadataRequest)
+    SE->>MM: loadMetadata(FileIdentifier)
 
     MM->>IMR: findById(fileIdentifier)
 
@@ -128,7 +114,7 @@ sequenceDiagram
     participant IMR as IMetadataRepository
     participant Disk as Disk
 
-    SE->>MM: loadMetadata(LoadDatabaseMetadataRequest)
+    SE->>MM: loadMetadata(FileIdentifier)
 
     MM->>IMR: findById(fileIdentifier)
 
@@ -161,7 +147,7 @@ sequenceDiagram
     participant Disk as Disk
     participant IMF as IMetadataFactory
 
-    SE->>MM: loadMetadata(LoadDatabaseMetadataRequest)
+    SE->>MM: loadMetadata(FileIdentifier)
 
     MM->>IMR: findById(fileIdentifier)
 
@@ -198,7 +184,7 @@ sequenceDiagram
     participant DF as DatabaseFile
     participant IMV as IMetadataValidator
 
-    SE->>MM: loadMetadata(LoadDatabaseMetadataRequest)
+    SE->>MM: loadMetadata(FileIdentifier)
 
     MM->>IMR: findById(fileIdentifier)
 
