@@ -19,8 +19,3 @@ Manage and maintain metadata describing a database file, including its identity,
 - FileConfiguration
 - FileStatistics
 - FileState
-
-## Design
-
-- Class Diagram
-- Sequence Diagrams
