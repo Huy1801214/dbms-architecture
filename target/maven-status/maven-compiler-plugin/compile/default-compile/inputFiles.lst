@@ -1,0 +1,13 @@
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\DatabaseFile.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\FileConfiguration.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\FileHeader.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\FileIdentifier.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\FileState.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\FileStatistics.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\FileType.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\IMetadataFactory.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\IMetadataRepository.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\IMetadataValidator.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\MetadataManager.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\domain\ValidationResult.java
+D:\My Project\DBMS\dbms-architecture\src\main\java\dbms\metadata\request\CreateDatabaseMetadataRequest.java

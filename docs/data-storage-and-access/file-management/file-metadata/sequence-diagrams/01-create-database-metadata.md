@@ -151,9 +151,7 @@ sequenceDiagram
     MF-->>MM: DatabaseFile
 
     MM->>MV: validate(DatabaseFile)
-    MV->>DF: validate()
-    DF-->>MV: validation failed
-
+    Note over MV: Validate domain rules
     MV-->>MM: MetadataValidationException
     MM-->>SE: MetadataValidationException
 ```
@@ -183,8 +181,7 @@ sequenceDiagram
     MF-->>MM: DatabaseFile
 
     MM->>MV: validate(DatabaseFile)
-    MV->>DF: validate()
-    DF-->>MV: validation passed
+    Note over MV: Validate domain rules
     MV-->>MM: validation passed
 
     MM->>MR: persist(DatabaseFile)
