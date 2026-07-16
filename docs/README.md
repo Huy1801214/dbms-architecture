@@ -381,3 +381,280 @@ classDiagram
     style LockRequest fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
     style LockType fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 ```
+
+--- 
+# Unit Test Mindmap for Data Storage & Access
+```mermaid
+flowchart LR
+
+    %% ─────────────────── LEFT SIDE: PAGE MANAGEMENT ───────────────────
+    %% Page
+    PageTest1["shouldUpdatePageContent"] --> Page
+    PageTest2["shouldMarkPageDirty"] --> Page
+    Page["Page"] --> A
+
+    %% Page Table
+    PageTableTest1["shouldInsertAndLookupPage"] --> PageTable
+    PageTableTest2["shouldRemovePage"] --> PageTable
+    PageTableTest3["shouldReplaceExistingPage"] --> PageTable
+    PageTable["PageTable"] --> A
+
+    %% Default Page Allocator
+    AllocatorTest1["shouldAllocateUniquePage"] --> DefaultPageAllocator
+    AllocatorTest2["shouldFreeAllocatedPage"] --> DefaultPageAllocator
+    DefaultPageAllocator["DefaultPageAllocator"] --> A
+
+    %% Disk Page IO
+    PageIOTest1["shouldWriteAndReadPage"] --> DiskPageIO
+    PageIOTest2["shouldOverwriteExistingPage"] --> DiskPageIO
+    PageIOTest3["shouldThrowExceptionWhenReadingMissingPage"] --> DiskPageIO
+    DiskPageIO["DiskPageIO"] --> A
+
+    %% Page Manager
+    PageManagerTest1["shouldAllocateNewPage"] --> PageManager
+    PageManagerTest2["shouldFetchExistingPage"] --> PageManager
+    PageManagerTest3["shouldFlushDirtyPage"] --> PageManager
+    PageManagerTest4["shouldDeletePage"] --> PageManager
+    PageManager["PageManager"] --> A
+
+    %% ─────────────────── CENTRAL ROOT ───────────────────
+    A(["Data Storage & Access Unit Tests"])
+
+    %% ─────────────────── RIGHT SIDE: BUFFER MANAGEMENT ───────────────────
+    %% Buffer Frame
+    A --> BufferFrame["BufferFrame"]
+    BufferFrame --> BufferFrameTest1["shouldPinAndUnpinFrame"]
+    BufferFrame --> BufferFrameTest2["shouldMarkFrameDirty"]
+
+    %% Buffer Pool
+    A --> BufferPool["BufferPool"]
+    BufferPool --> BufferPoolTest1["shouldAddAndRetrieveFrame"]
+    BufferPool --> BufferPoolTest2["shouldRespectConfiguredCapacity"]
+
+    %% LRU Replacer
+    A --> LRUReplacer["LRUReplacer"]
+    LRUReplacer --> LruTest1["shouldSelectLeastRecentlyUsedFrame"]
+    LRUReplacer --> LruTest2["shouldUpdateAccessHistory"]
+
+    %% Buffer Manager
+    A --> BufferManager["BufferManager"]
+    BufferManager --> BufferManagerTest1["shouldPinExistingPage"]
+    BufferManager --> BufferManagerTest2["shouldLoadPageOnCacheMiss"]
+    BufferManager --> BufferManagerTest3["shouldReturnCachedPageOnCacheHit"]
+    BufferManager --> BufferManagerTest4["shouldEvictPageWhenBufferIsFull"]
+    BufferManager --> BufferManagerTest5["shouldFlushDirtyPagesToDisk"]
+    BufferManager --> BufferManagerTest6["shouldUnpinPageSuccessfully"]
+
+    %% ─────────────────── STYLING DEFINITIONS ───────────────────
+    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
+    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
+    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
+
+    class A rootStyle;
+    class Page,PageTable,DefaultPageAllocator,DiskPageIO,PageManager,BufferFrame,BufferPool,LRUReplacer,BufferManager modStyle;
+    class PageTest1,PageTest2,PageTableTest1,PageTableTest2,PageTableTest3,AllocatorTest1,AllocatorTest2,PageIOTest1,PageIOTest2,PageIOTest3,PageManagerTest1,PageManagerTest2,PageManagerTest3,PageManagerTest4,BufferFrameTest1,BufferFrameTest2,BufferPoolTest1,BufferPoolTest2,LruTest1,LruTest2,BufferManagerTest1,BufferManagerTest2,BufferManagerTest3,BufferManagerTest4,BufferManagerTest5,BufferManagerTest6 testStyle;
+```
+
+--- 
+# Unit Test Mindmap for Query Processing
+```mermaid
+flowchart LR
+
+    %% ─────────────────── LEFT SIDE: PARSING & PLANNING ───────────────────
+    %% Lexer
+    LexerTest1["shouldTokenizeValidSQL"] --> Lexer
+    LexerTest2["shouldIgnoreWhitespace"] --> Lexer
+    LexerTest3["shouldRejectInvalidCharacter"] --> Lexer
+    Lexer["Lexer"] --> A
+
+    %% Parser
+    ParserTest1["shouldBuildASTFromValidSQL"] --> Parser
+    ParserTest2["shouldBuildCorrectASTStructure"] --> Parser
+    ParserTest3["shouldThrowSyntaxErrorForInvalidSQL"] --> Parser
+    Parser["Parser"] --> A
+
+    %% SQL Parser
+    SQLParserTest1["shouldParseValidSQL"] --> SQLParser
+    SQLParserTest2["shouldDelegateLexingAndParsing"] --> SQLParser
+    SQLParser["SQLParser"] --> A
+
+    %% Query Planner
+    PlannerTest1["shouldGenerateExecutionPlan"] --> QueryPlanner
+    PlannerTest2["shouldGenerateSequentialScanPlan"] --> QueryPlanner
+    PlannerTest3["shouldGenerateFilterPlan"] --> QueryPlanner
+    PlannerTest4["shouldRejectUnsupportedAST"] --> QueryPlanner
+    QueryPlanner["QueryPlanner"] --> A
+
+    %% Execution Plan
+    ExecutionPlanTest1["shouldBuildExecutionPlan"] --> ExecutionPlan
+    ExecutionPlan["ExecutionPlan"] --> A
+
+    %% ─────────────────── CENTRAL ROOT ───────────────────
+    A(["Query Processing Unit Tests"])
+
+    %% ─────────────────── RIGHT SIDE: EXECUTION ───────────────────
+    %% Sequential Scan Plan
+    A --> SequentialScanPlan["SequentialScanPlan"]
+    SequentialScanPlan --> SeqScanPlanTest1["shouldCreateSequentialScanPlan"]
+
+    %% Filter Plan
+    A --> FilterPlan["FilterPlan"]
+    FilterPlan --> FilterPlanTest1["shouldCreateFilterPlan"]
+
+    %% Execution Context
+    A --> ExecutionContext["ExecutionContext"]
+    ExecutionContext --> ContextTest1["shouldProvideExecutionDependencies"]
+
+    %% Table Scan Executor
+    A --> TableScanExecutor["TableScanExecutor"]
+    TableScanExecutor --> TableScanTest1["shouldScanEntireTable"]
+    TableScanExecutor --> TableScanTest2["shouldReturnEndOfTableWhenFinished"]
+
+    %% Filter Executor
+    A --> FilterExecutor["FilterExecutor"]
+    FilterExecutor --> FilterExecutorTest1["shouldReturnMatchingRows"]
+    FilterExecutor --> FilterExecutorTest2["shouldSkipNonMatchingRows"]
+
+    %% Execution Engine
+    A --> ExecutionEngine["ExecutionEngine"]
+    ExecutionEngine --> EngineTest1["shouldExecuteExecutionPlan"]
+    ExecutionEngine --> EngineTest2["shouldExecuteSequentialScan"]
+    ExecutionEngine --> EngineTest3["shouldExecuteFilterPlan"]
+    ExecutionEngine --> EngineTest4["shouldRejectUnsupportedExecutionPlan"]
+
+    %% Result Set
+    A --> ResultSet["ResultSet"]
+    ResultSet --> ResultSetTest1["shouldStoreAndRetrieveRows"]
+    ResultSet --> ResultSetTest2["shouldIterateResultSet"]
+
+    %% ─────────────────── STYLING DEFINITIONS ───────────────────
+    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
+    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
+    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
+
+    class A rootStyle;
+    class Lexer,Parser,SQLParser,QueryPlanner,ExecutionPlan,SequentialScanPlan,FilterPlan,ExecutionContext,TableScanExecutor,FilterExecutor,ExecutionEngine,ResultSet modStyle;
+    class LexerTest1,LexerTest2,LexerTest3,ParserTest1,ParserTest2,ParserTest3,SQLParserTest1,SQLParserTest2,PlannerTest1,PlannerTest2,PlannerTest3,PlannerTest4,ExecutionPlanTest1,SeqScanPlanTest1,FilterPlanTest1,ContextTest1,TableScanTest1,TableScanTest2,FilterExecutorTest1,FilterExecutorTest2,EngineTest1,EngineTest2,EngineTest3,EngineTest4,ResultSetTest1,ResultSetTest2 testStyle;
+```
+
+--- 
+# Unit Test Mindmap for Transaction & Concurrency Management
+```mermaid
+flowchart LR
+
+    %% ─────────────────── LEFT SIDE: TRANSACTION MANAGEMENT ───────────────────
+    %% Transaction
+    TransactionTest1["shouldChangeTransactionState"] --> Transaction
+    TransactionTest2["shouldAttachTransactionContext"] --> Transaction
+    Transaction["Transaction"] --> A
+
+    %% Transaction Context
+    ContextTest1["shouldStoreTransactionMetadata"] --> TransactionContext
+    TransactionContext["TransactionContext"] --> A
+
+    %% Transaction Log
+    LogTest1["shouldAppendTransactionLog"] --> TransactionLog
+    LogTest2["shouldRetrieveTransactionLog"] --> TransactionLog
+    TransactionLog["TransactionLog"] --> A
+
+    %% Transaction Manager
+    TMTest1["shouldBeginTransaction"] --> TransactionManager
+    TMTest2["shouldCommitTransaction"] --> TransactionManager
+    TMTest3["shouldRollbackTransaction"] --> TransactionManager
+    TMTest4["shouldWriteTransactionLog"] --> TransactionManager
+    TMTest5["shouldCoordinateConcurrencyManager"] --> TransactionManager
+    TransactionManager["TransactionManager"] --> A
+
+    %% ─────────────────── CENTRAL ROOT ───────────────────
+    A(["Transaction & Concurrency Management Unit Tests"])
+
+    %% ─────────────────── RIGHT SIDE: CONCURRENCY & LOCK MANAGEMENT ───────────────────
+    %% Lock
+    A --> Lock["Lock"]
+    Lock --> LockTest1["shouldCreateSharedLock"]
+    Lock --> LockTest2["shouldCreateExclusiveLock"]
+
+    %% Lock Request
+    A --> LockRequest["LockRequest"]
+    LockRequest --> LockRequestTest1["shouldCreateLockRequest"]
+
+    %% Lock Table
+    A --> LockTable["LockTable"]
+    LockTable --> LockTableTest1["shouldRegisterLock"]
+    LockTable --> LockTableTest2["shouldLookupLock"]
+    LockTable --> LockTableTest3["shouldRemoveLock"]
+
+    %% Lock Manager
+    A --> LockManager["LockManager"]
+    LockManager --> LockManagerTest1["shouldAcquireSharedLock"]
+    LockManager --> LockManagerTest2["shouldAcquireExclusiveLock"]
+    LockManager --> LockManagerTest3["shouldReleaseLock"]
+    LockManager --> LockManagerTest4["shouldRejectConflictingLock"]
+
+    %% Concurrency Manager
+    A --> ConcurrencyManager["ConcurrencyManager"]
+    ConcurrencyManager --> CMTest1["shouldAcquireLock"]
+    ConcurrencyManager --> CMTest2["shouldReleaseLock"]
+    ConcurrencyManager --> CMTest3["shouldDelegateToLockManager"]
+
+    %% ─────────────────── STYLING DEFINITIONS ───────────────────
+    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
+    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
+    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
+
+    class A rootStyle;
+    class Transaction,TransactionContext,TransactionLog,TransactionManager,Lock,LockRequest,LockTable,LockManager,ConcurrencyManager modStyle;
+    class TransactionTest1,TransactionTest2,ContextTest1,LogTest1,LogTest2,TMTest1,TMTest2,TMTest3,TMTest4,TMTest5,LockTest1,LockTest2,LockRequestTest1,LockTableTest1,LockTableTest2,LockTableTest3,LockManagerTest1,LockManagerTest2,LockManagerTest3,LockManagerTest4,CMTest1,CMTest2,CMTest3 testStyle;
+```
+
+# Mindmap for Integration Test
+```mermaid
+flowchart LR
+
+    %% ─────────────────── LEFT SIDE: DATA STORAGE & QUERY PROCESSING ───────────────────
+    %% Data Storage
+    StorageTest1["shouldAllocateFetchAndFlushPage"] --> Storage
+    StorageTest2["shouldLoadPageFromDiskOnCacheMiss"] --> Storage
+    StorageTest3["shouldReturnCachedPageOnCacheHit"] --> Storage
+    StorageTest4["shouldEvictLeastRecentlyUsedPage"] --> Storage
+    StorageTest5["shouldPersistDirtyPageToDisk"] --> Storage
+    Storage["Data Storage & Access"] --> A
+
+    %% Query Processing
+    QueryTest1["shouldParsePlanAndExecuteSelectQuery"] --> Query
+    QueryTest2["shouldExecuteSequentialScanQuery"] --> Query
+    QueryTest3["shouldExecuteFilterQuery"] --> Query
+    QueryTest4["shouldReturnExpectedResultSet"] --> Query
+    Query["Query Processing"] --> A
+
+    %% ─────────────────── CENTRAL ROOT ───────────────────
+    A(["DBMS Integration Tests"])
+
+    %% ─────────────────── RIGHT SIDE: TRANSACTION, CONCURRENCY & END-TO-END ───────────────────
+    %% Transaction Management
+    A --> Transaction["Transaction Management"]
+    Transaction --> TransactionTest1["shouldCommitTransactionSuccessfully"]
+    Transaction --> TransactionTest2["shouldRollbackTransactionWhenExecutionFails"]
+    Transaction --> TransactionTest3["shouldWriteTransactionLogAfterCommit"]
+
+    %% Concurrency Control
+    A --> Concurrency["Concurrency Control"]
+    Concurrency --> ConcurrencyTest1["shouldAcquireLockBeforeExecutingQuery"]
+    Concurrency --> ConcurrencyTest2["shouldReleaseLockAfterCommit"]
+    Concurrency --> ConcurrencyTest3["shouldBlockConflictingTransactions"]
+
+    %% End-to-End Workflow
+    A --> EndToEnd["End-to-End Workflow"]
+    EndToEnd --> E2ETest1["shouldExecuteCompleteSelectWorkflow"]
+    EndToEnd --> E2ETest2["shouldExecuteCompleteTransactionWorkflow"]
+    EndToEnd --> E2ETest3["shouldExecuteConcurrentTransactionsSafely"]
+
+    %% ─────────────────── STYLING DEFINITIONS ───────────────────
+    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
+    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
+    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
+
+    class A rootStyle;
+    class Storage,Query,Transaction,Concurrency,EndToEnd modStyle;
+    class StorageTest1,StorageTest2,StorageTest3,StorageTest4,StorageTest5,QueryTest1,QueryTest2,QueryTest3,QueryTest4,TransactionTest1,TransactionTest2,TransactionTest3,ConcurrencyTest1,ConcurrencyTest2,ConcurrencyTest3,E2ETest1,E2ETest2,E2ETest3 testStyle;
+```
