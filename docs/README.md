@@ -31,7 +31,7 @@ flowchart LR
     DSA5["Storage Allocation Management"]:::subDSA --> DSA
     DSA6["Record Management"]:::subDSA            --> DSA
     DSA7["Log Files"]:::subDSA                    --> DSA
-    DSA["Data Storage & Access"]:::modDSA         --> ROOT
+    DSA["**Data Storage & Access**"]:::modDSA         --> ROOT
 
     %% Transaction & Concurrency Management
     TCM1["Transaction Management"]:::subTCM --> TCM
@@ -40,7 +40,7 @@ flowchart LR
     TCM4["Isolation Management"]:::subTCM   --> TCM
     TCM5["ACID Enforcement"]:::subTCM       --> TCM
     TCM6["Concurrency Control"]:::subTCM    --> TCM
-    TCM["Transaction & Concurrency Management"]:::modTCM --> ROOT
+    TCM["**Transaction & Concurrency Management**"]:::modTCM --> ROOT
 
     %% Backup, Recovery & Logging
     BRL1["Backup Management"]:::subBRL      --> BRL
@@ -97,11 +97,232 @@ flowchart LR
     PS --> PS8["Parallel Execution"]:::subPS
 
     %% Query Processing
-    ROOT --> QP["Query Processing"]:::modQP
+    ROOT --> QP["**Query Processing**"]:::modQP
     QP --> QP1["Semantic Analyzer"]:::subQP
     QP --> QP2["SQL Parser"]:::subQP
     QP --> QP3["Query Optimizer"]:::subQP
     QP --> QP4["Execution Planner"]:::subQP
     QP --> QP5["Execution Engine"]:::subQP
     QP --> QP6["Result Formatter"]:::subQP
+```
+
+---
+# DBMS System Architecture Important Modules
+![alt text](image.png)
+
+---
+# DBMS Class Diagram mindmap
+![alt text](image-1.png)
+
+---
+# Class Diagram for Core Features
+```mermaid
+classDiagram
+direction LR
+
+%% =====================================================
+%% PAGE MANAGEMENT
+%% =====================================================
+
+class PageManager {
+    +fetchPage()
+    +allocatePage()
+    +flushPage()
+    +deletePage()
+}
+
+class Page {
+    +pageId
+    +data
+    +dirty
+}
+
+class PageTable {
+    +lookup()
+    +insert()
+    +remove()
+}
+
+class PageAllocator {
+    +allocate()
+    +free()
+}
+
+class PageIO {
+    +read()
+    +write()
+}
+
+PageManager *-- Page
+PageManager *-- PageTable
+PageManager --> PageAllocator
+PageManager --> PageIO
+
+%% =====================================================
+%% BUFFER MANAGEMENT
+%% =====================================================
+
+class BufferManager {
+    +pinPage()
+    +unpinPage()
+    +flush()
+}
+
+class BufferPool {
+    +capacity
+}
+
+class BufferFrame {
+    +frameId
+    +pinCount
+    +dirty
+}
+
+class ReplacementPolicy {
+    <<interface>>
+    +victim()
+    +recordAccess()
+}
+
+class LRUReplacer {
+    +victim()
+}
+
+BufferManager *-- BufferPool
+BufferPool *-- BufferFrame
+
+ReplacementPolicy <|.. LRUReplacer
+
+BufferManager --> ReplacementPolicy
+BufferManager --> PageManager
+
+%% =====================================================
+%% SQL PARSER
+%% =====================================================
+
+class SQLParser {
+    +parse()
+}
+
+class Lexer {
+    +tokenize()
+}
+
+class Parser {
+    +buildAST()
+}
+
+class ASTNode {
+    <<abstract>>
+}
+
+class SyntaxError
+
+SQLParser --> Lexer
+SQLParser --> Parser
+Parser --> ASTNode
+Parser ..> SyntaxError
+
+%% =====================================================
+%% EXECUTION ENGINE
+%% =====================================================
+
+class ExecutionEngine {
+    +execute()
+}
+
+class ExecutionContext
+
+class Executor {
+    <<abstract>>
+    +next()
+}
+
+class Operator {
+    <<interface>>
+    +execute()
+}
+
+class ResultSet
+
+ExecutionEngine --> ExecutionContext
+ExecutionEngine --> Executor
+
+Executor <|-- Operator
+
+ExecutionEngine --> ResultSet
+ExecutionEngine --> ASTNode
+
+%% =====================================================
+%% TRANSACTION
+%% =====================================================
+
+class TransactionManager {
+    +begin()
+    +commit()
+    +rollback()
+}
+
+class Transaction {
+    +transactionId
+    +state
+}
+
+class TransactionContext
+
+class TransactionState {
+    <<enumeration>>
+    Active
+    Committed
+    Aborted
+}
+
+class TransactionLog
+
+TransactionManager --> Transaction
+Transaction --> TransactionContext
+Transaction --> TransactionState
+TransactionManager --> TransactionLog
+
+%% =====================================================
+%% CONCURRENCY
+%% =====================================================
+
+class ConcurrencyManager {
+    +acquire()
+    +release()
+}
+
+class LockManager {
+    +lock()
+    +unlock()
+}
+
+class Lock {
+    +type
+}
+
+class LockRequest
+
+class LockTable
+
+ConcurrencyManager --> LockManager
+
+LockManager *-- LockTable
+LockTable *-- Lock
+LockManager --> LockRequest
+
+%% =====================================================
+%% CROSS MODULE DEPENDENCIES
+%% =====================================================
+
+ExecutionEngine --> BufferManager
+ExecutionEngine --> TransactionManager
+
+TransactionManager --> ConcurrencyManager
+
+PageIO --> Page
+
+BufferManager --> Page
+
 ```
