@@ -1,5 +1,27 @@
 package dbms.transaction.manager;
 
-public class TransactionLogTest {
+import org.junit.jupiter.api.Test;
+
+class TransactionLogTest {
+
+    @Test
+    void shouldAppendTransactionLog() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldRetrieveTransactionLog() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

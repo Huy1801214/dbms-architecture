@@ -1,5 +1,27 @@
 package dbms.transaction.concurrency;
 
-public class LockTest {
+import org.junit.jupiter.api.Test;
+
+class LockTest {
+
+    @Test
+    void shouldCreateSharedLock() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldCreateExclusiveLock() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

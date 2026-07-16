@@ -1,5 +1,17 @@
 package dbms.transaction.manager;
 
-public class TransactionContextTest {
+import org.junit.jupiter.api.Test;
+
+class TransactionContextTest {
+
+    @Test
+    void shouldStoreTransactionMetadata() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }
