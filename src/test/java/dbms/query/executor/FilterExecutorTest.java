@@ -1,5 +1,27 @@
 package dbms.query.executor;
 
-public class FilterExecutorTest {
+import org.junit.jupiter.api.Test;
+
+class FilterExecutorTest {
+
+    @Test
+    void shouldReturnMatchingRows() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldSkipNonMatchingRows() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

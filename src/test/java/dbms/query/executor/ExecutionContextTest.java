@@ -1,5 +1,17 @@
 package dbms.query.executor;
 
-public class ExecutionContextTest {
+import org.junit.jupiter.api.Test;
+
+class ExecutionContextTest {
+
+    @Test
+    void shouldProvideExecutionDependencies() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

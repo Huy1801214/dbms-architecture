@@ -1,5 +1,17 @@
 package dbms.query.planner;
 
-public class FilterPlanTest {
+import org.junit.jupiter.api.Test;
+
+class FilterPlanTest {
+
+    @Test
+    void shouldCreateFilterPlan() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

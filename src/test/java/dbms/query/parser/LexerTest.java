@@ -1,5 +1,37 @@
 package dbms.query.parser;
 
-public class LexerTest {
+import org.junit.jupiter.api.Test;
+
+class LexerTest {
+
+    @Test
+    void shouldTokenizeValidSQL() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldIgnoreWhitespace() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldRejectInvalidCharacter() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

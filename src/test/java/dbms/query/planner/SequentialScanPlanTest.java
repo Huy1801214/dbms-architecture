@@ -1,5 +1,17 @@
 package dbms.query.planner;
 
-public class SequentialScanPlanTest {
+import org.junit.jupiter.api.Test;
+
+class SequentialScanPlanTest {
+
+    @Test
+    void shouldCreateSequentialScanPlan() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }
