@@ -1,5 +1,8 @@
 package dbms.query.executor;
 
+import dbms.storage.buffer.BufferManager;
+import dbms.transaction.manager.Transaction;
+
 public class ExecutionContext {
 
     private Transaction transaction;
