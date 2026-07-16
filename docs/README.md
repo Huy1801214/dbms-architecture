@@ -108,221 +108,276 @@ flowchart LR
 
 ---
 # DBMS System Architecture Important Modules
-![alt text](image.png)
+![alt text](image-2.png)
 
 ---
 # DBMS Class Diagram mindmap
-![alt text](image-1.png)
+![alt text](image.png)
 
 ---
 # Class Diagram for Core Features
 ```mermaid
 classDiagram
-direction LR
+    direction TB
 
-%% =====================================================
-%% PAGE MANAGEMENT
-%% =====================================================
+    %% =====================================================
+    %% PAGE MANAGEMENT
+    %% =====================================================
+    class Page {
+        +pageId
+        +data
+        +dirty
+    }
+    class PageTable {
+        +lookupPage()
+        +addPage()
+        +removePage()
+    }
+    class PageManager {
+        +fetchPage()
+        +allocatePage()
+        +flushPage()
+        +deletePage()
+    }
+    class IPageAllocator {
+        <<interface>>
+        +allocate()
+        +free()
+    }
+    class DefaultPageAllocator {
+        +allocate()
+        +free()
+    }
+    class IPageIO {
+        <<interface>>
+        +read()
+        +write()
+    }
+    class DiskPageIO {
+        +read()
+        +write()
+    }
 
-class PageManager {
-    +fetchPage()
-    +allocatePage()
-    +flushPage()
-    +deletePage()
-}
+    PageTable *-- Page
+    PageManager --> PageTable
+    PageManager --> IPageAllocator
+    PageManager --> IPageIO
+    DefaultPageAllocator ..|> IPageAllocator
+    DiskPageIO ..|> IPageIO
 
-class Page {
-    +pageId
-    +data
-    +dirty
-}
+    %% =====================================================
+    %% BUFFER MANAGEMENT
+    %% =====================================================
+    class BufferFrame {
+        +frameId
+        +pinCount
+        +dirty
+    }
+    class BufferPool {
+        +capacity
+    }
+    class ReplacementPolicy {
+        <<interface>>
+        +victim()
+        +recordAccess()
+    }
+    class LRUReplacer {
+        +victim()
+        +recordAccess()
+    }
+    class BufferManager {
+        +pinPage()
+        +unpinPage()
+        +flushPage()
+        +flushAll()
+    }
 
-class PageTable {
-    +lookup()
-    +insert()
-    +remove()
-}
+    BufferPool *-- BufferFrame
+    LRUReplacer ..|> ReplacementPolicy
+    BufferManager --> BufferPool
+    BufferManager --> ReplacementPolicy
+    BufferManager --> PageManager
+    BufferFrame --> Page
 
-class PageAllocator {
-    +allocate()
-    +free()
-}
+    %% =====================================================
+    %% SQL PARSER
+    %% =====================================================
+    class SQLParser {
+        +parse()
+    }
+    class Lexer {
+        +tokenize()
+    }
+    class Parser {
+        +buildAST()
+    }
+    class ASTNode {
+        <<abstract>>
+    }
+    class SyntaxError
 
-class PageIO {
-    +read()
-    +write()
-}
+    SQLParser --> Lexer
+    SQLParser --> Parser
+    Parser --> ASTNode
+    Parser ..> SyntaxError
 
-PageManager *-- Page
-PageManager *-- PageTable
-PageManager --> PageAllocator
-PageManager --> PageIO
+    %% =====================================================
+    %% QUERY PLANNER
+    %% =====================================================
+    class QueryPlanner {
+        +createPlan()
+    }
+    class ExecutionPlan {
+        <<abstract>>
+    }
+    class SequentialScanPlan
+    class FilterPlan
 
-%% =====================================================
-%% BUFFER MANAGEMENT
-%% =====================================================
+    ExecutionPlan <|-- SequentialScanPlan
+    ExecutionPlan <|-- FilterPlan
+    QueryPlanner --> ASTNode
+    QueryPlanner --> ExecutionPlan
 
-class BufferManager {
-    +pinPage()
-    +unpinPage()
-    +flush()
-}
+    %% =====================================================
+    %% EXECUTION ENGINE
+    %% =====================================================
+    class ExecutionEngine {
+        +execute()
+    }
+    class ExecutionContext
+    class Executor {
+        <<abstract>>
+        +next()
+    }
+    class TableScanExecutor {
+        +next()
+    }
+    class FilterExecutor {
+        +next()
+    }
+    class ResultSet
 
-class BufferPool {
-    +capacity
-}
+    Executor <|-- TableScanExecutor
+    Executor <|-- FilterExecutor
+    ExecutionEngine --> ExecutionContext
+    ExecutionEngine --> ExecutionPlan
+    ExecutionEngine --> Executor
+    ExecutionEngine --> ResultSet
 
-class BufferFrame {
-    +frameId
-    +pinCount
-    +dirty
-}
+    %% =====================================================
+    %% TRANSACTION
+    %% =====================================================
+    class TransactionManager {
+        +begin()
+        +commit()
+        +rollback()
+    }
+    class Transaction {
+        +transactionId
+        +state
+    }
+    class TransactionContext
+    class TransactionState {
+        <<enumeration>>
+        ACTIVE
+        COMMITTED
+        ABORTED
+    }
+    class TransactionLog
 
-class ReplacementPolicy {
-    <<interface>>
-    +victim()
-    +recordAccess()
-}
+    Transaction --> TransactionContext
+    Transaction --> TransactionState
+    TransactionManager --> Transaction
+    TransactionManager --> TransactionLog
 
-class LRUReplacer {
-    +victim()
-}
+    %% =====================================================
+    %% CONCURRENCY
+    %% =====================================================
+    class ConcurrencyManager {
+        +acquire()
+        +release()
+    }
+    class ILockManager {
+        <<interface>>
+        +lock()
+        +unlock()
+    }
+    class LockManager {
+        +lock()
+        +unlock()
+    }
+    class LockTable
+    class Lock
+    class LockRequest
+    class LockType {
+        <<enumeration>>
+        SHARED
+        EXCLUSIVE
+    }
 
-BufferManager *-- BufferPool
-BufferPool *-- BufferFrame
+    Lock --> LockType
+    LockTable *-- Lock
+    LockManager ..|> ILockManager
+    ConcurrencyManager --> ILockManager
+    LockManager --> LockTable
+    LockManager --> LockRequest
 
-ReplacementPolicy <|.. LRUReplacer
+    %% =====================================================
+    %% CROSS MODULE DEPENDENCIES
+    %% =====================================================
+    ExecutionEngine --> BufferManager
+    ExecutionEngine --> TransactionManager
+    TransactionManager --> ConcurrencyManager
 
-BufferManager --> ReplacementPolicy
-BufferManager --> PageManager
+    %% =====================================================
+    %% STYLING DEFINITIONS (COLOR-CODED BY MODULE)
+    %% =====================================================
+    %% Page Management (Green)
+    style Page fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+    style PageTable fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+    style PageManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+    style IPageAllocator fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+    style DefaultPageAllocator fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+    style IPageIO fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+    style DiskPageIO fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
-%% =====================================================
-%% SQL PARSER
-%% =====================================================
+    %% Buffer Management (Blue)
+    style BufferFrame fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+    style BufferPool fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+    style ReplacementPolicy fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+    style LRUReplacer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+    style BufferManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
-class SQLParser {
-    +parse()
-}
+    %% Parser & Query Planner (Yellow/Orange)
+    style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style Parser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style ASTNode fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style SyntaxError fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style QueryPlanner fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style ExecutionPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style SequentialScanPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+    style FilterPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 
-class Lexer {
-    +tokenize()
-}
+    %% Execution Engine (Purple)
+    style ExecutionEngine fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
+    style ExecutionContext fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
+    style Executor fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
+    style TableScanExecutor fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
+    style FilterExecutor fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
+    style ResultSet fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
 
-class Parser {
-    +buildAST()
-}
-
-class ASTNode {
-    <<abstract>>
-}
-
-class SyntaxError
-
-SQLParser --> Lexer
-SQLParser --> Parser
-Parser --> ASTNode
-Parser ..> SyntaxError
-
-%% =====================================================
-%% EXECUTION ENGINE
-%% =====================================================
-
-class ExecutionEngine {
-    +execute()
-}
-
-class ExecutionContext
-
-class Executor {
-    <<abstract>>
-    +next()
-}
-
-class Operator {
-    <<interface>>
-    +execute()
-}
-
-class ResultSet
-
-ExecutionEngine --> ExecutionContext
-ExecutionEngine --> Executor
-
-Executor <|-- Operator
-
-ExecutionEngine --> ResultSet
-ExecutionEngine --> ASTNode
-
-%% =====================================================
-%% TRANSACTION
-%% =====================================================
-
-class TransactionManager {
-    +begin()
-    +commit()
-    +rollback()
-}
-
-class Transaction {
-    +transactionId
-    +state
-}
-
-class TransactionContext
-
-class TransactionState {
-    <<enumeration>>
-    Active
-    Committed
-    Aborted
-}
-
-class TransactionLog
-
-TransactionManager --> Transaction
-Transaction --> TransactionContext
-Transaction --> TransactionState
-TransactionManager --> TransactionLog
-
-%% =====================================================
-%% CONCURRENCY
-%% =====================================================
-
-class ConcurrencyManager {
-    +acquire()
-    +release()
-}
-
-class LockManager {
-    +lock()
-    +unlock()
-}
-
-class Lock {
-    +type
-}
-
-class LockRequest
-
-class LockTable
-
-ConcurrencyManager --> LockManager
-
-LockManager *-- LockTable
-LockTable *-- Lock
-LockManager --> LockRequest
-
-%% =====================================================
-%% CROSS MODULE DEPENDENCIES
-%% =====================================================
-
-ExecutionEngine --> BufferManager
-ExecutionEngine --> TransactionManager
-
-TransactionManager --> ConcurrencyManager
-
-PageIO --> Page
-
-BufferManager --> Page
-
+    %% Transaction & Concurrency (Red/Coral)
+    style TransactionManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style Transaction fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style TransactionContext fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style TransactionState fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style TransactionLog fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style ConcurrencyManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style ILockManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style LockManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style LockTable fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style Lock fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style LockRequest fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+    style LockType fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 ```

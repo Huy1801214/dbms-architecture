@@ -52,7 +52,11 @@ public class BufferManager {
 
     }
 
-    public void flush() {
+    public void flushPage(int pageId) {
+
+    }
+
+    public void flushAll() {
 
     }
 

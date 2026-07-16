@@ -1,6 +1,6 @@
 package dbms.transaction.concurrency;
 
-public class LockManager {
+public class LockManager implements ILockManager {
 
     private LockTable lockTable;
 
@@ -19,11 +19,13 @@ public class LockManager {
         this.lockTable = lockTable;
     }
 
-    public void lock(LockRequest lockRequest) {
+    @Override
+    public void lock(LockRequest request) {
 
     }
 
-    public void unlock(LockRequest lockRequest) {
+    @Override
+    public void unlock(LockRequest request) {
 
     }
 

@@ -4,17 +4,17 @@ public class Transaction {
 
     private int transactionId;
     private TransactionState state;
-    private TransactionContext transactionContext;
+    private TransactionContext context;
 
     public Transaction() {
     }
 
     public Transaction(int transactionId,
             TransactionState state,
-            TransactionContext transactionContext) {
+            TransactionContext context) {
         this.transactionId = transactionId;
         this.state = state;
-        this.transactionContext = transactionContext;
+        this.context = context;
     }
 
     public int getTransactionId() {
@@ -33,12 +33,12 @@ public class Transaction {
         this.state = state;
     }
 
-    public TransactionContext getTransactionContext() {
-        return transactionContext;
+    public TransactionContext getContext() {
+        return context;
     }
 
-    public void setTransactionContext(TransactionContext transactionContext) {
-        this.transactionContext = transactionContext;
+    public void setContext(TransactionContext context) {
+        this.context = context;
     }
 
 }

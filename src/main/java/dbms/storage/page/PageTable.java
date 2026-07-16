@@ -23,15 +23,15 @@ public class PageTable {
         this.pageTable = pageTable;
     }
 
-    public Page lookup(int pageId) {
+    public Page lookupPage(int pageId) {
         return null;
     }
 
-    public void insert(Page page) {
+    public void addPage(Page page) {
 
     }
 
-    public void remove(int pageId) {
+    public void removePage(int pageId) {
 
     }
 

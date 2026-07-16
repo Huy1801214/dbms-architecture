@@ -1,25 +1,25 @@
 package dbms.transaction.concurrency;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LockTable {
 
-    private Map<String, Lock> locks;
+    private List<Lock> locks;
 
     public LockTable() {
-        this.locks = new HashMap<>();
+        this.locks = new ArrayList<>();
     }
 
-    public LockTable(Map<String, Lock> locks) {
+    public LockTable(List<Lock> locks) {
         this.locks = locks;
     }
 
-    public Map<String, Lock> getLocks() {
+    public List<Lock> getLocks() {
         return locks;
     }
 
-    public void setLocks(Map<String, Lock> locks) {
+    public void setLocks(List<Lock> locks) {
         this.locks = locks;
     }
 

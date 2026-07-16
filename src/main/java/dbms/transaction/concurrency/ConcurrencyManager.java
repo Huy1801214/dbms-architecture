@@ -2,28 +2,28 @@ package dbms.transaction.concurrency;
 
 public class ConcurrencyManager {
 
-    private LockManager lockManager;
+    private ILockManager lockManager;
 
     public ConcurrencyManager() {
     }
 
-    public ConcurrencyManager(LockManager lockManager) {
+    public ConcurrencyManager(ILockManager lockManager) {
         this.lockManager = lockManager;
     }
 
-    public LockManager getLockManager() {
+    public ILockManager getLockManager() {
         return lockManager;
     }
 
-    public void setLockManager(LockManager lockManager) {
+    public void setLockManager(ILockManager lockManager) {
         this.lockManager = lockManager;
     }
 
-    public void acquire(LockRequest lockRequest) {
+    public void acquire(LockRequest request) {
 
     }
 
-    public void release(LockRequest lockRequest) {
+    public void release(LockRequest request) {
 
     }
 

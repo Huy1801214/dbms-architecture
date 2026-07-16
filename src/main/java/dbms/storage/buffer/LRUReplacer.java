@@ -5,22 +5,22 @@ import java.util.List;
 
 public class LRUReplacer implements ReplacementPolicy {
 
-    private List<BufferFrame> bufferFrames;
+    private List<BufferFrame> accessHistory;
 
     public LRUReplacer() {
-        this.bufferFrames = new LinkedList<>();
+        this.accessHistory = new LinkedList<>();
     }
 
-    public LRUReplacer(List<BufferFrame> bufferFrames) {
-        this.bufferFrames = bufferFrames;
+    public LRUReplacer(List<BufferFrame> accessHistory) {
+        this.accessHistory = accessHistory;
     }
 
-    public List<BufferFrame> getBufferFrames() {
-        return bufferFrames;
+    public List<BufferFrame> getAccessHistory() {
+        return accessHistory;
     }
 
-    public void setBufferFrames(List<BufferFrame> bufferFrames) {
-        this.bufferFrames = bufferFrames;
+    public void setAccessHistory(List<BufferFrame> accessHistory) {
+        this.accessHistory = accessHistory;
     }
 
     @Override

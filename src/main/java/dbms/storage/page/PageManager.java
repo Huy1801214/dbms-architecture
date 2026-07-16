@@ -3,13 +3,15 @@ package dbms.storage.page;
 public class PageManager {
 
     private PageTable pageTable;
-    private PageAllocator pageAllocator;
-    private PageIO pageIO;
+    private IPageAllocator pageAllocator;
+    private IPageIO pageIO;
 
     public PageManager() {
     }
 
-    public PageManager(PageTable pageTable, PageAllocator pageAllocator, PageIO pageIO) {
+    public PageManager(PageTable pageTable,
+            IPageAllocator pageAllocator,
+            IPageIO pageIO) {
         this.pageTable = pageTable;
         this.pageAllocator = pageAllocator;
         this.pageIO = pageIO;
@@ -23,19 +25,19 @@ public class PageManager {
         this.pageTable = pageTable;
     }
 
-    public PageAllocator getPageAllocator() {
+    public IPageAllocator getPageAllocator() {
         return pageAllocator;
     }
 
-    public void setPageAllocator(PageAllocator pageAllocator) {
+    public void setPageAllocator(IPageAllocator pageAllocator) {
         this.pageAllocator = pageAllocator;
     }
 
-    public PageIO getPageIO() {
+    public IPageIO getPageIO() {
         return pageIO;
     }
 
-    public void setPageIO(PageIO pageIO) {
+    public void setPageIO(IPageIO pageIO) {
         this.pageIO = pageIO;
     }
 

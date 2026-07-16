@@ -2,21 +2,21 @@ package dbms.transaction.manager;
 
 public class TransactionContext {
 
-    private Transaction transaction;
+    private long startTime;
 
     public TransactionContext() {
     }
 
-    public TransactionContext(Transaction transaction) {
-        this.transaction = transaction;
+    public TransactionContext(long startTime) {
+        this.startTime = startTime;
     }
 
-    public Transaction getTransaction() {
-        return transaction;
+    public long getStartTime() {
+        return startTime;
     }
 
-    public void setTransaction(Transaction transaction) {
-        this.transaction = transaction;
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
     }
 
 }

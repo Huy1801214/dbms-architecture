@@ -4,27 +4,16 @@ import dbms.transaction.concurrency.ConcurrencyManager;
 
 public class TransactionManager {
 
-    private Transaction transaction;
     private TransactionLog transactionLog;
     private ConcurrencyManager concurrencyManager;
 
     public TransactionManager() {
     }
 
-    public TransactionManager(Transaction transaction,
-            TransactionLog transactionLog,
+    public TransactionManager(TransactionLog transactionLog,
             ConcurrencyManager concurrencyManager) {
-        this.transaction = transaction;
         this.transactionLog = transactionLog;
         this.concurrencyManager = concurrencyManager;
-    }
-
-    public Transaction getTransaction() {
-        return transaction;
-    }
-
-    public void setTransaction(Transaction transaction) {
-        this.transaction = transaction;
     }
 
     public TransactionLog getTransactionLog() {

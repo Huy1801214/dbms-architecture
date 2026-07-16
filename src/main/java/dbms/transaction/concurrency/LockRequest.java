@@ -1,34 +1,26 @@
 package dbms.transaction.concurrency;
 
+import dbms.transaction.manager.Transaction;
+
 public class LockRequest {
 
-    private int transactionId;
-    private String resourceId;
+    private Transaction transaction;
     private Lock lock;
 
     public LockRequest() {
     }
 
-    public LockRequest(int transactionId, String resourceId, Lock lock) {
-        this.transactionId = transactionId;
-        this.resourceId = resourceId;
+    public LockRequest(Transaction transaction, Lock lock) {
+        this.transaction = transaction;
         this.lock = lock;
     }
 
-    public int getTransactionId() {
-        return transactionId;
+    public Transaction getTransaction() {
+        return transaction;
     }
 
-    public void setTransactionId(int transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public String getResourceId() {
-        return resourceId;
-    }
-
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
+    public void setTransaction(Transaction transaction) {
+        this.transaction = transaction;
     }
 
     public Lock getLock() {

@@ -1,27 +1,18 @@
 package dbms.query.executor;
 
-import dbms.query.parser.ASTNode;
-import dbms.storage.buffer.BufferManager;
-import dbms.transaction.manager.TransactionManager;
+import dbms.query.planner.ExecutionPlan;
 
 public class ExecutionEngine {
 
     private ExecutionContext executionContext;
     private Executor executor;
-    private BufferManager bufferManager;
-    private TransactionManager transactionManager;
 
     public ExecutionEngine() {
     }
 
-    public ExecutionEngine(ExecutionContext executionContext,
-            Executor executor,
-            BufferManager bufferManager,
-            TransactionManager transactionManager) {
+    public ExecutionEngine(ExecutionContext executionContext, Executor executor) {
         this.executionContext = executionContext;
         this.executor = executor;
-        this.bufferManager = bufferManager;
-        this.transactionManager = transactionManager;
     }
 
     public ExecutionContext getExecutionContext() {
@@ -40,23 +31,7 @@ public class ExecutionEngine {
         this.executor = executor;
     }
 
-    public BufferManager getBufferManager() {
-        return bufferManager;
-    }
-
-    public void setBufferManager(BufferManager bufferManager) {
-        this.bufferManager = bufferManager;
-    }
-
-    public TransactionManager getTransactionManager() {
-        return transactionManager;
-    }
-
-    public void setTransactionManager(TransactionManager transactionManager) {
-        this.transactionManager = transactionManager;
-    }
-
-    public ResultSet execute(ASTNode astNode) {
+    public ResultSet execute(ExecutionPlan executionPlan) {
         return null;
     }
 

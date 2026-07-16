@@ -1,28 +1,20 @@
 package dbms.query.executor;
 
 import dbms.storage.buffer.BufferManager;
-import dbms.transaction.manager.Transaction;
+import dbms.transaction.manager.TransactionManager;
 
 public class ExecutionContext {
 
-    private Transaction transaction;
     private BufferManager bufferManager;
+    private TransactionManager transactionManager;
 
     public ExecutionContext() {
     }
 
-    public ExecutionContext(Transaction transaction,
-            BufferManager bufferManager) {
-        this.transaction = transaction;
+    public ExecutionContext(BufferManager bufferManager,
+            TransactionManager transactionManager) {
         this.bufferManager = bufferManager;
-    }
-
-    public Transaction getTransaction() {
-        return transaction;
-    }
-
-    public void setTransaction(Transaction transaction) {
-        this.transaction = transaction;
+        this.transactionManager = transactionManager;
     }
 
     public BufferManager getBufferManager() {
@@ -31,6 +23,14 @@ public class ExecutionContext {
 
     public void setBufferManager(BufferManager bufferManager) {
         this.bufferManager = bufferManager;
+    }
+
+    public TransactionManager getTransactionManager() {
+        return transactionManager;
+    }
+
+    public void setTransactionManager(TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
     }
 
 }

@@ -1,13 +1,13 @@
 package dbms.storage.page;
 
-public class PageAllocator {
+public class DefaultPageAllocator implements IPageAllocator {
 
     private int nextPageId;
 
-    public PageAllocator() {
+    public DefaultPageAllocator() {
     }
 
-    public PageAllocator(int nextPageId) {
+    public DefaultPageAllocator(int nextPageId) {
         this.nextPageId = nextPageId;
     }
 
@@ -19,10 +19,12 @@ public class PageAllocator {
         this.nextPageId = nextPageId;
     }
 
+    @Override
     public Page allocate() {
         return null;
     }
 
+    @Override
     public void free(int pageId) {
 
     }

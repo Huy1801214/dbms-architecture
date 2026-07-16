@@ -5,22 +5,22 @@ import java.util.List;
 
 public class TransactionLog {
 
-    private List<String> logEntries;
+    private List<Transaction> transactions;
 
     public TransactionLog() {
-        this.logEntries = new ArrayList<>();
+        this.transactions = new ArrayList<>();
     }
 
-    public TransactionLog(List<String> logEntries) {
-        this.logEntries = logEntries;
+    public TransactionLog(List<Transaction> transactions) {
+        this.transactions = transactions;
     }
 
-    public List<String> getLogEntries() {
-        return logEntries;
+    public List<Transaction> getTransactions() {
+        return transactions;
     }
 
-    public void setLogEntries(List<String> logEntries) {
-        this.logEntries = logEntries;
+    public void setTransactions(List<Transaction> transactions) {
+        this.transactions = transactions;
     }
 
 }
