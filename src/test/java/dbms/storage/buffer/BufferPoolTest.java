@@ -1,5 +1,27 @@
 package dbms.storage.buffer;
 
-public class BufferPoolTest {
+import org.junit.jupiter.api.Test;
+
+class BufferPoolTest {
+
+    @Test
+    void shouldAddAndRetrieveFrame() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldRespectConfiguredCapacity() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

@@ -1,5 +1,27 @@
 package dbms.storage.page;
 
-public class DefaultPageAllocatorTest {
+import org.junit.jupiter.api.Test;
+
+class DefaultPageAllocatorTest {
+
+    @Test
+    void shouldAllocateUniquePage() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldFreeAllocatedPage() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }

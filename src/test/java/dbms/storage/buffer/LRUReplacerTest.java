@@ -1,5 +1,27 @@
 package dbms.storage.buffer;
 
-public class LRUReplacerTest {
+import org.junit.jupiter.api.Test;
+
+class LRUReplacerTest {
+
+    @Test
+    void shouldSelectLeastRecentlyUsedFrame() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    void shouldUpdateAccessHistory() {
+
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
 
 }
