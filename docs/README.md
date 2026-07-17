@@ -2,659 +2,894 @@
 
 ```mermaid
 flowchart LR
-    classDef rootStyle  fill:#1d3557,color:#fff,stroke:#457b9d,font-weight:bold
-    classDef modDSA     fill:#2d6a4f,color:#fff,stroke:#1b4332,font-weight:bold
-    classDef modTCM     fill:#e76f51,color:#fff,stroke:#c1440e,font-weight:bold
-    classDef modBRL     fill:#0077b6,color:#fff,stroke:#023e8a,font-weight:bold
-    classDef modAM      fill:#457b9d,color:#fff,stroke:#1d3557,font-weight:bold
-    classDef modSUM     fill:#7b2d8b,color:#fff,stroke:#560bad,font-weight:bold
-    classDef modDO      fill:#9b2226,color:#fff,stroke:#6a040f,font-weight:bold
-    classDef modPS      fill:#c77c08,color:#fff,stroke:#a05f00,font-weight:bold
-    classDef modQP      fill:#b5a300,color:#fff,stroke:#8a7a00,font-weight:bold
+    %% =====================================================
+    %% NODE DECLARATIONS & STYLING (Declared exactly once)
+    %% =====================================================
+    DBMS((DBMS)):::rootStyle
+    
+    %% Left-side Branches
+    Server["Database Server"]:::branchAdmin
+    Security["Security"]:::branchAdmin
+    Replication["Replication"]:::branchAdmin
+    Recovery["Recovery"]:::branchTx
+    
+    DatabaseServer["DatabaseServer"]:::leafStyle
+    DatabaseManager["DatabaseManager"]:::leafStyle
+    ConfigurationManager["ConfigurationManager"]:::leafStyle
+    SecurityManager["SecurityManager"]:::leafStyle
+    MonitoringManager["MonitoringManager"]:::leafStyle
+    
+    User["User"]:::leafStyle
+    Role["Role"]:::leafStyle
+    Permission["Permission"]:::leafStyle
+    ClusterNode["Cluster Node"]:::leafStyle
+    LogRecord["Log Record"]:::leafStyle
 
-    classDef subDSA     fill:#d8f3dc,color:#1b4332,stroke:#52b788
-    classDef subTCM     fill:#ffddd2,color:#7d2d1a,stroke:#e29578
-    classDef subBRL     fill:#caf0f8,color:#023e8a,stroke:#90e0ef
-    classDef subAM      fill:#dbe9f5,color:#1d3557,stroke:#457b9d
-    classDef subSUM     fill:#e9d8f5,color:#560bad,stroke:#c77dff
-    classDef subDO      fill:#ffccd5,color:#5c0a14,stroke:#c9184a
-    classDef subPS      fill:#ffe8d6,color:#7c4a03,stroke:#f4a261
-    classDef subQP      fill:#fefae0,color:#554400,stroke:#c8aa00
+    %% Right-side Branches
+    Database["Database"]:::branchCatalog
+    Storage["Storage Engine"]:::branchStorage
+    Query["Query Processing"]:::branchQuery
+    Transaction["Transaction"]:::branchTx
+    Metadata["Metadata"]:::branchCatalog
+    
+    Schema["Schema"]:::leafStyle
+    Table["Table"]:::leafStyle
+    Column["Column"]:::leafStyle
+    Row["Row"]:::leafStyle
+    Index["Index"]:::leafStyle
+    
+    BufferPool["Buffer Pool"]:::leafStyle
+    PageManager["Page Manager"]:::leafStyle
+    FileManager["File Manager"]:::leafStyle
+    
+    SQLParser["SQL Parser"]:::leafStyle
+    Lexer["Lexer"]:::leafStyle
+    AST["AST"]:::leafStyle
+    
+    QueryOptimizer["Query Optimizer"]:::leafStyle
+    LogicalPlan["Logical Plan"]:::leafStyle
+    PhysicalPlan["Physical Plan"]:::leafStyle
+    StatisticsManager["Statistics Manager"]:::leafStyle
+    
+    QueryExecutor["Query Executor"]:::leafStyle
+    RuntimeContext["Runtime Context"]:::leafStyle
+    
+    TransactionObject["Transaction Object"]:::leafStyle
+    TransactionManager["Transaction Manager"]:::leafStyle
+    LockManager["Lock Manager"]:::leafStyle
+    MVCCManager["MVCC Manager"]:::leafStyle
+    WALManager["WAL Manager"]:::leafStyle
+    
+    CatalogManager["Catalog Manager"]:::leafStyle
 
-    %% ─────────────────── LEFT SIDE ───────────────────
+    %% =====================================================
+    %% CONNECTIONS (Simple Node IDs only)
+    %% =====================================================
+    
+    %% Left Side Connections (pointing left-to-right into DBMS)
+    Server --> DBMS
+    Security --> DBMS
+    Replication --> DBMS
+    Recovery --> DBMS
 
-    %% Data Storage & Access
-    DSA1["File Management"]:::subDSA              --> DSA
-    DSA2["Page Management"]:::subDSA              --> DSA
-    DSA3["Buffer Management"]:::subDSA            --> DSA
-    DSA4["Data Access Methods"]:::subDSA          --> DSA
-    DSA5["Storage Allocation Management"]:::subDSA --> DSA
-    DSA6["Record Management"]:::subDSA            --> DSA
-    DSA7["Log Files"]:::subDSA                    --> DSA
-    DSA["**Data Storage & Access**"]:::modDSA         --> ROOT
+    DatabaseServer --> Server
+    DatabaseManager --> Server
+    ConfigurationManager --> Server
+    SecurityManager --> Server
+    MonitoringManager --> Server
 
-    %% Transaction & Concurrency Management
-    TCM1["Transaction Management"]:::subTCM --> TCM
-    TCM2["Lock Management"]:::subTCM        --> TCM
-    TCM3["Deadlock Management"]:::subTCM    --> TCM
-    TCM4["Isolation Management"]:::subTCM   --> TCM
-    TCM5["ACID Enforcement"]:::subTCM       --> TCM
-    TCM6["Concurrency Control"]:::subTCM    --> TCM
-    TCM["**Transaction & Concurrency Management**"]:::modTCM --> ROOT
+    User --> Security
+    Role --> Security
+    Permission --> Security
 
-    %% Backup, Recovery & Logging
-    BRL1["Backup Management"]:::subBRL      --> BRL
-    BRL2["Restore Management"]:::subBRL     --> BRL
-    BRL3["Transaction Logging"]:::subBRL    --> BRL
-    BRL4["Recovery Management"]:::subBRL    --> BRL
-    BRL5["Checkpoint Management"]:::subBRL  --> BRL
-    BRL["Backup, Recovery & Logging"]:::modBRL --> ROOT
+    ClusterNode --> Replication
+    LogRecord --> Recovery
 
-    %% Administration & Monitoring
-    AM1["System Monitoring"]:::subAM           --> AM
-    AM2["Resource Monitoring"]:::subAM         --> AM
-    AM3["Configuration Management"]:::subAM    --> AM
-    AM4["Database Maintenance"]:::subAM        --> AM
-    AM5["Import & Export Management"]:::subAM  --> AM
-    AM6["Administrative Tools"]:::subAM        --> AM
-    AM["Administration & Monitoring"]:::modAM --> ROOT
+    %% Right Side Connections (pointing right)
+    DBMS --> Database
+    DBMS --> Storage
+    DBMS --> Query
+    DBMS --> Transaction
+    DBMS --> Metadata
 
-    %% ─────────────────── ROOT ───────────────────
-    ROOT(["DBMS Analysis"]):::rootStyle
+    Database --> Schema
+    Database --> Table
+    Database --> Column
+    Database --> Row
+    Database --> Index
 
-    %% ─────────────────── RIGHT SIDE ───────────────────
+    Storage --> BufferPool
+    Storage --> PageManager
+    Storage --> FileManager
 
-    %% Security & User Management
-    ROOT --> SUM["Security & User Management"]:::modSUM
-    SUM --> SUM1["Authentication Management"]:::subSUM
-    SUM --> SUM2["Authorization Management"]:::subSUM
-    SUM --> SUM3["User Management"]:::subSUM
-    SUM --> SUM4["Role Management"]:::subSUM
-    SUM --> SUM5["Data Protection"]:::subSUM
-    SUM --> SUM6["Auditing & Compliance"]:::subSUM
+    Query --> SQLParser
+    SQLParser --> Lexer
+    SQLParser --> AST
 
-    %% Database Objects
-    ROOT --> DO["Database Objects"]:::modDO
-    DO --> DO1["Schema Management"]:::subDO
-    DO --> DO2["Database Management"]:::subDO
-    DO --> DO3["Column Management"]:::subDO
-    DO --> DO4["Table Management"]:::subDO
-    DO --> DO5["View Management"]:::subDO
-    DO --> DO6["Programmable Objects Management"]:::subDO
-    DO --> DO7["Index Management"]:::subDO
-    DO --> DO8["Constraint Management"]:::subDO
-    DO --> DO9["Metadata Catalog Management"]:::subDO
+    Query --> QueryOptimizer
+    QueryOptimizer --> LogicalPlan
+    QueryOptimizer --> PhysicalPlan
+    QueryOptimizer --> StatisticsManager
 
-    %% Performance & Scalability
-    ROOT --> PS["Performance & Scalability"]:::modPS
-    PS --> PS1["Memory Management"]:::subPS
-    PS --> PS2["Workload Management"]:::subPS
-    PS --> PS3["Resource Management"]:::subPS
-    PS --> PS4["Data Distribution"]:::subPS
-    PS --> PS5["Scalability Management"]:::subPS
-    PS --> PS6["Performance Monitoring"]:::subPS
-    PS --> PS7["Connection Management"]:::subPS
-    PS --> PS8["Parallel Execution"]:::subPS
+    Query --> QueryExecutor
+    QueryExecutor --> RuntimeContext
+    QueryExecutor --> PhysicalPlan
 
-    %% Query Processing
-    ROOT --> QP["**Query Processing**"]:::modQP
-    QP --> QP1["Semantic Analyzer"]:::subQP
-    QP --> QP2["SQL Parser"]:::subQP
-    QP --> QP3["Query Optimizer"]:::subQP
-    QP --> QP4["Execution Planner"]:::subQP
-    QP --> QP5["Execution Engine"]:::subQP
-    QP --> QP6["Result Formatter"]:::subQP
+    Transaction --> TransactionObject
+    Transaction --> TransactionManager
+    Transaction --> LockManager
+    Transaction --> MVCCManager
+    Transaction --> WALManager
+
+    Metadata --> CatalogManager
+
+    %% =====================================================
+    %% STYLING DEFINITIONS (HSL Colors)
+    %% =====================================================
+    classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
+    classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
+    classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
 
 ---
-# DBMS System Architecture Important Modules
-![alt text](image-2.png)
+# Overview Class Diagram
 
----
-# DBMS Class Diagram mindmap
-![alt text](image.png)
-
----
-# Class Diagram for Core Features
 ```mermaid
 classDiagram
-    direction TB
+direction TB
 
-    %% =====================================================
-    %% PAGE MANAGEMENT
-    %% =====================================================
-    class Page {
-        +pageId
-        +data
-        +dirty
-    }
-    class PageTable {
-        +lookupPage()
-        +addPage()
-        +removePage()
-    }
-    class PageManager {
-        +fetchPage()
-        +allocatePage()
-        +flushPage()
-        +deletePage()
-    }
-    class IPageAllocator {
-        <<interface>>
-        +allocate()
-        +free()
-    }
-    class DefaultPageAllocator {
-        +allocate()
-        +free()
-    }
-    class IPageIO {
-        <<interface>>
-        +read()
-        +write()
-    }
-    class DiskPageIO {
-        +read()
-        +write()
-    }
+class DatabaseServer{
+    +serverId
+    +version
+    +status
+    +start()
+    +stop()
+    +restart()
+}
 
-    PageTable *-- Page
-    PageManager --> PageTable
-    PageManager --> IPageAllocator
-    PageManager --> IPageIO
-    DefaultPageAllocator ..|> IPageAllocator
-    DiskPageIO ..|> IPageIO
+class DatabaseManager{
+    +createDatabase()
+    +dropDatabase()
+    +getDatabase()
+    +listDatabases()
+}
 
-    %% =====================================================
-    %% BUFFER MANAGEMENT
-    %% =====================================================
-    class BufferFrame {
-        +frameId
-        +pinCount
-        +dirty
-    }
-    class BufferPool {
-        +capacity
-    }
-    class ReplacementPolicy {
-        <<interface>>
-        +victim()
-        +recordAccess()
-    }
-    class LRUReplacer {
-        +victim()
-        +recordAccess()
-    }
-    class BufferManager {
-        +pinPage()
-        +unpinPage()
-        +flushPage()
-        +flushAll()
-    }
+class Database{
+    +databaseId
+    +name
+    +owner
+    +open()
+    +close()
+}
 
-    BufferPool *-- BufferFrame
-    LRUReplacer ..|> ReplacementPolicy
-    BufferManager --> BufferPool
-    BufferManager --> ReplacementPolicy
-    BufferManager --> PageManager
-    BufferFrame --> Page
+class Schema{
+    +schemaId
+    +name
+    +createTable()
+    +dropTable()
+}
 
-    %% =====================================================
-    %% SQL PARSER
-    %% =====================================================
-    class SQLParser {
-        +parse()
-    }
-    class Lexer {
-        +tokenize()
-    }
-    class Parser {
-        +buildAST()
-    }
-    class ASTNode {
-        <<abstract>>
-    }
-    class SyntaxError
+class Table{
+    +tableId
+    +name
+    +insert()
+    +update()
+    +delete()
+}
 
-    SQLParser --> Lexer
-    SQLParser --> Parser
-    Parser --> ASTNode
-    Parser ..> SyntaxError
+class Column{
+    +columnId
+    +name
+    +dataType
+    +nullable
+}
 
-    %% =====================================================
-    %% QUERY PLANNER
-    %% =====================================================
-    class QueryPlanner {
-        +createPlan()
-    }
-    class ExecutionPlan {
-        <<abstract>>
-    }
-    class SequentialScanPlan
-    class FilterPlan
+class Row{
+    +rowId
+    +values
+    +version
+}
 
-    ExecutionPlan <|-- SequentialScanPlan
-    ExecutionPlan <|-- FilterPlan
-    QueryPlanner --> ASTNode
-    QueryPlanner --> ExecutionPlan
+class DataType{
+    <<enumeration>>
+}
 
-    %% =====================================================
-    %% EXECUTION ENGINE
-    %% =====================================================
-    class ExecutionEngine {
-        +execute()
-    }
-    class ExecutionContext
-    class Executor {
-        <<abstract>>
-        +next()
-    }
-    class TableScanExecutor {
-        +next()
-    }
-    class FilterExecutor {
-        +next()
-    }
-    class ResultSet
+class Constraint{
+    <<abstract>>
+    +validate()
+}
 
-    Executor <|-- TableScanExecutor
-    Executor <|-- FilterExecutor
-    ExecutionEngine --> ExecutionContext
-    ExecutionEngine --> ExecutionPlan
-    ExecutionEngine --> Executor
-    ExecutionEngine --> ResultSet
+class PrimaryKey{
+    +columns
+}
 
-    %% =====================================================
-    %% TRANSACTION
-    %% =====================================================
-    class TransactionManager {
-        +begin()
-        +commit()
-        +rollback()
-    }
-    class Transaction {
-        +transactionId
-        +state
-    }
-    class TransactionContext
-    class TransactionState {
-        <<enumeration>>
-        ACTIVE
-        COMMITTED
-        ABORTED
-    }
-    class TransactionLog
+class ForeignKey{
+    +referenceTable
+}
 
-    Transaction --> TransactionContext
-    Transaction --> TransactionState
-    TransactionManager --> Transaction
-    TransactionManager --> TransactionLog
+class UniqueConstraint
 
-    %% =====================================================
-    %% CONCURRENCY
-    %% =====================================================
-    class ConcurrencyManager {
-        +acquire()
-        +release()
-    }
-    class ILockManager {
-        <<interface>>
-        +lock()
-        +unlock()
-    }
-    class LockManager {
-        +lock()
-        +unlock()
-    }
-    class LockTable
-    class Lock
-    class LockRequest
-    class LockType {
-        <<enumeration>>
-        SHARED
-        EXCLUSIVE
-    }
+class CheckConstraint
 
-    Lock --> LockType
-    LockTable *-- Lock
-    LockManager ..|> ILockManager
-    ConcurrencyManager --> ILockManager
-    LockManager --> LockTable
-    LockManager --> LockRequest
+class Index{
+    <<abstract>>
+    +search()
+    +insertKey()
+    +deleteKey()
+}
 
-    %% =====================================================
-    %% CROSS MODULE DEPENDENCIES
-    %% =====================================================
-    ExecutionEngine --> BufferManager
-    ExecutionEngine --> TransactionManager
-    TransactionManager --> ConcurrencyManager
+class BTreeIndex
 
-    %% =====================================================
-    %% STYLING DEFINITIONS (COLOR-CODED BY MODULE)
-    %% =====================================================
-    %% Page Management (Green)
-    style Page fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-    style PageTable fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-    style PageManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-    style IPageAllocator fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-    style DefaultPageAllocator fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-    style IPageIO fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-    style DiskPageIO fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+class HashIndex
 
-    %% Buffer Management (Blue)
-    style BufferFrame fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-    style BufferPool fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-    style ReplacementPolicy fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-    style LRUReplacer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-    style BufferManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+class BitmapIndex
 
-    %% Parser & Query Planner (Yellow/Orange)
-    style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style Parser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style ASTNode fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style SyntaxError fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style QueryPlanner fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style ExecutionPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style SequentialScanPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-    style FilterPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+class Partition{
+    +partitionKey
+}
 
-    %% Execution Engine (Purple)
-    style ExecutionEngine fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
-    style ExecutionContext fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
-    style Executor fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
-    style TableScanExecutor fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
-    style FilterExecutor fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
-    style ResultSet fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#3b0a66
+class View{
+    +queryDefinition
+}
 
-    %% Transaction & Concurrency (Red/Coral)
-    style TransactionManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style Transaction fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style TransactionContext fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style TransactionState fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style TransactionLog fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style ConcurrencyManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style ILockManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style LockManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style LockTable fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style Lock fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style LockRequest fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-    style LockType fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+class StoredProcedure{
+    +execute()
+}
+
+class Trigger{
+    +fire()
+}
+
+class Sequence{
+    +nextValue()
+}
+
+class Transaction{
+    +transactionId
+    +begin()
+    +commit()
+    +rollback()
+}
+
+class TransactionManager{
+    +beginTransaction()
+    +commit()
+    +rollback()
+}
+
+class LockManager{
+    +acquireLock()
+    +releaseLock()
+}
+
+class MVCCManager{
+    +createVersion()
+    +garbageCollect()
+}
+
+class BufferPool{
+    +pinPage()
+    +flushPage()
+}
+
+class Page{
+    +pageId
+}
+
+class StorageEngine{
+    +readPage()
+    +writePage()
+}
+
+class FileManager{
+    +read()
+    +write()
+}
+
+class WALManager{
+    +appendLog()
+    +flush()
+}
+
+class RecoveryManager{
+    +recover()
+}
+
+class CatalogManager{
+    +registerTable()
+    +findTable()
+}
+
+class SQLParser{
+    +parse()
+}
+
+class Lexer{
+    +tokenize()
+}
+
+class AST{
+    +root
+}
+
+class QueryOptimizer{
+    +optimize()
+}
+
+class LogicalPlan{
+    +operators
+}
+
+class PhysicalPlan{
+    +operators
+}
+
+class QueryExecutor{
+    +execute()
+}
+
+class StatisticsManager{
+    +collect()
+}
+
+class SecurityManager{
+    +authenticate()
+    +authorize()
+}
+
+class User
+
+class Role
+
+class Permission
+
+DatabaseServer --> DatabaseManager
+DatabaseServer --> TransactionManager
+DatabaseServer --> StorageEngine
+DatabaseServer --> CatalogManager
+DatabaseServer --> SecurityManager
+
+DatabaseManager --> Database
+Database --> Schema
+Schema --> Table
+Schema --> View
+Schema --> StoredProcedure
+Schema --> Sequence
+
+Table --> Column
+Table --> Row
+Table --> Index
+Table --> Constraint
+Table --> Partition
+Table --> Trigger
+
+Constraint <|-- PrimaryKey
+Constraint <|-- ForeignKey
+Constraint <|-- UniqueConstraint
+Constraint <|-- CheckConstraint
+
+Index <|-- BTreeIndex
+Index <|-- HashIndex
+Index <|-- BitmapIndex
+
+Column --> DataType
+ForeignKey --> Table
+
+TransactionManager --> Transaction
+TransactionManager --> LockManager
+TransactionManager --> MVCCManager
+TransactionManager --> WALManager
+
+StorageEngine --> BufferPool
+StorageEngine --> FileManager
+BufferPool --> Page
+
+RecoveryManager --> WALManager
+
+CatalogManager --> Table
+CatalogManager --> Index
+CatalogManager --> Schema
+
+SQLParser --> Lexer
+SQLParser --> AST
+AST --> LogicalPlan
+QueryOptimizer --> LogicalPlan
+QueryOptimizer --> PhysicalPlan
+QueryExecutor --> PhysicalPlan
+QueryExecutor --> Transaction
+
+StatisticsManager --> Table
+QueryOptimizer --> StatisticsManager
+
+SecurityManager --> User
+SecurityManager --> Role
+Role --> Permission
+
+%% =====================================================
+%% STYLING DEFINITIONS (Color-coded by Domain Group)
+%% =====================================================
+%% Server & Security (Blue)
+style DatabaseServer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style DatabaseManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style SecurityManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style User fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Role fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Permission fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+%% Catalog & Database Objects (Green)
+style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Schema fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Row fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style DataType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style BTreeIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style HashIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style BitmapIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Partition fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style CatalogManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+%% Query Engine (Yellow/Orange)
+style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style AST fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style LogicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style PhysicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style QueryExecutor fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style StatisticsManager fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
+%% Storage Engine (Teal)
+style StorageEngine fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
+style BufferPool fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
+style Page fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
+style FileManager fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
+
+%% Transaction & Recovery (Red/Coral)
+style Transaction fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style TransactionManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style LockManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style MVCCManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style WALManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style RecoveryManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 ```
 
 --- 
-# Unit Test Mindmap for Data Storage & Access
+
+# Class Diagram for Database Server Module
 ```mermaid
-flowchart LR
+classDiagram
+direction LR
 
-    %% ─────────────────── LEFT SIDE: PAGE MANAGEMENT ───────────────────
-    %% Page
-    PageTest1["shouldUpdatePageContent"] --> Page
-    PageTest2["shouldMarkPageDirty"] --> Page
-    Page["Page"] --> A
+class DatabaseServer{
+    +serverId
+    +version
+    +status
+    +configuration
+    +startTime
 
-    %% Page Table
-    PageTableTest1["shouldInsertAndLookupPage"] --> PageTable
-    PageTableTest2["shouldRemovePage"] --> PageTable
-    PageTableTest3["shouldReplaceExistingPage"] --> PageTable
-    PageTable["PageTable"] --> A
+    +start()
+    +stop()
+    +restart()
+}
 
-    %% Default Page Allocator
-    AllocatorTest1["shouldAllocateUniquePage"] --> DefaultPageAllocator
-    AllocatorTest2["shouldFreeAllocatedPage"] --> DefaultPageAllocator
-    DefaultPageAllocator["DefaultPageAllocator"] --> A
+class DatabaseManager{
+    +createDatabase()
+    +dropDatabase()
+    +getDatabase()
+    +listDatabases()
+}
 
-    %% Disk Page IO
-    PageIOTest1["shouldWriteAndReadPage"] --> DiskPageIO
-    PageIOTest2["shouldOverwriteExistingPage"] --> DiskPageIO
-    PageIOTest3["shouldThrowExceptionWhenReadingMissingPage"] --> DiskPageIO
-    DiskPageIO["DiskPageIO"] --> A
+class ConfigurationManager
 
-    %% Page Manager
-    PageManagerTest1["shouldAllocateNewPage"] --> PageManager
-    PageManagerTest2["shouldFetchExistingPage"] --> PageManager
-    PageManagerTest3["shouldFlushDirtyPage"] --> PageManager
-    PageManagerTest4["shouldDeletePage"] --> PageManager
-    PageManager["PageManager"] --> A
+class SecurityManager{
+    +authenticate()
+    +authorize()
+    +grantPermission()
+    +revokePermission()
+}
 
-    %% ─────────────────── CENTRAL ROOT ───────────────────
-    A(["Data Storage & Access Unit Tests"])
+class MonitoringManager
 
-    %% ─────────────────── RIGHT SIDE: BUFFER MANAGEMENT ───────────────────
-    %% Buffer Frame
-    A --> BufferFrame["BufferFrame"]
-    BufferFrame --> BufferFrameTest1["shouldPinAndUnpinFrame"]
-    BufferFrame --> BufferFrameTest2["shouldMarkFrameDirty"]
+class Database{
+    +databaseId
+    +name
+    +owner
+    +status
+    +createdAt
 
-    %% Buffer Pool
-    A --> BufferPool["BufferPool"]
-    BufferPool --> BufferPoolTest1["shouldAddAndRetrieveFrame"]
-    BufferPool --> BufferPoolTest2["shouldRespectConfiguredCapacity"]
+    +open()
+    +close()
+}
 
-    %% LRU Replacer
-    A --> LRUReplacer["LRUReplacer"]
-    LRUReplacer --> LruTest1["shouldSelectLeastRecentlyUsedFrame"]
-    LRUReplacer --> LruTest2["shouldUpdateAccessHistory"]
+DatabaseServer --> DatabaseManager
+DatabaseServer --> ConfigurationManager
+DatabaseServer --> SecurityManager
+DatabaseServer --> MonitoringManager
 
-    %% Buffer Manager
-    A --> BufferManager["BufferManager"]
-    BufferManager --> BufferManagerTest1["shouldPinExistingPage"]
-    BufferManager --> BufferManagerTest2["shouldLoadPageOnCacheMiss"]
-    BufferManager --> BufferManagerTest3["shouldReturnCachedPageOnCacheHit"]
-    BufferManager --> BufferManagerTest4["shouldEvictPageWhenBufferIsFull"]
-    BufferManager --> BufferManagerTest5["shouldFlushDirtyPagesToDisk"]
-    BufferManager --> BufferManagerTest6["shouldUnpinPageSuccessfully"]
-
-    %% ─────────────────── STYLING DEFINITIONS ───────────────────
-    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
-    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
-    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
-
-    class A rootStyle;
-    class Page,PageTable,DefaultPageAllocator,DiskPageIO,PageManager,BufferFrame,BufferPool,LRUReplacer,BufferManager modStyle;
-    class PageTest1,PageTest2,PageTableTest1,PageTableTest2,PageTableTest3,AllocatorTest1,AllocatorTest2,PageIOTest1,PageIOTest2,PageIOTest3,PageManagerTest1,PageManagerTest2,PageManagerTest3,PageManagerTest4,BufferFrameTest1,BufferFrameTest2,BufferPoolTest1,BufferPoolTest2,LruTest1,LruTest2,BufferManagerTest1,BufferManagerTest2,BufferManagerTest3,BufferManagerTest4,BufferManagerTest5,BufferManagerTest6 testStyle;
+DatabaseManager --> Database
 ```
-
 --- 
-# Unit Test Mindmap for Query Processing
+
+# Database Objects Module
+
 ```mermaid
-flowchart LR
+classDiagram
+direction TB
 
-    %% ─────────────────── LEFT SIDE: PARSING & PLANNING ───────────────────
-    %% Lexer
-    LexerTest1["shouldTokenizeValidSQL"] --> Lexer
-    LexerTest2["shouldIgnoreWhitespace"] --> Lexer
-    LexerTest3["shouldRejectInvalidCharacter"] --> Lexer
-    Lexer["Lexer"] --> A
+class Database{
+    +databaseId
+    +name
+    +owner
+    +status
+}
 
-    %% Parser
-    ParserTest1["shouldBuildASTFromValidSQL"] --> Parser
-    ParserTest2["shouldBuildCorrectASTStructure"] --> Parser
-    ParserTest3["shouldThrowSyntaxErrorForInvalidSQL"] --> Parser
-    Parser["Parser"] --> A
+class Schema{
+    +schemaId
+    +name
+    +owner
 
-    %% SQL Parser
-    SQLParserTest1["shouldParseValidSQL"] --> SQLParser
-    SQLParserTest2["shouldDelegateLexingAndParsing"] --> SQLParser
-    SQLParser["SQLParser"] --> A
+    +createTable()
+    +dropTable()
+    +createView()
+    +createProcedure()
+}
 
-    %% Query Planner
-    PlannerTest1["shouldGenerateExecutionPlan"] --> QueryPlanner
-    PlannerTest2["shouldGenerateSequentialScanPlan"] --> QueryPlanner
-    PlannerTest3["shouldGenerateFilterPlan"] --> QueryPlanner
-    PlannerTest4["shouldRejectUnsupportedAST"] --> QueryPlanner
-    QueryPlanner["QueryPlanner"] --> A
+class Table{
+    +tableId
+    +name
+    +engine
+    +rowCount
 
-    %% Execution Plan
-    ExecutionPlanTest1["shouldBuildExecutionPlan"] --> ExecutionPlan
-    ExecutionPlan["ExecutionPlan"] --> A
+    +insert()
+    +update()
+    +delete()
+    +truncate()
+    +analyze()
+}
 
-    %% ─────────────────── CENTRAL ROOT ───────────────────
-    A(["Query Processing Unit Tests"])
+class Column{
+    +columnId
+    +name
+    +dataType
+    +nullable
+    +defaultValue
+    +length
+    +precision
+    +scale
+}
 
-    %% ─────────────────── RIGHT SIDE: EXECUTION ───────────────────
-    %% Sequential Scan Plan
-    A --> SequentialScanPlan["SequentialScanPlan"]
-    SequentialScanPlan --> SeqScanPlanTest1["shouldCreateSequentialScanPlan"]
+class Row{
+    +rowId
+    +values
+    +transactionId
+    +version
+}
 
-    %% Filter Plan
-    A --> FilterPlan["FilterPlan"]
-    FilterPlan --> FilterPlanTest1["shouldCreateFilterPlan"]
+class DataType{
+    <<enumeration>>
+}
 
-    %% Execution Context
-    A --> ExecutionContext["ExecutionContext"]
-    ExecutionContext --> ContextTest1["shouldProvideExecutionDependencies"]
+class Constraint{
+    <<abstract>>
+    +validate()
+}
 
-    %% Table Scan Executor
-    A --> TableScanExecutor["TableScanExecutor"]
-    TableScanExecutor --> TableScanTest1["shouldScanEntireTable"]
-    TableScanExecutor --> TableScanTest2["shouldReturnEndOfTableWhenFinished"]
+class PrimaryKey
+class ForeignKey
+class UniqueConstraint
+class CheckConstraint
 
-    %% Filter Executor
-    A --> FilterExecutor["FilterExecutor"]
-    FilterExecutor --> FilterExecutorTest1["shouldReturnMatchingRows"]
-    FilterExecutor --> FilterExecutorTest2["shouldSkipNonMatchingRows"]
+class Index{
+    <<abstract>>
+    +search()
+    +insertKey()
+    +deleteKey()
+    +rebuild()
+}
 
-    %% Execution Engine
-    A --> ExecutionEngine["ExecutionEngine"]
-    ExecutionEngine --> EngineTest1["shouldExecuteExecutionPlan"]
-    ExecutionEngine --> EngineTest2["shouldExecuteSequentialScan"]
-    ExecutionEngine --> EngineTest3["shouldExecuteFilterPlan"]
-    ExecutionEngine --> EngineTest4["shouldRejectUnsupportedExecutionPlan"]
+class BTreeIndex
+class HashIndex
+class BitmapIndex
 
-    %% Result Set
-    A --> ResultSet["ResultSet"]
-    ResultSet --> ResultSetTest1["shouldStoreAndRetrieveRows"]
-    ResultSet --> ResultSetTest2["shouldIterateResultSet"]
+class Partition
+class View
+class StoredProcedure
+class Trigger
+class Sequence
 
-    %% ─────────────────── STYLING DEFINITIONS ───────────────────
-    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
-    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
-    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
+Database --> Schema
 
-    class A rootStyle;
-    class Lexer,Parser,SQLParser,QueryPlanner,ExecutionPlan,SequentialScanPlan,FilterPlan,ExecutionContext,TableScanExecutor,FilterExecutor,ExecutionEngine,ResultSet modStyle;
-    class LexerTest1,LexerTest2,LexerTest3,ParserTest1,ParserTest2,ParserTest3,SQLParserTest1,SQLParserTest2,PlannerTest1,PlannerTest2,PlannerTest3,PlannerTest4,ExecutionPlanTest1,SeqScanPlanTest1,FilterPlanTest1,ContextTest1,TableScanTest1,TableScanTest2,FilterExecutorTest1,FilterExecutorTest2,EngineTest1,EngineTest2,EngineTest3,EngineTest4,ResultSetTest1,ResultSetTest2 testStyle;
+Schema --> Table
+Schema --> View
+Schema --> StoredProcedure
+Schema --> Sequence
+
+Table --> Column
+Table --> Row
+Table --> Index
+Table --> Constraint
+Table --> Partition
+Table --> Trigger
+
+Column --> DataType
+
+Constraint <|-- PrimaryKey
+Constraint <|-- ForeignKey
+Constraint <|-- UniqueConstraint
+Constraint <|-- CheckConstraint
+
+Index <|-- BTreeIndex
+Index <|-- HashIndex
+Index <|-- BitmapIndex
+
+ForeignKey --> Table
 ```
-
 --- 
-# Unit Test Mindmap for Transaction & Concurrency Management
+
+# Storage Engine Module
+
 ```mermaid
-flowchart LR
+classDiagram
+direction LR
 
-    %% ─────────────────── LEFT SIDE: TRANSACTION MANAGEMENT ───────────────────
-    %% Transaction
-    TransactionTest1["shouldChangeTransactionState"] --> Transaction
-    TransactionTest2["shouldAttachTransactionContext"] --> Transaction
-    Transaction["Transaction"] --> A
+class StorageEngine{
+    +pageSize
+    +dataFiles
+    +freeSpaceMap
 
-    %% Transaction Context
-    ContextTest1["shouldStoreTransactionMetadata"] --> TransactionContext
-    TransactionContext["TransactionContext"] --> A
+    +readPage()
+    +writePage()
+    +allocatePage()
+    +checkpoint()
+}
 
-    %% Transaction Log
-    LogTest1["shouldAppendTransactionLog"] --> TransactionLog
-    LogTest2["shouldRetrieveTransactionLog"] --> TransactionLog
-    TransactionLog["TransactionLog"] --> A
+class BufferPool{
+    +pages
+    +capacity
+    +replacementPolicy
 
-    %% Transaction Manager
-    TMTest1["shouldBeginTransaction"] --> TransactionManager
-    TMTest2["shouldCommitTransaction"] --> TransactionManager
-    TMTest3["shouldRollbackTransaction"] --> TransactionManager
-    TMTest4["shouldWriteTransactionLog"] --> TransactionManager
-    TMTest5["shouldCoordinateConcurrencyManager"] --> TransactionManager
-    TransactionManager["TransactionManager"] --> A
+    +pinPage()
+    +unpinPage()
+    +flushPage()
+    +evictPage()
+}
 
-    %% ─────────────────── CENTRAL ROOT ───────────────────
-    A(["Transaction & Concurrency Management Unit Tests"])
+class Page{
+    +pageId
+}
 
-    %% ─────────────────── RIGHT SIDE: CONCURRENCY & LOCK MANAGEMENT ───────────────────
-    %% Lock
-    A --> Lock["Lock"]
-    Lock --> LockTest1["shouldCreateSharedLock"]
-    Lock --> LockTest2["shouldCreateExclusiveLock"]
+class FileManager{
+    +read()
+    +write()
+}
 
-    %% Lock Request
-    A --> LockRequest["LockRequest"]
-    LockRequest --> LockRequestTest1["shouldCreateLockRequest"]
+StorageEngine --> BufferPool
+StorageEngine --> FileManager
 
-    %% Lock Table
-    A --> LockTable["LockTable"]
-    LockTable --> LockTableTest1["shouldRegisterLock"]
-    LockTable --> LockTableTest2["shouldLookupLock"]
-    LockTable --> LockTableTest3["shouldRemoveLock"]
-
-    %% Lock Manager
-    A --> LockManager["LockManager"]
-    LockManager --> LockManagerTest1["shouldAcquireSharedLock"]
-    LockManager --> LockManagerTest2["shouldAcquireExclusiveLock"]
-    LockManager --> LockManagerTest3["shouldReleaseLock"]
-    LockManager --> LockManagerTest4["shouldRejectConflictingLock"]
-
-    %% Concurrency Manager
-    A --> ConcurrencyManager["ConcurrencyManager"]
-    ConcurrencyManager --> CMTest1["shouldAcquireLock"]
-    ConcurrencyManager --> CMTest2["shouldReleaseLock"]
-    ConcurrencyManager --> CMTest3["shouldDelegateToLockManager"]
-
-    %% ─────────────────── STYLING DEFINITIONS ───────────────────
-    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
-    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
-    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
-
-    class A rootStyle;
-    class Transaction,TransactionContext,TransactionLog,TransactionManager,Lock,LockRequest,LockTable,LockManager,ConcurrencyManager modStyle;
-    class TransactionTest1,TransactionTest2,ContextTest1,LogTest1,LogTest2,TMTest1,TMTest2,TMTest3,TMTest4,TMTest5,LockTest1,LockTest2,LockRequestTest1,LockTableTest1,LockTableTest2,LockTableTest3,LockManagerTest1,LockManagerTest2,LockManagerTest3,LockManagerTest4,CMTest1,CMTest2,CMTest3 testStyle;
+BufferPool --> Page
 ```
+--- 
 
-# Mindmap for Integration Test
+# Query Processing Module
+
 ```mermaid
-flowchart LR
+classDiagram
+direction LR
 
-    %% ─────────────────── LEFT SIDE: DATA STORAGE & QUERY PROCESSING ───────────────────
-    %% Data Storage
-    StorageTest1["shouldAllocateFetchAndFlushPage"] --> Storage
-    StorageTest2["shouldLoadPageFromDiskOnCacheMiss"] --> Storage
-    StorageTest3["shouldReturnCachedPageOnCacheHit"] --> Storage
-    StorageTest4["shouldEvictLeastRecentlyUsedPage"] --> Storage
-    StorageTest5["shouldPersistDirtyPageToDisk"] --> Storage
-    Storage["Data Storage & Access"] --> A
+class SQLParser{
+    +parse()
+    +tokenize()
+    +validateSyntax()
+}
 
-    %% Query Processing
-    QueryTest1["shouldParsePlanAndExecuteSelectQuery"] --> Query
-    QueryTest2["shouldExecuteSequentialScanQuery"] --> Query
-    QueryTest3["shouldExecuteFilterQuery"] --> Query
-    QueryTest4["shouldReturnExpectedResultSet"] --> Query
-    Query["Query Processing"] --> A
+class Lexer
 
-    %% ─────────────────── CENTRAL ROOT ───────────────────
-    A(["DBMS Integration Tests"])
+class AST
 
-    %% ─────────────────── RIGHT SIDE: TRANSACTION, CONCURRENCY & END-TO-END ───────────────────
-    %% Transaction Management
-    A --> Transaction["Transaction Management"]
-    Transaction --> TransactionTest1["shouldCommitTransactionSuccessfully"]
-    Transaction --> TransactionTest2["shouldRollbackTransactionWhenExecutionFails"]
-    Transaction --> TransactionTest3["shouldWriteTransactionLogAfterCommit"]
+class QueryOptimizer{
+    +optimize()
+    +estimateCost()
+    +chooseJoinOrder()
+}
 
-    %% Concurrency Control
-    A --> Concurrency["Concurrency Control"]
-    Concurrency --> ConcurrencyTest1["shouldAcquireLockBeforeExecutingQuery"]
-    Concurrency --> ConcurrencyTest2["shouldReleaseLockAfterCommit"]
-    Concurrency --> ConcurrencyTest3["shouldBlockConflictingTransactions"]
+class LogicalPlan
 
-    %% End-to-End Workflow
-    A --> EndToEnd["End-to-End Workflow"]
-    EndToEnd --> E2ETest1["shouldExecuteCompleteSelectWorkflow"]
-    EndToEnd --> E2ETest2["shouldExecuteCompleteTransactionWorkflow"]
-    EndToEnd --> E2ETest3["shouldExecuteConcurrentTransactionsSafely"]
+class PhysicalPlan
 
-    %% ─────────────────── STYLING DEFINITIONS ───────────────────
-    classDef rootStyle fill:#1d3557,color:#fff,stroke:#457b9d,stroke-width:2px,font-weight:bold
-    classDef modStyle fill:#2d6a4f,color:#fff,stroke:#1b4332,stroke-width:1.5px,font-weight:bold
-    classDef testStyle fill:#f8f9fa,color:#212529,stroke:#dee2e6,stroke-width:1px
+class StatisticsManager
 
-    class A rootStyle;
-    class Storage,Query,Transaction,Concurrency,EndToEnd modStyle;
-    class StorageTest1,StorageTest2,StorageTest3,StorageTest4,StorageTest5,QueryTest1,QueryTest2,QueryTest3,QueryTest4,TransactionTest1,TransactionTest2,TransactionTest3,ConcurrencyTest1,ConcurrencyTest2,ConcurrencyTest3,E2ETest1,E2ETest2,E2ETest3 testStyle;
+class QueryExecutor{
+    +execute()
+    +fetch()
+    +cancel()
+}
+
+SQLParser --> Lexer
+SQLParser --> AST
+
+AST --> LogicalPlan
+
+QueryOptimizer --> LogicalPlan
+QueryOptimizer --> PhysicalPlan
+QueryOptimizer --> StatisticsManager
+
+QueryExecutor --> PhysicalPlan
 ```
+---
+
+# Transaction Management Module
+```mermaid
+classDiagram
+direction LR
+
+class Transaction{
+    +transactionId
+    +isolationLevel
+    +state
+    +startTime
+
+    +begin()
+    +commit()
+    +rollback()
+    +savepoint()
+}
+
+class TransactionManager{
+    +beginTransaction()
+    +commit()
+    +rollback()
+    +recover()
+}
+
+class LockManager{
+    +acquireLock()
+    +releaseLock()
+    +detectDeadlock()
+}
+
+class MVCCManager{
+    +createVersion()
+    +garbageCollect()
+}
+
+class WALManager{
+    +currentLSN
+    +logFiles
+
+    +append()
+    +flush()
+    +replay()
+}
+
+class RecoveryManager{
+    +recover()
+}
+
+TransactionManager --> Transaction
+TransactionManager --> LockManager
+TransactionManager --> MVCCManager
+TransactionManager --> WALManager
+
+RecoveryManager --> WALManager
+```
+---
+
+# Metadata Module
+```mermaid
+classDiagram
+direction LR
+
+class CatalogManager{
+    +metadataCache
+
+    +registerTable()
+    +getTable()
+    +getSchema()
+    +refreshMetadata()
+}
+
+class Database
+
+class Schema
+
+class Table
+
+class Index
+
+CatalogManager --> Database
+CatalogManager --> Schema
+CatalogManager --> Table
+CatalogManager --> Index
+```
+--- 
+# Security Module 
+```mermaid
+classDiagram
+direction LR
+
+class SecurityManager{
+    +users
+    +roles
+    +policies
+
+    +authenticate()
+    +authorize()
+    +grantPermission()
+    +revokePermission()
+}
+
+class User
+
+class Role
+
+class Permission
+
+SecurityManager --> User
+SecurityManager --> Role
+
+Role --> Permission
+```
+--- 
+
+# Recovery Module 
+```mermaid
+classDiagram
+direction LR
+
+class RecoveryManager{
+    +recover()
+}
+
+class WALManager{
+    +currentLSN
+    +logFiles
+
+    +append()
+    +flush()
+    +replay()
+}
+
+class LogRecord
+
+RecoveryManager --> WALManager
+WALManager --> LogRecord
+```
+--- 
+
+# Replication Module 
+```mermaid
+classDiagram
+direction LR
+
+class ReplicationManager{
+    +replicationMode
+    +replicas
+
+    +replicate()
+    +synchronize()
+    +electLeader()
+}
+
+class ClusterNode
+
+class WALManager
+
+ReplicationManager --> ClusterNode
+ReplicationManager --> WALManager
+```
+--- 
