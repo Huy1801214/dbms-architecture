@@ -1651,6 +1651,57 @@ flowchart LR
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
 ---
+
+# Security Module
+```mermaid
+classDiagram
+direction TB
+
+class SecurityManager{
+    +users
+    +roles
+    +policies
+
+    +authenticate()
+    +authorize()
+    +grantPermission()
+    +revokePermission()
+}
+
+class User{
+    +userId
+    +username
+    +passwordHash
+    +status
+}
+
+class Role{
+    +roleId
+    +name
+    +permissions
+}
+
+class Permission{
+    +permissionId
+    +resource
+    +action
+}
+
+SecurityManager --> User
+SecurityManager --> Role
+
+Role --> Permission
+
+%% =====================================================
+%% STYLING DEFINITIONS
+%% =====================================================
+style SecurityManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style User fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Role fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Permission fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+```
+---
+
 # Security Test
 
 ```mermaid
