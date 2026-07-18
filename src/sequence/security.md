@@ -1,335 +1,624 @@
 # Security Unit Test
 
-## Security Manager
+## SecurityManager
 
 ### 1. shouldAuthenticateUser()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
     participant User as User
+    end
 
-    Test->>Security: authenticate(username,password)
-
-    Security->>User: findUser(username)
-
-    User-->>Security: user found
-
-    Security->>User: verifyPassword(password)
-
-    User-->>Security: password valid
-
-    Security-->>Test: AuthenticationSuccess=true
+    Test->>Security: authenticate("user", "pass")
+    Security->>User: validatePassword("pass")
+    User-->>Security: valid
+    Security-->>Test: AuthSuccess=true
 ```
 
 ### 2. shouldAuthorizeUser()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
     participant User as User
     participant Role as Role
+    end
 
-    Test->>Security: authorize(user,resource)
-
-    Security->>User: getAssignedRoles()
-
+    Test->>Security: authorize("user", "read")
+    Security->>User: getRoles()
     User-->>Security: roles
-
-    Security->>Role: containsPermission(resource)
-
-    Role-->>Security: permission granted
-
-    Security-->>Test: AuthorizationSuccess=true
+    Security->>Role: checkPermission("read")
+    Role-->>Security: permitted
+    Security-->>Test: AuthzSuccess=true
 ```
 
 ### 3. shouldGrantPermission()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
-    participant Role as Role
-    participant Permission
+    participant User as User
+    end
 
-    Test->>Security: grantPermission(role,permission)
-
-    Security->>Role: addPermission(permission)
-
-    Role->>Permission: validate()
-
-    Permission-->>Role: valid
-
-    Role-->>Security: permission added
-
+    Test->>Security: grantPermission("user", "read")
+    Security->>User: addPermission("read")
+    User-->>Security: success
     Security-->>Test: GrantSuccess=true
 ```
+
 ### 4. shouldRevokePermission()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
-    participant Role as Role
-    participant Permission
+    participant User as User
+    end
 
-    Test->>Security: revokePermission(role,permission)
-
-    Security->>Role: removePermission(permission)
-
-    Role-->>Security: permission removed
-
+    Test->>Security: revokePermission("user", "read")
+    Security->>User: removePermission("read")
+    User-->>Security: success
     Security-->>Test: RevokeSuccess=true
 ```
 
-## User 
-
-### 5. shouldCreateUser()
+### 5. shouldRejectInvalidPassword()
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Test as UserTest
-    participant User
 
-    Test->>User: create(username,password)
+    box #e1f5fe Test Suite
+    participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    participant User as User
+    end
 
-    User->>User: hashPassword()
-
-    User->>User: initializeStatus()
-
-    User-->>Test: UserCreated
+    Test->>Security: authenticate("user", "wrongPass")
+    Security->>User: validatePassword("wrongPass")
+    User-->>Security: invalid
+    Security-->>Test: error: InvalidPassword
 ```
 
-### 6. shouldUpdatePassword()
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Test as UserTest
-    participant User
-
-    Test->>User: updatePassword(newPassword)
-
-    User->>User: hashPassword()
-
-    User->>User: replacePasswordHash()
-
-    User-->>Test: PasswordUpdated
-```
-
-### 7. shouldLockUser()
+### 6. shouldRejectLockedUser()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    participant User as User
+    end
+
+    Test->>Security: authenticate("user", "pass")
+    Security->>User: isLocked()
+    User-->>Security: true
+    Security-->>Test: error: UserLocked
+```
+
+### 7. shouldRejectDisabledUser()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    participant User as User
+    end
+
+    Test->>Security: authenticate("user", "pass")
+    Security->>User: isEnabled()
+    User-->>Security: false
+    Security-->>Test: error: UserDisabled
+```
+
+### 8. shouldCheckRolePermission()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    participant Role as Role
+    end
+
+    Test->>Security: checkRole("admin", "read")
+    Security->>Role: hasPermission("read")
+    Role-->>Security: true
+    Security-->>Test: hasPermission=true
+```
+
+### 9. shouldGrantRolePermission()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    participant Role as Role
+    end
+
+    Test->>Security: grantRolePermission("admin", "write")
+    Security->>Role: addPermission("write")
+    Role-->>Security: success
+    Security-->>Test: GrantSuccess=true
+```
+
+### 10. shouldVerifyPermissionInheritance()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityManagerTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    participant User as User
+    participant Role as Role
+    end
+
+    Test->>Security: checkPermission("user", "read")
+    Security->>User: getRoles()
+    User-->>Security: [admin]
+    Security->>Role: getInheritedPermissions()
+    Role-->>Security: [read]
+    Security-->>Test: permitted=true
+```
+
+## User
+
+### 1. shouldCreateUser()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as UserTest
-    participant User
+    end
+    box #e3f2fd Security Components
+    participant User as User
+    end
+
+    Test->>User: create("name", "hash")
+    User-->>Test: UserCreated=true
+```
+
+### 2. shouldUpdatePassword()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as UserTest
+    end
+    box #e3f2fd Security Components
+    participant User as User
+    end
+
+    Test->>User: updatePassword("newHash")
+    User->>User: setPasswordHash()
+    User-->>Test: UpdateSuccess=true
+```
+
+### 3. shouldLockUser()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as UserTest
+    end
+    box #e3f2fd Security Components
+    participant User as User
+    end
 
     Test->>User: lock()
-
-    User->>User: status=LOCKED
-
-    User-->>Test: Locked
+    User->>User: setLocked(true)
+    User-->>Test: LockSuccess=true
 ```
 
-### 8. shouldUnlockUser()
-```mermaid 
+### 4. shouldUnlockUser()
+```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as UserTest
-    participant User
+    end
+    box #e3f2fd Security Components
+    participant User as User
+    end
 
     Test->>User: unlock()
+    User->>User: setLocked(false)
+    User-->>Test: UnlockSuccess=true
+```
 
-    User->>User: status=ACTIVE
+### 5. shouldEnableUser()
+```mermaid
+sequenceDiagram
+    autonumber
 
-    User-->>Test: Unlocked
+    box #e1f5fe Test Suite
+    participant Test as UserTest
+    end
+    box #e3f2fd Security Components
+    participant User as User
+    end
+
+    Test->>User: enable()
+    User->>User: setEnabled(true)
+    User-->>Test: EnableSuccess=true
+```
+
+### 6. shouldDisableUser()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as UserTest
+    end
+    box #e3f2fd Security Components
+    participant User as User
+    end
+
+    Test->>User: disable()
+    User->>User: setEnabled(false)
+    User-->>Test: DisableSuccess=true
+```
+
+### 7. shouldValidatePasswordHash()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as UserTest
+    end
+    box #e3f2fd Security Components
+    participant User as User
+    end
+
+    Test->>User: validatePassword("pass")
+    User->>User: compareHash("pass")
+    User-->>Test: match=true
 ```
 
 ## Role
 
-### 9. shouldCreateRole()
+### 1. shouldCreateRole()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as RoleTest
-    participant Role
+    end
+    box #e3f2fd Security Components
+    participant Role as Role
+    end
 
-    Test->>Role: create(roleName)
-
-    Role->>Role: initializePermissionSet()
-
-    Role-->>Test: RoleCreated
+    Test->>Role: create("admin")
+    Role-->>Test: RoleCreated=true
 ```
 
-### 10. shouldAssignPermission()
+### 2. shouldAssignPermission()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as RoleTest
-    participant Role
-    participant Permission
+    end
+    box #e3f2fd Security Components
+    participant Role as Role
+    end
 
-    Test->>Role: assignPermission(permission)
-
-    Role->>Permission: validate()
-
-    Permission-->>Role: valid
-
-    Role->>Role: add(permission)
-
-    Role-->>Test: PermissionAssigned
+    Test->>Role: assignPermission("read")
+    Role->>Role: addPermission("read")
+    Role-->>Test: AssignSuccess=true
 ```
 
-### 11. shouldRemovePermission()
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Test as RoleTest
-    participant Role
-    participant Permission
-
-    Test->>Role: removePermission(permission)
-
-    Role->>Role: delete(permission)
-
-    Role-->>Test: PermissionRemoved
-```
-
-## Permission 
-
-### 12. shouldCreatePermission()
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Test as PermissionTest
-    participant Permission
-
-    Test->>Permission: create(resource,action)
-
-    Permission->>Permission: initialize()
-
-    Permission-->>Test: PermissionCreated
-```
-
-### 13. shouldComparePermissions()
+### 3. shouldRemovePermission()
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Test as PermissionTest
-    participant Permission
 
-    Test->>Permission: equals(otherPermission)
+    box #e1f5fe Test Suite
+    participant Test as RoleTest
+    end
+    box #e3f2fd Security Components
+    participant Role as Role
+    end
 
-    Permission->>Permission: compareResource()
-
-    Permission->>Permission: compareAction()
-
-    Permission-->>Test: CompareResult
+    Test->>Role: removePermission("read")
+    Role->>Role: deletePermission("read")
+    Role-->>Test: RemoveSuccess=true
 ```
 
-### 14. shouldValidatePermission()
-```mermaid 
+### 4. shouldDeleteRole()
+```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RoleTest
+    end
+    box #e3f2fd Security Components
+    participant Role as Role
+    end
+
+    Test->>Role: delete()
+    Role-->>Test: DeleteSuccess=true
+```
+
+### 5. shouldRenameRole()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RoleTest
+    end
+    box #e3f2fd Security Components
+    participant Role as Role
+    end
+
+    Test->>Role: rename("newAdmin")
+    Role->>Role: setName()
+    Role-->>Test: RenameSuccess=true
+```
+
+### 6. shouldListPermissions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RoleTest
+    end
+    box #e3f2fd Security Components
+    participant Role as Role
+    end
+
+    Test->>Role: getPermissions()
+    Role-->>Test: list
+```
+
+## Permission
+
+### 1. shouldCreatePermission()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as PermissionTest
-    participant Permission
+    end
+    box #e3f2fd Security Components
+    participant Permission as Permission
+    end
+
+    Test->>Permission: create("read", "table1")
+    Permission-->>Test: PermissionCreated=true
+```
+
+### 2. shouldComparePermissions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PermissionTest
+    end
+    box #e3f2fd Security Components
+    participant Permission as Permission
+    end
+
+    Test->>Permission: compare(perm1, perm2)
+    Permission-->>Test: equals=true
+```
+
+### 3. shouldValidatePermission()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PermissionTest
+    end
+    box #e3f2fd Security Components
+    participant Permission as Permission
+    end
 
     Test->>Permission: validate()
-
-    Permission->>Permission: checkResource()
-
-    Permission->>Permission: checkAction()
-
-    Permission-->>Test: ValidationResult
+    Permission-->>Test: valid=true
 ```
+
+### 4. shouldStoreAction()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PermissionTest
+    end
+    box #e3f2fd Security Components
+    participant Permission as Permission
+    end
+
+    Test->>Permission: setAction("read")
+    Permission-->>Test: success
+```
+
+### 5. shouldStoreResource()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PermissionTest
+    end
+    box #e3f2fd Security Components
+    participant Permission as Permission
+    end
+
+    Test->>Permission: setResource("table1")
+    Permission-->>Test: success
+```
+
 # Security Integration Test
 
-### 15. shouldAuthenticateAndAuthorizeUser()
+### 1. shouldAuthenticateAndAuthorizeUser()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityIntegrationTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
-    participant User
-    participant Role
+    end
 
-    Test->>Security: authenticate(username,password)
-
-    Security->>User: verifyPassword()
-
-    User-->>Security: authenticated
-
-    Security->>Role: checkPermission()
-
-    Role-->>Security: permission granted
-
-    Security-->>Test: AccessGranted
+    Test->>Security: login("u", "p")
+    Security-->>Test: token
+    Test->>Security: access("u", "resource")
+    Security-->>Test: allowed=true
 ```
 
-### 16. shouldAssignRoleAndGrantPermission()
+### 2. shouldAssignRoleAndGrantPermission()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityIntegrationTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
-    participant User
-    participant Role
-    participant Permission
+    end
 
-    Test->>Security: assignRole(user,role)
-
-    Security->>User: attachRole(role)
-
-    User-->>Security: role assigned
-
-    Security->>Role: addPermission(permission)
-
-    Role->>Permission: validate()
-
-    Permission-->>Role: valid
-
-    Role-->>Security: permission added
-
-    Security-->>Test: AssignmentCompleted
+    Test->>Security: assignRole("u", "admin")
+    Security->>Security: grantPermission("admin", "read")
+    Security-->>Test: success
 ```
 
-### 17. shouldRevokePermissionSuccessfully()
+### 3. shouldRevokePermissionSuccessfully()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityIntegrationTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
-    participant Role
-    participant Permission
+    end
 
-    Test->>Security: revokePermission(role,permission)
-
-    Security->>Role: removePermission(permission)
-
-    Role-->>Security: permission removed
-
-    Security-->>Test: RevokeCompleted
+    Test->>Security: revokePermission("admin", "read")
+    Security-->>Test: success
 ```
 
-### 18. shouldRejectUnauthorizedAccess()
+### 4. shouldRejectUnauthorizedAccess()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as SecurityIntegrationTest
+    end
+    box #e3f2fd Security Components
     participant Security as SecurityManager
-    participant User
-    participant Role
+    end
 
-    Test->>Security: authorize(user,resource)
-
-    Security->>User: getAssignedRoles()
-
-    User-->>Security: roles
-
-    Security->>Role: checkPermission(resource)
-
-    Role-->>Security: permission denied
-
-    Security-->>Test: AccessDenied
+    Test->>Security: access("u", "secret")
+    Security-->>Test: error: Unauthorized
 ```
+
+### 5. shouldAuthenticateGrantAndAccess()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityIntegrationTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    end
+
+    Test->>Security: login("u", "p")
+    Security->>Security: grantPermission("u", "read")
+    Security->>Security: access("u", "read")
+    Security-->>Test: allowed=true
+```
+
+### 6. shouldGrantRoleThenAuthorize()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityIntegrationTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    end
+
+    Test->>Security: assignRole("u", "manager")
+    Security->>Security: authorize("u", "write")
+    Security-->>Test: authorized=true
+```
+
+### 7. shouldRevokePermissionAndRejectAccess()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SecurityIntegrationTest
+    end
+    box #e3f2fd Security Components
+    participant Security as SecurityManager
+    end
+
+    Test->>Security: revoke("u", "read")
+    Security->>Security: access("u", "read")
+    Security-->>Test: denied=true
+```
+

@@ -542,97 +542,151 @@ flowchart LR
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Server Module Test)):::rootStyle
+    ROOT((Database Server Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
+    INT_TEST["IntegrationTest"]:::branchTx
 
-    SERVERINT["DatabaseServerIntegrationTest"]:::branchTx
-
-    sit1["shouldStartEntireDatabaseServer()"]:::leafStyle
-    sit2["shouldCreateDatabaseThroughServer()"]:::leafStyle
-    sit3["shouldShutdownServerGracefully()"]:::leafStyle
-
-    sit1 --> SERVERINT
-    sit2 --> SERVERINT
-    sit3 --> SERVERINT
-
-    SERVERINT --> ROOT
+    it1["shouldStartEntireDatabaseServer()"]:::leafStyle
+    it1 --> INT_TEST
+    it2["shouldInitializeAllManagers()"]:::leafStyle
+    it2 --> INT_TEST
+    it3["shouldCreateDatabaseThroughServer()"]:::leafStyle
+    it3 --> INT_TEST
+    it4["shouldOpenExistingDatabase()"]:::leafStyle
+    it4 --> INT_TEST
+    it5["shouldShutdownServerGracefully()"]:::leafStyle
+    it5 --> INT_TEST
+    it6["shouldRestartServerWithoutDataLoss()"]:::leafStyle
+    it6 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
+    DATABASESERVERTEST["DatabaseServerTest"]:::branchAdmin
+    ROOT --> DATABASESERVERTEST
+    DATABASEMANAGERTEST["DatabaseManagerTest"]:::branchAdmin
+    ROOT --> DATABASEMANAGERTEST
+    CONFIGURATIONMANAGERTEST["ConfigurationManagerTest"]:::branchAdmin
+    ROOT --> CONFIGURATIONMANAGERTEST
+    SECURITYMANAGERTEST["SecurityManagerTest"]:::branchAdmin
+    ROOT --> SECURITYMANAGERTEST
+    MONITORINGMANAGERTEST["MonitoringManagerTest"]:::branchAdmin
+    ROOT --> MONITORINGMANAGERTEST
 
-    DBSERVER["DatabaseServerTest"]:::branchAdmin
-    DBMANAGER["DatabaseManagerTest"]:::branchAdmin
-    CONFIG["ConfigurationManagerTest"]:::branchAdmin
-    MONITOR["MonitoringManagerTest"]:::branchAdmin
+    %% DatabaseServerTest methods
+    databaseservertest_1["shouldStartDatabaseServer()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_1
+    databaseservertest_2["shouldStopDatabaseServer()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_2
+    databaseservertest_3["shouldRestartDatabaseServer()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_3
+    databaseservertest_4["shouldInitializeManagersOnStartup()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_4
+    databaseservertest_5["shouldShutdownManagersGracefully()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_5
+    databaseservertest_6["shouldAcceptClientConnection()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_6
+    databaseservertest_7["shouldRejectConnectionWhenStopped()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_7
+    databaseservertest_8["shouldTrackActiveConnections()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_8
+    databaseservertest_9["shouldCloseIdleConnections()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_9
+    databaseservertest_10["shouldRecoverAfterUnexpectedShutdown()"]:::leafStyle
+    DATABASESERVERTEST --> databaseservertest_10
 
-    ROOT --> DBSERVER
-    ROOT --> DBMANAGER
-    ROOT --> CONFIG
-    ROOT --> MONITOR
+    %% DatabaseManagerTest methods
+    databasemanagertest_1["shouldCreateDatabase()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_1
+    databasemanagertest_2["shouldDropDatabase()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_2
+    databasemanagertest_3["shouldRenameDatabase()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_3
+    databasemanagertest_4["shouldOpenDatabase()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_4
+    databasemanagertest_5["shouldCloseDatabase()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_5
+    databasemanagertest_6["shouldGetDatabaseByName()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_6
+    databasemanagertest_7["shouldListAllDatabases()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_7
+    databasemanagertest_8["shouldRejectDuplicateDatabaseName()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_8
+    databasemanagertest_9["shouldRejectUnknownDatabase()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_9
+    databasemanagertest_10["shouldPersistDatabaseMetadata()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_10
+    databasemanagertest_11["shouldLoadExistingDatabases()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_11
+    databasemanagertest_12["shouldUpdateDatabaseStatus()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_12
 
-    %% =====================================================
-    %% DatabaseServerTest
-    %% =====================================================
+    %% ConfigurationManagerTest methods
+    configurationmanagertest_1["shouldLoadConfiguration()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_1
+    configurationmanagertest_2["shouldReloadConfiguration()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_2
+    configurationmanagertest_3["shouldUpdateConfiguration()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_3
+    configurationmanagertest_4["shouldPersistConfiguration()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_4
+    configurationmanagertest_5["shouldRestoreDefaultConfiguration()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_5
+    configurationmanagertest_6["shouldValidateConfiguration()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_6
+    configurationmanagertest_7["shouldRejectInvalidConfiguration()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_7
+    configurationmanagertest_8["shouldReadConfigurationProperty()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_8
+    configurationmanagertest_9["shouldUpdateConfigurationProperty()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_9
+    configurationmanagertest_10["shouldSaveConfigurationToDisk()"]:::leafStyle
+    CONFIGURATIONMANAGERTEST --> configurationmanagertest_10
 
-    ds1["shouldStartDatabaseServer()"]:::leafStyle
-    ds2["shouldStopDatabaseServer()"]:::leafStyle
-    ds3["shouldRestartDatabaseServer()"]:::leafStyle
-    ds4["shouldInitializeManagersOnStartup()"]:::leafStyle
+    %% SecurityManagerTest methods
+    securitymanagertest_1["shouldInitializeSecurityManager()"]:::leafStyle
+    SECURITYMANAGERTEST --> securitymanagertest_1
+    securitymanagertest_2["shouldLoadSecurityConfiguration()"]:::leafStyle
+    SECURITYMANAGERTEST --> securitymanagertest_2
+    securitymanagertest_3["shouldEnableAuthentication()"]:::leafStyle
+    SECURITYMANAGERTEST --> securitymanagertest_3
+    securitymanagertest_4["shouldDisableAuthentication()"]:::leafStyle
+    SECURITYMANAGERTEST --> securitymanagertest_4
+    securitymanagertest_5["shouldEnableAuthorization()"]:::leafStyle
+    SECURITYMANAGERTEST --> securitymanagertest_5
+    securitymanagertest_6["shouldDisableAuthorization()"]:::leafStyle
+    SECURITYMANAGERTEST --> securitymanagertest_6
 
-    DBSERVER --> ds1
-    DBSERVER --> ds2
-    DBSERVER --> ds3
-    DBSERVER --> ds4
-
-    %% =====================================================
-    %% DatabaseManagerTest
-    %% =====================================================
-
-    dm1["shouldCreateDatabase()"]:::leafStyle
-    dm2["shouldDropDatabase()"]:::leafStyle
-    dm3["shouldGetDatabaseByName()"]:::leafStyle
-    dm4["shouldListAllDatabases()"]:::leafStyle
-    dm5["shouldRejectDuplicateDatabaseName()"]:::leafStyle
-
-    DBMANAGER --> dm1
-    DBMANAGER --> dm2
-    DBMANAGER --> dm3
-    DBMANAGER --> dm4
-    DBMANAGER --> dm5
-
-    %% =====================================================
-    %% ConfigurationManagerTest
-    %% =====================================================
-
-    cf1["shouldLoadConfiguration()"]:::leafStyle
-    cf2["shouldUpdateConfiguration()"]:::leafStyle
-    cf3["shouldPersistConfiguration()"]:::leafStyle
-
-    CONFIG --> cf1
-    CONFIG --> cf2
-    CONFIG --> cf3
-
-    %% =====================================================
-    %% MonitoringManagerTest
-    %% =====================================================
-
-    mn1["shouldCollectServerMetrics()"]:::leafStyle
-    mn2["shouldReportServerStatus()"]:::leafStyle
-
-    MONITOR --> mn1
-    MONITOR --> mn2
+    %% MonitoringManagerTest methods
+    monitoringmanagertest_1["shouldCollectServerMetrics()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_1
+    monitoringmanagertest_2["shouldCollectMemoryUsage()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_2
+    monitoringmanagertest_3["shouldCollectCPUUsage()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_3
+    monitoringmanagertest_4["shouldCollectDiskUsage()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_4
+    monitoringmanagertest_5["shouldCollectConnectionStatistics()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_5
+    monitoringmanagertest_6["shouldReportServerStatus()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_6
+    monitoringmanagertest_7["shouldReportDatabaseStatistics()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_7
+    monitoringmanagertest_8["shouldResetStatistics()"]:::leafStyle
+    MONITORINGMANAGERTEST --> monitoringmanagertest_8
 
     %% =====================================================
     %% Styling
     %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
     classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -785,182 +839,303 @@ flowchart LR
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Database Objects Test)):::rootStyle
+    ROOT((Database Objects Module Test)):::rootStyle
 
     %% =====================================================
-    %% Left Side: Integration Tests (pointing into ROOT)
+    %% Integration Tests
     %% =====================================================
-
-    DBINT["DatabaseObjectsIntegrationTest"]:::branchTx
+    INT_TEST["IntegrationTest"]:::branchTx
 
     it1["shouldCreateDatabaseWithSchemaAndTable()"]:::leafStyle
+    it1 --> INT_TEST
     it2["shouldInsertRowWithConstraints()"]:::leafStyle
-    it3["shouldUseIndexForQueryExecution()"]:::leafStyle
-    it4["shouldExecuteTriggerDuringInsert()"]:::leafStyle
-    it5["shouldExecuteStoredProcedureSuccessfully()"]:::leafStyle
-    it6["shouldReadDataFromView()"]:::leafStyle
-    it7["shouldGenerateSequenceValueForInsert()"]:::leafStyle
-
-    it1 --> DBINT
-    it2 --> DBINT
-    it3 --> DBINT
-    it4 --> DBINT
-    it5 --> DBINT
-    it6 --> DBINT
-    it7 --> DBINT
-
-    DBINT --> ROOT
-
-    %% =====================================================
-    %% Left Side: Unit Tests (pointing into ROOT)
-    %% =====================================================
-
-    DATABASE["DatabaseTest"]:::branchCatalog
-    SCHEMA["SchemaTest"]:::branchCatalog
-    TABLE["TableTest"]:::branchCatalog
-    COLUMN["ColumnTest"]:::branchCatalog
-    ROW["RowTest"]:::branchCatalog
-
-    DATABASE --> ROOT
-    SCHEMA --> ROOT
-    TABLE --> ROOT
-    COLUMN --> ROOT
-    ROW --> ROOT
-
-    %% DatabaseTest methods (Left Side)
-    db1["shouldOpenDatabase()"]:::leafStyle
-    db2["shouldCloseDatabase()"]:::leafStyle
-
-    db1 --> DATABASE
-    db2 --> DATABASE
-
-    %% SchemaTest methods (Left Side)
-    sc1["shouldCreateTable()"]:::leafStyle
-    sc2["shouldDropTable()"]:::leafStyle
-    sc3["shouldCreateView()"]:::leafStyle
-    sc4["shouldCreateStoredProcedure()"]:::leafStyle
-
-    sc1 --> SCHEMA
-    sc2 --> SCHEMA
-    sc3 --> SCHEMA
-    sc4 --> SCHEMA
-
-    %% TableTest methods (Left Side)
-    tb1["shouldInsertRow()"]:::leafStyle
-    tb2["shouldUpdateRow()"]:::leafStyle
-    tb3["shouldDeleteRow()"]:::leafStyle
-    tb4["shouldTruncateTable()"]:::leafStyle
-    tb5["shouldAnalyzeTable()"]:::leafStyle
-
-    tb1 --> TABLE
-    tb2 --> TABLE
-    tb3 --> TABLE
-    tb4 --> TABLE
-    tb5 --> TABLE
-
-    %% ColumnTest methods (Left Side)
-    col1["shouldValidateColumnDefinition()"]:::leafStyle
-    col2["shouldUpdateColumnMetadata()"]:::leafStyle
-
-    col1 --> COLUMN
-    col2 --> COLUMN
-
-    %% RowTest methods (Left Side)
-    row1["shouldCreateRow()"]:::leafStyle
-    row2["shouldUpdateRowVersion()"]:::leafStyle
-    row3["shouldDeleteRow()"]:::leafStyle
-
-    row1 --> ROW
-    row2 --> ROW
-    row3 --> ROW
-
+    it2 --> INT_TEST
+    it3["shouldUpdateRowAndRefreshIndex()"]:::leafStyle
+    it3 --> INT_TEST
+    it4["shouldDeleteRowAndUpdateIndex()"]:::leafStyle
+    it4 --> INT_TEST
+    it5["shouldUseIndexForQueryExecution()"]:::leafStyle
+    it5 --> INT_TEST
+    it6["shouldExecuteTriggerDuringInsert()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldExecuteTriggerDuringUpdate()"]:::leafStyle
+    it7 --> INT_TEST
+    it8["shouldExecuteStoredProcedureSuccessfully()"]:::leafStyle
+    it8 --> INT_TEST
+    it9["shouldReadDataFromView()"]:::leafStyle
+    it9 --> INT_TEST
+    it10["shouldGenerateSequenceValueForInsert()"]:::leafStyle
+    it10 --> INT_TEST
+    it11["shouldValidateForeignKeyAcrossTables()"]:::leafStyle
+    it11 --> INT_TEST
+    it12["shouldRefreshViewAfterTableUpdate()"]:::leafStyle
+    it12 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
-    %% Right Side: Unit Tests (pointing from ROOT)
+    %% Unit Tests
     %% =====================================================
+    DATABASETEST["DatabaseTest"]:::branchCatalog
+    ROOT --> DATABASETEST
+    SCHEMATEST["SchemaTest"]:::branchCatalog
+    ROOT --> SCHEMATEST
+    TABLETEST["TableTest"]:::branchCatalog
+    ROOT --> TABLETEST
+    COLUMNTEST["ColumnTest"]:::branchCatalog
+    ROOT --> COLUMNTEST
+    ROWTEST["RowTest"]:::branchCatalog
+    ROOT --> ROWTEST
+    CONSTRAINTTEST["ConstraintTest"]:::branchCatalog
+    ROOT --> CONSTRAINTTEST
+    INDEXTEST["IndexTest"]:::branchCatalog
+    ROOT --> INDEXTEST
+    PARTITIONTEST["PartitionTest"]:::branchCatalog
+    ROOT --> PARTITIONTEST
+    VIEWTEST["ViewTest"]:::branchCatalog
+    ROOT --> VIEWTEST
+    STOREDPROCEDURETEST["StoredProcedureTest"]:::branchCatalog
+    ROOT --> STOREDPROCEDURETEST
+    TRIGGERTEST["TriggerTest"]:::branchCatalog
+    ROOT --> TRIGGERTEST
+    SEQUENCETEST["SequenceTest"]:::branchCatalog
+    ROOT --> SEQUENCETEST
 
-    CONSTRAINT["ConstraintTest"]:::branchCatalog
-    INDEX["IndexTest"]:::branchCatalog
-    PARTITION["PartitionTest"]:::branchCatalog
-    VIEW["ViewTest"]:::branchCatalog
-    PROCEDURE["StoredProcedureTest"]:::branchCatalog
-    TRIGGER["TriggerTest"]:::branchCatalog
-    SEQUENCE["SequenceTest"]:::branchCatalog
+    %% DatabaseTest methods
+    databasetest_1["shouldCreateDatabase()"]:::leafStyle
+    DATABASETEST --> databasetest_1
+    databasetest_2["shouldOpenDatabase()"]:::leafStyle
+    DATABASETEST --> databasetest_2
+    databasetest_3["shouldCloseDatabase()"]:::leafStyle
+    DATABASETEST --> databasetest_3
+    databasetest_4["shouldRenameDatabase()"]:::leafStyle
+    DATABASETEST --> databasetest_4
+    databasetest_5["shouldDropDatabase()"]:::leafStyle
+    DATABASETEST --> databasetest_5
+    databasetest_6["shouldSetDatabaseOwner()"]:::leafStyle
+    DATABASETEST --> databasetest_6
+    databasetest_7["shouldUpdateDatabaseStatus()"]:::leafStyle
+    DATABASETEST --> databasetest_7
+    databasetest_8["shouldRejectOperationWhenClosed()"]:::leafStyle
+    DATABASETEST --> databasetest_8
 
-    ROOT --> CONSTRAINT
-    ROOT --> INDEX
-    ROOT --> PARTITION
-    ROOT --> VIEW
-    ROOT --> PROCEDURE
-    ROOT --> TRIGGER
-    ROOT --> SEQUENCE
+    %% SchemaTest methods
+    schematest_1["shouldCreateTable()"]:::leafStyle
+    SCHEMATEST --> schematest_1
+    schematest_2["shouldDropTable()"]:::leafStyle
+    SCHEMATEST --> schematest_2
+    schematest_3["shouldRenameTable()"]:::leafStyle
+    SCHEMATEST --> schematest_3
+    schematest_4["shouldCreateView()"]:::leafStyle
+    SCHEMATEST --> schematest_4
+    schematest_5["shouldDropView()"]:::leafStyle
+    SCHEMATEST --> schematest_5
+    schematest_6["shouldCreateStoredProcedure()"]:::leafStyle
+    SCHEMATEST --> schematest_6
+    schematest_7["shouldDropStoredProcedure()"]:::leafStyle
+    SCHEMATEST --> schematest_7
+    schematest_8["shouldCreateSequence()"]:::leafStyle
+    SCHEMATEST --> schematest_8
+    schematest_9["shouldDropSequence()"]:::leafStyle
+    SCHEMATEST --> schematest_9
+    schematest_10["shouldReturnExistingTable()"]:::leafStyle
+    SCHEMATEST --> schematest_10
 
-    %% ConstraintTest methods (Right Side)
-    ct1["shouldValidatePrimaryKey()"]:::leafStyle
-    ct2["shouldValidateForeignKey()"]:::leafStyle
-    ct3["shouldValidateUniqueConstraint()"]:::leafStyle
-    ct4["shouldValidateCheckConstraint()"]:::leafStyle
+    %% TableTest methods
+    tabletest_1["shouldInsertRow()"]:::leafStyle
+    TABLETEST --> tabletest_1
+    tabletest_2["shouldUpdateRow()"]:::leafStyle
+    TABLETEST --> tabletest_2
+    tabletest_3["shouldDeleteRow()"]:::leafStyle
+    TABLETEST --> tabletest_3
+    tabletest_4["shouldTruncateTable()"]:::leafStyle
+    TABLETEST --> tabletest_4
+    tabletest_5["shouldAnalyzeTable()"]:::leafStyle
+    TABLETEST --> tabletest_5
+    tabletest_6["shouldIncreaseRowCount()"]:::leafStyle
+    TABLETEST --> tabletest_6
+    tabletest_7["shouldDecreaseRowCount()"]:::leafStyle
+    TABLETEST --> tabletest_7
+    tabletest_8["shouldRejectDuplicatePrimaryKey()"]:::leafStyle
+    TABLETEST --> tabletest_8
+    tabletest_9["shouldValidateConstraintsBeforeInsert()"]:::leafStyle
+    TABLETEST --> tabletest_9
+    tabletest_10["shouldValidateConstraintsBeforeUpdate()"]:::leafStyle
+    TABLETEST --> tabletest_10
+    tabletest_11["shouldReturnInsertedRow()"]:::leafStyle
+    TABLETEST --> tabletest_11
+    tabletest_12["shouldReturnUpdatedRow()"]:::leafStyle
+    TABLETEST --> tabletest_12
 
-    CONSTRAINT --> ct1
-    CONSTRAINT --> ct2
-    CONSTRAINT --> ct3
-    CONSTRAINT --> ct4
+    %% ColumnTest methods
+    columntest_1["shouldCreateColumn()"]:::leafStyle
+    COLUMNTEST --> columntest_1
+    columntest_2["shouldValidateColumnDefinition()"]:::leafStyle
+    COLUMNTEST --> columntest_2
+    columntest_3["shouldRejectInvalidDataType()"]:::leafStyle
+    COLUMNTEST --> columntest_3
+    columntest_4["shouldRejectInvalidLength()"]:::leafStyle
+    COLUMNTEST --> columntest_4
+    columntest_5["shouldAcceptNullableColumn()"]:::leafStyle
+    COLUMNTEST --> columntest_5
+    columntest_6["shouldRejectNullForNotNullColumn()"]:::leafStyle
+    COLUMNTEST --> columntest_6
+    columntest_7["shouldUpdateColumnMetadata()"]:::leafStyle
+    COLUMNTEST --> columntest_7
+    columntest_8["shouldChangeDefaultValue()"]:::leafStyle
+    COLUMNTEST --> columntest_8
 
-    %% IndexTest methods (Right Side)
-    idx1["shouldInsertKey()"]:::leafStyle
-    idx2["shouldSearchKey()"]:::leafStyle
-    idx3["shouldDeleteKey()"]:::leafStyle
-    idx4["shouldRebuildIndex()"]:::leafStyle
+    %% RowTest methods
+    rowtest_1["shouldCreateRow()"]:::leafStyle
+    ROWTEST --> rowtest_1
+    rowtest_2["shouldUpdateRow()"]:::leafStyle
+    ROWTEST --> rowtest_2
+    rowtest_3["shouldDeleteRow()"]:::leafStyle
+    ROWTEST --> rowtest_3
+    rowtest_4["shouldReadRow()"]:::leafStyle
+    ROWTEST --> rowtest_4
+    rowtest_5["shouldCloneRowVersion()"]:::leafStyle
+    ROWTEST --> rowtest_5
+    rowtest_6["shouldUpdateRowVersion()"]:::leafStyle
+    ROWTEST --> rowtest_6
+    rowtest_7["shouldStoreTransactionId()"]:::leafStyle
+    ROWTEST --> rowtest_7
+    rowtest_8["shouldReturnColumnValue()"]:::leafStyle
+    ROWTEST --> rowtest_8
+    rowtest_9["shouldReplaceColumnValue()"]:::leafStyle
+    ROWTEST --> rowtest_9
+    rowtest_10["shouldMarkRowDeleted()"]:::leafStyle
+    ROWTEST --> rowtest_10
 
-    INDEX --> idx1
-    INDEX --> idx2
-    INDEX --> idx3
-    INDEX --> idx4
+    %% ConstraintTest methods
+    constrainttest_1["shouldValidatePrimaryKey()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_1
+    constrainttest_2["shouldRejectDuplicatePrimaryKey()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_2
+    constrainttest_3["shouldValidateForeignKey()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_3
+    constrainttest_4["shouldRejectBrokenForeignKey()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_4
+    constrainttest_5["shouldValidateUniqueConstraint()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_5
+    constrainttest_6["shouldRejectDuplicateUniqueValue()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_6
+    constrainttest_7["shouldValidateCheckConstraint()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_7
+    constrainttest_8["shouldRejectInvalidCheckConstraint()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_8
+    constrainttest_9["shouldRejectInvalidForeignKey()"]:::leafStyle
+    CONSTRAINTTEST --> constrainttest_9
 
-    %% PartitionTest methods (Right Side)
-    pt1["shouldPartitionTable()"]:::leafStyle
-    pt2["shouldLocatePartition()"]:::leafStyle
+    %% IndexTest methods
+    indextest_1["shouldInsertKey()"]:::leafStyle
+    INDEXTEST --> indextest_1
+    indextest_2["shouldSearchKey()"]:::leafStyle
+    INDEXTEST --> indextest_2
+    indextest_3["shouldDeleteKey()"]:::leafStyle
+    INDEXTEST --> indextest_3
+    indextest_4["shouldUpdateKey()"]:::leafStyle
+    INDEXTEST --> indextest_4
+    indextest_5["shouldHandleDuplicateKey()"]:::leafStyle
+    INDEXTEST --> indextest_5
+    indextest_6["shouldRebuildIndex()"]:::leafStyle
+    INDEXTEST --> indextest_6
+    indextest_7["shouldReturnOrderedKeys()"]:::leafStyle
+    INDEXTEST --> indextest_7
+    indextest_8["shouldRejectInvalidKey()"]:::leafStyle
+    INDEXTEST --> indextest_8
+    indextest_9["shouldSplitNode()"]:::leafStyle
+    INDEXTEST --> indextest_9
+    indextest_10["shouldMergeNode()"]:::leafStyle
+    INDEXTEST --> indextest_10
 
-    PARTITION --> pt1
-    PARTITION --> pt2
+    %% PartitionTest methods
+    partitiontest_1["shouldPartitionTable()"]:::leafStyle
+    PARTITIONTEST --> partitiontest_1
+    partitiontest_2["shouldDropPartition()"]:::leafStyle
+    PARTITIONTEST --> partitiontest_2
+    partitiontest_3["shouldLocatePartition()"]:::leafStyle
+    PARTITIONTEST --> partitiontest_3
+    partitiontest_4["shouldSplitPartition()"]:::leafStyle
+    PARTITIONTEST --> partitiontest_4
+    partitiontest_5["shouldMergePartition()"]:::leafStyle
+    PARTITIONTEST --> partitiontest_5
+    partitiontest_6["shouldMoveRowBetweenPartitions()"]:::leafStyle
+    PARTITIONTEST --> partitiontest_6
+    partitiontest_7["shouldLocateCorrectPartition()"]:::leafStyle
+    PARTITIONTEST --> partitiontest_7
 
-    %% ViewTest methods (Right Side)
-    vw1["shouldExecuteViewQuery()"]:::leafStyle
-    vw2["shouldRefreshViewDefinition()"]:::leafStyle
+    %% ViewTest methods
+    viewtest_1["shouldCreateView()"]:::leafStyle
+    VIEWTEST --> viewtest_1
+    viewtest_2["shouldReadUnderlyingTable()"]:::leafStyle
+    VIEWTEST --> viewtest_2
+    viewtest_3["shouldValidateViewDefinition()"]:::leafStyle
+    VIEWTEST --> viewtest_3
+    viewtest_4["shouldExecuteViewQuery()"]:::leafStyle
+    VIEWTEST --> viewtest_4
+    viewtest_5["shouldRefreshViewDefinition()"]:::leafStyle
+    VIEWTEST --> viewtest_5
+    viewtest_6["shouldRejectInvalidViewDefinition()"]:::leafStyle
+    VIEWTEST --> viewtest_6
+    viewtest_7["shouldReturnViewResult()"]:::leafStyle
+    VIEWTEST --> viewtest_7
 
-    VIEW --> vw1
-    VIEW --> vw2
+    %% StoredProcedureTest methods
+    storedproceduretest_1["shouldCreateProcedure()"]:::leafStyle
+    STOREDPROCEDURETEST --> storedproceduretest_1
+    storedproceduretest_2["shouldExecuteProcedure()"]:::leafStyle
+    STOREDPROCEDURETEST --> storedproceduretest_2
+    storedproceduretest_3["shouldPassProcedureParameters()"]:::leafStyle
+    STOREDPROCEDURETEST --> storedproceduretest_3
+    storedproceduretest_4["shouldReturnProcedureResult()"]:::leafStyle
+    STOREDPROCEDURETEST --> storedproceduretest_4
+    storedproceduretest_5["shouldHandleProcedureException()"]:::leafStyle
+    STOREDPROCEDURETEST --> storedproceduretest_5
 
-    %% StoredProcedureTest methods (Right Side)
-    sp1["shouldExecuteProcedure()"]:::leafStyle
-    sp2["shouldPassProcedureParameters()"]:::leafStyle
+    %% TriggerTest methods
+    triggertest_1["shouldCreateTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_1
+    triggertest_2["shouldFireTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_2
+    triggertest_3["shouldExecuteBeforeInsertTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_3
+    triggertest_4["shouldExecuteAfterInsertTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_4
+    triggertest_5["shouldExecuteBeforeUpdateTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_5
+    triggertest_6["shouldExecuteAfterUpdateTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_6
+    triggertest_7["shouldExecuteBeforeDeleteTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_7
+    triggertest_8["shouldExecuteAfterDeleteTrigger()"]:::leafStyle
+    TRIGGERTEST --> triggertest_8
+    triggertest_9["shouldCancelOperationWhenTriggerFails()"]:::leafStyle
+    TRIGGERTEST --> triggertest_9
 
-    PROCEDURE --> sp1
-    PROCEDURE --> sp2
-
-    %% TriggerTest methods (Right Side)
-    tg1["shouldFireTrigger()"]:::leafStyle
-    tg2["shouldExecuteBeforeInsertTrigger()"]:::leafStyle
-    tg3["shouldExecuteAfterUpdateTrigger()"]:::leafStyle
-
-    TRIGGER --> tg1
-    TRIGGER --> tg2
-    TRIGGER --> tg3
-
-    %% SequenceTest methods (Right Side)
-    sq1["shouldGenerateNextValue()"]:::leafStyle
-    sq2["shouldIncrementSequence()"]:::leafStyle
-
-    SEQUENCE --> sq1
-    SEQUENCE --> sq2
+    %% SequenceTest methods
+    sequencetest_1["shouldCreateSequence()"]:::leafStyle
+    SEQUENCETEST --> sequencetest_1
+    sequencetest_2["shouldGenerateNextValue()"]:::leafStyle
+    SEQUENCETEST --> sequencetest_2
+    sequencetest_3["shouldIncrementSequence()"]:::leafStyle
+    SEQUENCETEST --> sequencetest_3
+    sequencetest_4["shouldResetSequence()"]:::leafStyle
+    SEQUENCETEST --> sequencetest_4
+    sequencetest_5["shouldRespectStartValue()"]:::leafStyle
+    SEQUENCETEST --> sequencetest_5
+    sequencetest_6["shouldReturnCurrentValue()"]:::leafStyle
+    SEQUENCETEST --> sequencetest_6
+    sequencetest_7["shouldRespectIncrementStep()"]:::leafStyle
+    SEQUENCETEST --> sequencetest_7
 
     %% =====================================================
     %% Styling
     %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
+    classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
     classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -1018,112 +1193,153 @@ style FileManager fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
 --- 
 
 # Storage Engine Test
-
 ```mermaid
 flowchart LR
 
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Storage Engine Test)):::rootStyle
+    ROOT((Storage Engine Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
-
-    STORAGEINT["StorageIntegrationTest"]:::branchTx
+    INT_TEST["IntegrationTest"]:::branchTx
 
     it1["shouldAllocateAndWritePage()"]:::leafStyle
+    it1 --> INT_TEST
     it2["shouldReadPageFromDisk()"]:::leafStyle
-    it3["shouldLoadPageIntoBufferPool()"]:::leafStyle
-    it4["shouldFlushDirtyPageToDisk()"]:::leafStyle
+    it2 --> INT_TEST
+    it3["shouldFlushDirtyPageToDisk()"]:::leafStyle
+    it3 --> INT_TEST
+    it4["shouldReloadPageIntoBufferPool()"]:::leafStyle
+    it4 --> INT_TEST
     it5["shouldEvictPageUsingReplacementPolicy()"]:::leafStyle
-
-    it1 --> STORAGEINT
-    it2 --> STORAGEINT
-    it3 --> STORAGEINT
-    it4 --> STORAGEINT
-    it5 --> STORAGEINT
-
-    STORAGEINT --> ROOT
+    it5 --> INT_TEST
+    it6["shouldPersistPageAcrossRestart()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldRecoverPageAfterCrash()"]:::leafStyle
+    it7 --> INT_TEST
+    it8["shouldSynchronizeBufferPoolAndDisk()"]:::leafStyle
+    it8 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
+    BUFFERPOOLTEST["BufferPoolTest"]:::branchStorage
+    ROOT --> BUFFERPOOLTEST
+    PAGEMANAGERTEST["PageManagerTest"]:::branchStorage
+    ROOT --> PAGEMANAGERTEST
+    FILEMANAGERTEST["FileManagerTest"]:::branchStorage
+    ROOT --> FILEMANAGERTEST
+    PAGETEST["PageTest"]:::branchStorage
+    ROOT --> PAGETEST
 
-    STORAGE["StorageEngineTest"]:::branchAdmin
-    BUFFER["BufferPoolTest"]:::branchAdmin
-    PAGE["PageTest"]:::branchAdmin
-    FILE["FileManagerTest"]:::branchAdmin
+    %% BufferPoolTest methods
+    bufferpooltest_1["shouldPinPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_1
+    bufferpooltest_2["shouldUnpinPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_2
+    bufferpooltest_3["shouldFetchExistingPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_3
+    bufferpooltest_4["shouldAllocateNewPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_4
+    bufferpooltest_5["shouldFlushDirtyPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_5
+    bufferpooltest_6["shouldEvictPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_6
+    bufferpooltest_7["shouldRejectEvictPinnedPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_7
+    bufferpooltest_8["shouldReplaceVictimPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_8
+    bufferpooltest_9["shouldMarkPageDirty()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_9
+    bufferpooltest_10["shouldClearDirtyFlagAfterFlush()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_10
+    bufferpooltest_11["shouldTrackPinCount()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_11
+    bufferpooltest_12["shouldReturnCachedPage()"]:::leafStyle
+    BUFFERPOOLTEST --> bufferpooltest_12
 
-    ROOT --> STORAGE
-    ROOT --> BUFFER
-    ROOT --> PAGE
-    ROOT --> FILE
+    %% PageManagerTest methods
+    pagemanagertest_1["shouldCreatePage()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_1
+    pagemanagertest_2["shouldReadPage()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_2
+    pagemanagertest_3["shouldWritePage()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_3
+    pagemanagertest_4["shouldAllocatePage()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_4
+    pagemanagertest_5["shouldDeallocatePage()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_5
+    pagemanagertest_6["shouldReuseFreedPage()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_6
+    pagemanagertest_7["shouldAssignUniquePageId()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_7
+    pagemanagertest_8["shouldMaintainPageMetadata()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_8
+    pagemanagertest_9["shouldMarkPageDirty()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_9
+    pagemanagertest_10["shouldClearDirtyFlag()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_10
+    pagemanagertest_11["shouldCreateCheckpoint()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_11
+    pagemanagertest_12["shouldRestoreCheckpoint()"]:::leafStyle
+    PAGEMANAGERTEST --> pagemanagertest_12
+
+    %% FileManagerTest methods
+    filemanagertest_1["shouldCreateDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_1
+    filemanagertest_2["shouldOpenDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_2
+    filemanagertest_3["shouldCloseDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_3
+    filemanagertest_4["shouldReadDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_4
+    filemanagertest_5["shouldWriteDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_5
+    filemanagertest_6["shouldDeleteDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_6
+    filemanagertest_7["shouldRenameDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_7
+    filemanagertest_8["shouldExpandDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_8
+    filemanagertest_9["shouldShrinkDataFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_9
+    filemanagertest_10["shouldCheckFileExistence()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_10
+    filemanagertest_11["shouldSynchronizeFileToDisk()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_11
+    filemanagertest_12["shouldHandleMissingFile()"]:::leafStyle
+    FILEMANAGERTEST --> filemanagertest_12
+
+    %% PageTest methods
+    pagetest_1["shouldCreatePage()"]:::leafStyle
+    PAGETEST --> pagetest_1
+    pagetest_2["shouldReadPageData()"]:::leafStyle
+    PAGETEST --> pagetest_2
+    pagetest_3["shouldWritePageData()"]:::leafStyle
+    PAGETEST --> pagetest_3
+    pagetest_4["shouldUpdatePageHeader()"]:::leafStyle
+    PAGETEST --> pagetest_4
+    pagetest_5["shouldMarkPageDirty()"]:::leafStyle
+    PAGETEST --> pagetest_5
+    pagetest_6["shouldClearDirtyFlag()"]:::leafStyle
+    PAGETEST --> pagetest_6
+    pagetest_7["shouldIncrementPageLSN()"]:::leafStyle
+    PAGETEST --> pagetest_7
+    pagetest_8["shouldResetPage()"]:::leafStyle
+    PAGETEST --> pagetest_8
 
     %% =====================================================
-    %% StorageEngineTest
+    %% Styling
     %% =====================================================
-
-    se1["shouldReadPage()"]:::leafStyle
-    se2["shouldWritePage()"]:::leafStyle
-    se3["shouldAllocatePage()"]:::leafStyle
-    se4["shouldCreateCheckpoint()"]:::leafStyle
-
-    STORAGE --> se1
-    STORAGE --> se2
-    STORAGE --> se3
-    STORAGE --> se4
-
-    %% =====================================================
-    %% BufferPoolTest
-    %% =====================================================
-
-    bp1["shouldPinPage()"]:::leafStyle
-    bp2["shouldUnpinPage()"]:::leafStyle
-    bp3["shouldFlushDirtyPage()"]:::leafStyle
-    bp4["shouldEvictPage()"]:::leafStyle
-
-    BUFFER --> bp1
-    BUFFER --> bp2
-    BUFFER --> bp3
-    BUFFER --> bp4
-
-    %% =====================================================
-    %% PageTest
-    %% =====================================================
-
-    pg1["shouldCreatePage()"]:::leafStyle
-    pg2["shouldReadPageData()"]:::leafStyle
-    pg3["shouldWritePageData()"]:::leafStyle
-    pg4["shouldMarkPageDirty()"]:::leafStyle
-
-    PAGE --> pg1
-    PAGE --> pg2
-    PAGE --> pg3
-    PAGE --> pg4
-
-    %% =====================================================
-    %% FileManagerTest
-    %% =====================================================
-
-    fm1["shouldCreateDataFile()"]:::leafStyle
-    fm2["shouldReadDataFile()"]:::leafStyle
-    fm3["shouldWriteDataFile()"]:::leafStyle
-    fm4["shouldDeleteDataFile()"]:::leafStyle
-
-    FILE --> fm1
-    FILE --> fm2
-    FILE --> fm3
-    FILE --> fm4
-
-    %% =====================================================
-    %% Styles
-    %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
     classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -1188,159 +1404,272 @@ style QueryExecutor fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 ```
 ---
 
-# Query Processing Test 
-
+# Query Processing Test
 ```mermaid
 flowchart LR
 
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Query Processing Test)):::rootStyle
+    ROOT((Query Processing Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
-
-    QUERYINT["QueryProcessingIntegrationTest"]:::branchTx
+    INT_TEST["IntegrationTest"]:::branchTx
 
     it1["shouldParseOptimizeAndExecuteQuery()"]:::leafStyle
+    it1 --> INT_TEST
     it2["shouldGenerateLogicalAndPhysicalPlan()"]:::leafStyle
+    it2 --> INT_TEST
     it3["shouldExecuteOptimizedQueryPlan()"]:::leafStyle
+    it3 --> INT_TEST
     it4["shouldCollectStatisticsDuringExecution()"]:::leafStyle
+    it4 --> INT_TEST
     it5["shouldRejectInvalidSQLQuery()"]:::leafStyle
-
-    it1 --> QUERYINT
-    it2 --> QUERYINT
-    it3 --> QUERYINT
-    it4 --> QUERYINT
-    it5 --> QUERYINT
-
-    QUERYINT --> ROOT
+    it5 --> INT_TEST
+    it6["shouldOptimizeJoinQuery()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldExecuteIndexBasedQuery()"]:::leafStyle
+    it7 --> INT_TEST
+    it8["shouldExecuteAggregateQuery()"]:::leafStyle
+    it8 --> INT_TEST
+    it9["shouldExecuteNestedQuery()"]:::leafStyle
+    it9 --> INT_TEST
+    it10["shouldExecuteMultiTableJoin()"]:::leafStyle
+    it10 --> INT_TEST
+    it11["shouldExecuteDDLStatement()"]:::leafStyle
+    it11 --> INT_TEST
+    it12["shouldExecuteDMLStatement()"]:::leafStyle
+    it12 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
+    SQLPARSERTEST["SQLParserTest"]:::branchQuery
+    ROOT --> SQLPARSERTEST
+    LEXERTEST["LexerTest"]:::branchQuery
+    ROOT --> LEXERTEST
+    ASTTEST["ASTTest"]:::branchQuery
+    ROOT --> ASTTEST
+    LOGICALPLANTEST["LogicalPlanTest"]:::branchQuery
+    ROOT --> LOGICALPLANTEST
+    QUERYOPTIMIZERTEST["QueryOptimizerTest"]:::branchQuery
+    ROOT --> QUERYOPTIMIZERTEST
+    PHYSICALPLANTEST["PhysicalPlanTest"]:::branchQuery
+    ROOT --> PHYSICALPLANTEST
+    QUERYEXECUTORTEST["QueryExecutorTest"]:::branchQuery
+    ROOT --> QUERYEXECUTORTEST
+    STATISTICSMANAGERTEST["StatisticsManagerTest"]:::branchQuery
+    ROOT --> STATISTICSMANAGERTEST
 
-    SQLPARSER["SQLParserTest"]:::branchAdmin
-    LEXER["LexerTest"]:::branchAdmin
-    AST["ASTTest"]:::branchAdmin
-    LOGICAL["LogicalPlanTest"]:::branchAdmin
-    OPTIMIZER["QueryOptimizerTest"]:::branchAdmin
-    PHYSICAL["PhysicalPlanTest"]:::branchAdmin
-    EXECUTOR["QueryExecutorTest"]:::branchAdmin
-    STATS["StatisticsManagerTest"]:::branchAdmin
+    %% SQLParserTest methods
+    sqlparsertest_1["shouldParseValidSQL()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_1
+    sqlparsertest_2["shouldParseSelectStatement()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_2
+    sqlparsertest_3["shouldParseInsertStatement()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_3
+    sqlparsertest_4["shouldParseUpdateStatement()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_4
+    sqlparsertest_5["shouldParseDeleteStatement()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_5
+    sqlparsertest_6["shouldParseCreateTableStatement()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_6
+    sqlparsertest_7["shouldParseDropTableStatement()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_7
+    sqlparsertest_8["shouldTokenizeSQL()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_8
+    sqlparsertest_9["shouldValidateSQLSyntax()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_9
+    sqlparsertest_10["shouldRejectInvalidSQLSyntax()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_10
+    sqlparsertest_11["shouldRejectUnsupportedSQL()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_11
+    sqlparsertest_12["shouldHandleNestedQuery()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_12
+    sqlparsertest_13["shouldHandleAlias()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_13
+    sqlparsertest_14["shouldHandleJoinClause()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_14
+    sqlparsertest_15["shouldHandleGroupByClause()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_15
+    sqlparsertest_16["shouldHandleOrderByClause()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_16
+    sqlparsertest_17["shouldHandleLimitClause()"]:::leafStyle
+    SQLPARSERTEST --> sqlparsertest_17
 
-    ROOT --> SQLPARSER
-    ROOT --> LEXER
-    ROOT --> AST
-    ROOT --> LOGICAL
-    ROOT --> OPTIMIZER
-    ROOT --> PHYSICAL
-    ROOT --> EXECUTOR
-    ROOT --> STATS
+    %% LexerTest methods
+    lexertest_1["shouldTokenizeSQLStatement()"]:::leafStyle
+    LEXERTEST --> lexertest_1
+    lexertest_2["shouldIgnoreWhitespace()"]:::leafStyle
+    LEXERTEST --> lexertest_2
+    lexertest_3["shouldIgnoreComments()"]:::leafStyle
+    LEXERTEST --> lexertest_3
+    lexertest_4["shouldRecognizeKeywords()"]:::leafStyle
+    LEXERTEST --> lexertest_4
+    lexertest_5["shouldRecognizeIdentifiers()"]:::leafStyle
+    LEXERTEST --> lexertest_5
+    lexertest_6["shouldRecognizeOperators()"]:::leafStyle
+    LEXERTEST --> lexertest_6
+    lexertest_7["shouldRecognizeNumbers()"]:::leafStyle
+    LEXERTEST --> lexertest_7
+    lexertest_8["shouldRecognizeStringLiteral()"]:::leafStyle
+    LEXERTEST --> lexertest_8
+    lexertest_9["shouldRecognizeBooleanLiteral()"]:::leafStyle
+    LEXERTEST --> lexertest_9
+    lexertest_10["shouldRecognizeDelimiter()"]:::leafStyle
+    LEXERTEST --> lexertest_10
+
+    %% ASTTest methods
+    asttest_1["shouldBuildASTFromSQL()"]:::leafStyle
+    ASTTEST --> asttest_1
+    asttest_2["shouldStoreASTRootNode()"]:::leafStyle
+    ASTTEST --> asttest_2
+    asttest_3["shouldBuildSelectNode()"]:::leafStyle
+    ASTTEST --> asttest_3
+    asttest_4["shouldBuildInsertNode()"]:::leafStyle
+    ASTTEST --> asttest_4
+    asttest_5["shouldBuildUpdateNode()"]:::leafStyle
+    ASTTEST --> asttest_5
+    asttest_6["shouldBuildDeleteNode()"]:::leafStyle
+    ASTTEST --> asttest_6
+    asttest_7["shouldBuildJoinNode()"]:::leafStyle
+    ASTTEST --> asttest_7
+    asttest_8["shouldBuildWhereNode()"]:::leafStyle
+    ASTTEST --> asttest_8
+    asttest_9["shouldBuildGroupByNode()"]:::leafStyle
+    ASTTEST --> asttest_9
+    asttest_10["shouldBuildOrderByNode()"]:::leafStyle
+    ASTTEST --> asttest_10
+
+    %% LogicalPlanTest methods
+    logicalplantest_1["shouldCreateLogicalPlan()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_1
+    logicalplantest_2["shouldAddLogicalOperators()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_2
+    logicalplantest_3["shouldCreateScanOperator()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_3
+    logicalplantest_4["shouldCreateFilterOperator()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_4
+    logicalplantest_5["shouldCreateProjectionOperator()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_5
+    logicalplantest_6["shouldCreateJoinOperator()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_6
+    logicalplantest_7["shouldCreateAggregationOperator()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_7
+    logicalplantest_8["shouldCreateSortOperator()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_8
+    logicalplantest_9["shouldCreateLimitOperator()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_9
+    logicalplantest_10["shouldLinkLogicalOperators()"]:::leafStyle
+    LOGICALPLANTEST --> logicalplantest_10
+
+    %% QueryOptimizerTest methods
+    queryoptimizertest_1["shouldOptimizeLogicalPlan()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_1
+    queryoptimizertest_2["shouldEstimateQueryCost()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_2
+    queryoptimizertest_3["shouldChooseJoinOrder()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_3
+    queryoptimizertest_4["shouldGeneratePhysicalPlan()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_4
+    queryoptimizertest_5["shouldPushDownPredicate()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_5
+    queryoptimizertest_6["shouldEliminateUnusedProjection()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_6
+    queryoptimizertest_7["shouldSimplifyExpression()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_7
+    queryoptimizertest_8["shouldChooseIndexScan()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_8
+    queryoptimizertest_9["shouldChooseTableScan()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_9
+    queryoptimizertest_10["shouldOptimizeJoinStrategy()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_10
+    queryoptimizertest_11["shouldOptimizeAggregation()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_11
+    queryoptimizertest_12["shouldReuseStatistics()"]:::leafStyle
+    QUERYOPTIMIZERTEST --> queryoptimizertest_12
+
+    %% PhysicalPlanTest methods
+    physicalplantest_1["shouldCreatePhysicalPlan()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_1
+    physicalplantest_2["shouldStoreExecutionOperators()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_2
+    physicalplantest_3["shouldCreateSequentialScan()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_3
+    physicalplantest_4["shouldCreateIndexScan()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_4
+    physicalplantest_5["shouldCreateNestedLoopJoin()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_5
+    physicalplantest_6["shouldCreateHashJoin()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_6
+    physicalplantest_7["shouldCreateMergeJoin()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_7
+    physicalplantest_8["shouldCreateSortOperator()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_8
+    physicalplantest_9["shouldCreateAggregateOperator()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_9
+    physicalplantest_10["shouldLinkExecutionTree()"]:::leafStyle
+    PHYSICALPLANTEST --> physicalplantest_10
+
+    %% QueryExecutorTest methods
+    queryexecutortest_1["shouldExecutePhysicalPlan()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_1
+    queryexecutortest_2["shouldExecuteSequentialScan()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_2
+    queryexecutortest_3["shouldExecuteIndexScan()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_3
+    queryexecutortest_4["shouldExecuteJoin()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_4
+    queryexecutortest_5["shouldExecuteAggregation()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_5
+    queryexecutortest_6["shouldExecuteSort()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_6
+    queryexecutortest_7["shouldExecuteProjection()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_7
+    queryexecutortest_8["shouldExecuteFilter()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_8
+    queryexecutortest_9["shouldFetchResultRows()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_9
+    queryexecutortest_10["shouldReturnEmptyResult()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_10
+    queryexecutortest_11["shouldCancelRunningQuery()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_11
+    queryexecutortest_12["shouldReleaseExecutionResources()"]:::leafStyle
+    QUERYEXECUTORTEST --> queryexecutortest_12
+
+    %% StatisticsManagerTest methods
+    statisticsmanagertest_1["shouldCollectTableStatistics()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_1
+    statisticsmanagertest_2["shouldCollectColumnStatistics()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_2
+    statisticsmanagertest_3["shouldUpdateStatistics()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_3
+    statisticsmanagertest_4["shouldDeleteStatistics()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_4
+    statisticsmanagertest_5["shouldEstimateRowCount()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_5
+    statisticsmanagertest_6["shouldEstimateSelectivity()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_6
+    statisticsmanagertest_7["shouldEstimateDistinctValues()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_7
+    statisticsmanagertest_8["shouldEstimateJoinCost()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_8
+    statisticsmanagertest_9["shouldProvideStatisticsForOptimizer()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_9
+    statisticsmanagertest_10["shouldPersistStatistics()"]:::leafStyle
+    STATISTICSMANAGERTEST --> statisticsmanagertest_10
 
     %% =====================================================
-    %% SQLParserTest
+    %% Styling
     %% =====================================================
-
-    sp1["shouldParseValidSQL()"]:::leafStyle
-    sp2["shouldTokenizeSQL()"]:::leafStyle
-    sp3["shouldValidateSQLSyntax()"]:::leafStyle
-    sp4["shouldRejectInvalidSQLSyntax()"]:::leafStyle
-
-    SQLPARSER --> sp1
-    SQLPARSER --> sp2
-    SQLPARSER --> sp3
-    SQLPARSER --> sp4
-
-    %% =====================================================
-    %% LexerTest
-    %% =====================================================
-
-    lx1["shouldTokenizeSQLStatement()"]:::leafStyle
-    lx2["shouldIgnoreWhitespace()"]:::leafStyle
-    lx3["shouldRecognizeKeywords()"]:::leafStyle
-
-    LEXER --> lx1
-    LEXER --> lx2
-    LEXER --> lx3
-
-    %% =====================================================
-    %% ASTTest
-    %% =====================================================
-
-    ast1["shouldBuildASTFromSQL()"]:::leafStyle
-    ast2["shouldStoreASTRootNode()"]:::leafStyle
-
-    AST --> ast1
-    AST --> ast2
-
-    %% =====================================================
-    %% LogicalPlanTest
-    %% =====================================================
-
-    lp1["shouldCreateLogicalPlan()"]:::leafStyle
-    lp2["shouldAddLogicalOperators()"]:::leafStyle
-
-    LOGICAL --> lp1
-    LOGICAL --> lp2
-
-    %% =====================================================
-    %% QueryOptimizerTest
-    %% =====================================================
-
-    op1["shouldOptimizeLogicalPlan()"]:::leafStyle
-    op2["shouldEstimateQueryCost()"]:::leafStyle
-    op3["shouldChooseJoinOrder()"]:::leafStyle
-    op4["shouldGeneratePhysicalPlan()"]:::leafStyle
-
-    OPTIMIZER --> op1
-    OPTIMIZER --> op2
-    OPTIMIZER --> op3
-    OPTIMIZER --> op4
-
-    %% =====================================================
-    %% PhysicalPlanTest
-    %% =====================================================
-
-    pp1["shouldCreatePhysicalPlan()"]:::leafStyle
-    pp2["shouldStoreExecutionOperators()"]:::leafStyle
-
-    PHYSICAL --> pp1
-    PHYSICAL --> pp2
-
-    %% =====================================================
-    %% QueryExecutorTest
-    %% =====================================================
-
-    qe1["shouldExecutePhysicalPlan()"]:::leafStyle
-    qe2["shouldFetchResultRows()"]:::leafStyle
-    qe3["shouldCancelRunningQuery()"]:::leafStyle
-
-    EXECUTOR --> qe1
-    EXECUTOR --> qe2
-    EXECUTOR --> qe3
-
-    %% =====================================================
-    %% StatisticsManagerTest
-    %% =====================================================
-
-    sm1["shouldCollectTableStatistics()"]:::leafStyle
-    sm2["shouldUpdateStatistics()"]:::leafStyle
-    sm3["shouldProvideStatisticsForOptimizer()"]:::leafStyle
-
-    STATS --> sm1
-    STATS --> sm2
-    STATS --> sm3
-
-    %% =====================================================
-    %% Styles
-    %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
     classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -1420,135 +1749,151 @@ flowchart LR
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Transaction Management Test)):::rootStyle
+    ROOT((Transaction & Lock Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
-
-    TXINT["TransactionIntegrationTest"]:::branchTx
+    INT_TEST["IntegrationTest"]:::branchTx
 
     it1["shouldCommitTransactionSuccessfully()"]:::leafStyle
+    it1 --> INT_TEST
     it2["shouldRollbackTransactionSuccessfully()"]:::leafStyle
+    it2 --> INT_TEST
     it3["shouldRecoverAfterCrash()"]:::leafStyle
-
-    it1 --> TXINT
-    it2 --> TXINT
-    it3 --> TXINT
-
-    TXINT --> ROOT
+    it3 --> INT_TEST
+    it4["shouldCommitTransactionAndFlushWAL()"]:::leafStyle
+    it4 --> INT_TEST
+    it5["shouldRollbackTransactionAndReleaseLocks()"]:::leafStyle
+    it5 --> INT_TEST
+    it6["shouldRecoverDatabaseUsingWAL()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldRecoverMultipleTransactions()"]:::leafStyle
+    it7 --> INT_TEST
+    it8["shouldRecoverAfterPowerFailure()"]:::leafStyle
+    it8 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
+    TRANSACTIONMANAGERTEST["TransactionManagerTest"]:::branchTx
+    ROOT --> TRANSACTIONMANAGERTEST
+    TRANSACTIONTEST["TransactionTest"]:::branchTx
+    ROOT --> TRANSACTIONTEST
+    LOCKMANAGERTEST["LockManagerTest"]:::branchTx
+    ROOT --> LOCKMANAGERTEST
+    MVCCMANAGERTEST["MVCCManagerTest"]:::branchTx
+    ROOT --> MVCCMANAGERTEST
 
-    TM["TransactionManagerTest"]:::branchAdmin
-    TX["TransactionTest"]:::branchAdmin
-    LM["LockManagerTest"]:::branchAdmin
-    MVCC["MVCCManagerTest"]:::branchAdmin
-    WAL["WALManagerTest"]:::branchAdmin
-    REC["RecoveryManagerTest"]:::branchAdmin
+    %% TransactionManagerTest methods
+    transactionmanagertest_1["shouldBeginTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_1
+    transactionmanagertest_2["shouldCommitTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_2
+    transactionmanagertest_3["shouldRollbackTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_3
+    transactionmanagertest_4["shouldRecoverTransactions()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_4
+    transactionmanagertest_5["shouldSuspendTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_5
+    transactionmanagertest_6["shouldResumeTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_6
+    transactionmanagertest_7["shouldRegisterActiveTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_7
+    transactionmanagertest_8["shouldRemoveCommittedTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_8
+    transactionmanagertest_9["shouldRemoveRolledBackTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_9
+    transactionmanagertest_10["shouldAssignTransactionId()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_10
+    transactionmanagertest_11["shouldTrackTransactionState()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_11
+    transactionmanagertest_12["shouldRejectDuplicateTransaction()"]:::leafStyle
+    TRANSACTIONMANAGERTEST --> transactionmanagertest_12
 
-    ROOT --> TM
-    ROOT --> TX
-    ROOT --> LM
-    ROOT --> MVCC
-    ROOT --> WAL
-    ROOT --> REC
+    %% TransactionTest methods
+    transactiontest_1["shouldBegin()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_1
+    transactiontest_2["shouldCommit()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_2
+    transactiontest_3["shouldRollback()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_3
+    transactiontest_4["shouldCreateSavepoint()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_4
+    transactiontest_5["shouldRollbackToSavepoint()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_5
+    transactiontest_6["shouldReleaseSavepoint()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_6
+    transactiontest_7["shouldHandleStateTransition()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_7
+    transactiontest_8["shouldEnforceIsolationLevel()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_8
+    transactiontest_9["shouldRecordStartTime()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_9
+    transactiontest_10["shouldRecordCommitTime()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_10
+    transactiontest_11["shouldRejectCommitAfterRollback()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_11
+    transactiontest_12["shouldRejectRollbackAfterCommit()"]:::leafStyle
+    TRANSACTIONTEST --> transactiontest_12
 
-    %% =====================================================
-    %% TransactionManagerTest
-    %% =====================================================
+    %% LockManagerTest methods
+    lockmanagertest_1["shouldAcquireSharedLock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_1
+    lockmanagertest_2["shouldAcquireExclusiveLock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_2
+    lockmanagertest_3["shouldReleaseLock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_3
+    lockmanagertest_4["shouldUpgradeLock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_4
+    lockmanagertest_5["shouldDowngradeLock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_5
+    lockmanagertest_6["shouldCheckCompatibility()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_6
+    lockmanagertest_7["shouldRejectConflictingLock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_7
+    lockmanagertest_8["shouldQueueWaitingTransaction()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_8
+    lockmanagertest_9["shouldWakeWaitingTransaction()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_9
+    lockmanagertest_10["shouldDetectDeadlock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_10
+    lockmanagertest_11["shouldResolveDeadlock()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_11
+    lockmanagertest_12["shouldReleaseAllLocksOnCommit()"]:::leafStyle
+    LOCKMANAGERTEST --> lockmanagertest_12
 
-    tm1["shouldBeginTransaction()"]:::leafStyle
-    tm2["shouldCommitTransaction()"]:::leafStyle
-    tm3["shouldRollbackTransaction()"]:::leafStyle
-    tm4["shouldRecoverTransactions()"]:::leafStyle
-
-    TM --> tm1
-    TM --> tm2
-    TM --> tm3
-    TM --> tm4
-
-    %% =====================================================
-    %% TransactionTest
-    %% =====================================================
-
-    tx1["shouldBegin()"]:::leafStyle
-    tx2["shouldCommit()"]:::leafStyle
-    tx3["shouldRollback()"]:::leafStyle
-    tx4["shouldCreateSavepoint()"]:::leafStyle
-    tx5["shouldHandleStateTransition()"]:::leafStyle
-    tx6["shouldEnforceIsolationLevel()"]:::leafStyle
-
-    TX --> tx1
-    TX --> tx2
-    TX --> tx3
-    TX --> tx4
-    TX --> tx5
-    TX --> tx6
-
-    %% =====================================================
-    %% LockManagerTest
-    %% =====================================================
-
-    lm1["shouldAcquireLock()"]:::leafStyle
-    lm2["shouldReleaseLock()"]:::leafStyle
-    lm3["shouldCheckCompatibility()"]:::leafStyle
-    lm4["shouldDetectDeadlock()"]:::leafStyle
-
-    LM --> lm1
-    LM --> lm2
-    LM --> lm3
-    LM --> lm4
-
-    %% =====================================================
-    %% MVCCManagerTest
-    %% =====================================================
-
-    mvcc1["shouldCreateVersion()"]:::leafStyle
-    mvcc2["shouldEnforceVisibilityRule()"]:::leafStyle
-    mvcc3["shouldGarbageCollect()"]:::leafStyle
-
-    MVCC --> mvcc1
-    MVCC --> mvcc2
-    MVCC --> mvcc3
-
-    %% =====================================================
-    %% WALManagerTest
-    %% =====================================================
-
-    wal1["shouldAppendLog()"]:::leafStyle
-    wal2["shouldFlushLog()"]:::leafStyle
-    wal3["shouldReplayLog()"]:::leafStyle
-    wal4["shouldOrderLSN()"]:::leafStyle
-
-    WAL --> wal1
-    WAL --> wal2
-    WAL --> wal3
-    WAL --> wal4
-
-    %% =====================================================
-    %% RecoveryManagerTest
-    %% =====================================================
-
-    rec1["shouldRecover()"]:::leafStyle
-    rec2["shouldRedo()"]:::leafStyle
-    rec3["shouldUndo()"]:::leafStyle
-    rec4["shouldRecoverCheckpoint()"]:::leafStyle
-
-    REC --> rec1
-    REC --> rec2
-    REC --> rec3
-    REC --> rec4
+    %% MVCCManagerTest methods
+    mvccmanagertest_1["shouldCreateVersion()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_1
+    mvccmanagertest_2["shouldReadVisibleVersion()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_2
+    mvccmanagertest_3["shouldHideUncommittedVersion()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_3
+    mvccmanagertest_4["shouldEnforceVisibilityRule()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_4
+    mvccmanagertest_5["shouldCreateSnapshot()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_5
+    mvccmanagertest_6["shouldReturnSnapshotVersion()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_6
+    mvccmanagertest_7["shouldDeleteObsoleteVersion()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_7
+    mvccmanagertest_8["shouldGarbageCollect()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_8
+    mvccmanagertest_9["shouldRemoveExpiredVersion()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_9
+    mvccmanagertest_10["shouldRejectInvisibleVersion()"]:::leafStyle
+    MVCCMANAGERTEST --> mvccmanagertest_10
 
     %% =====================================================
     %% Styling
     %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
     classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -1591,62 +1936,93 @@ style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 ```
 ---
 # Metadata Test
-
 ```mermaid
 flowchart LR
 
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Metadata Test)):::rootStyle
+    ROOT((Catalog Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
-
-    METAINT["MetadataIntegrationTest"]:::branchTx
+    INT_TEST["IntegrationTest"]:::branchTx
 
     it1["shouldRegisterDatabaseMetadata()"]:::leafStyle
-    it2["shouldRegisterTableMetadata()"]:::leafStyle
-    it3["shouldUpdateCatalogAfterSchemaChange()"]:::leafStyle
-    it4["shouldRefreshMetadataAfterDDL()"]:::leafStyle
-
-    it1 --> METAINT
-    it2 --> METAINT
-    it3 --> METAINT
-    it4 --> METAINT
-
-    METAINT --> ROOT
+    it1 --> INT_TEST
+    it2["shouldRegisterSchemaMetadata()"]:::leafStyle
+    it2 --> INT_TEST
+    it3["shouldRegisterTableMetadata()"]:::leafStyle
+    it3 --> INT_TEST
+    it4["shouldRegisterIndexMetadata()"]:::leafStyle
+    it4 --> INT_TEST
+    it5["shouldUpdateCatalogAfterSchemaChange()"]:::leafStyle
+    it5 --> INT_TEST
+    it6["shouldRefreshMetadataAfterDDL()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldSynchronizeMetadataCache()"]:::leafStyle
+    it7 --> INT_TEST
+    it8["shouldReloadMetadataAfterRestart()"]:::leafStyle
+    it8 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
+    CATALOGMANAGERTEST["CatalogManagerTest"]:::branchCatalog
+    ROOT --> CATALOGMANAGERTEST
 
-    CATALOG["CatalogManagerTest"]:::branchCatalog
-
-    ROOT --> CATALOG
-
-    %% =====================================================
-    %% CatalogManagerTest
-    %% =====================================================
-
-    cm1["shouldRegisterTable()"]:::leafStyle
-    cm2["shouldFindTable()"]:::leafStyle
-    cm3["shouldFindSchema()"]:::leafStyle
-    cm4["shouldRefreshMetadata()"]:::leafStyle
-
-    CATALOG --> cm1
-    CATALOG --> cm2
-    CATALOG --> cm3
-    CATALOG --> cm4
+    %% CatalogManagerTest methods
+    catalogmanagertest_1["shouldRegisterDatabase()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_1
+    catalogmanagertest_2["shouldRegisterSchema()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_2
+    catalogmanagertest_3["shouldRegisterTable()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_3
+    catalogmanagertest_4["shouldRegisterIndex()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_4
+    catalogmanagertest_5["shouldFindDatabase()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_5
+    catalogmanagertest_6["shouldFindSchema()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_6
+    catalogmanagertest_7["shouldFindTable()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_7
+    catalogmanagertest_8["shouldFindIndex()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_8
+    catalogmanagertest_9["shouldRefreshMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_9
+    catalogmanagertest_10["shouldInvalidateMetadataCache()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_10
+    catalogmanagertest_11["shouldLoadMetadataFromDisk()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_11
+    catalogmanagertest_12["shouldCacheFrequentlyUsedMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_12
+    catalogmanagertest_13["shouldUpdateTableMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_13
+    catalogmanagertest_14["shouldUpdateIndexMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_14
+    catalogmanagertest_15["shouldRemoveTableMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_15
+    catalogmanagertest_16["shouldRemoveSchemaMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_16
+    catalogmanagertest_17["shouldRemoveDatabaseMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_17
+    catalogmanagertest_18["shouldDetectDuplicateTableRegistration()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_18
+    catalogmanagertest_19["shouldRejectUnknownDatabase()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_19
+    catalogmanagertest_20["shouldReturnCachedMetadata()"]:::leafStyle
+    CATALOGMANAGERTEST --> catalogmanagertest_20
 
     %% =====================================================
     %% Styling
     %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
+    classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
     classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -1703,106 +2079,119 @@ style Permission fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 ---
 
 # Security Test
-
 ```mermaid
 flowchart LR
 
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Security Test)):::rootStyle
+    ROOT((Security Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
-
-    SECINT["SecurityIntegrationTest"]:::branchTx
+    INT_TEST["IntegrationTest"]:::branchTx
 
     it1["shouldAuthenticateAndAuthorizeUser()"]:::leafStyle
+    it1 --> INT_TEST
     it2["shouldAssignRoleAndGrantPermission()"]:::leafStyle
+    it2 --> INT_TEST
     it3["shouldRevokePermissionSuccessfully()"]:::leafStyle
+    it3 --> INT_TEST
     it4["shouldRejectUnauthorizedAccess()"]:::leafStyle
-
-    it1 --> SECINT
-    it2 --> SECINT
-    it3 --> SECINT
-    it4 --> SECINT
-
-    SECINT --> ROOT
+    it4 --> INT_TEST
+    it5["shouldAuthenticateGrantAndAccess()"]:::leafStyle
+    it5 --> INT_TEST
+    it6["shouldGrantRoleThenAuthorize()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldRevokePermissionAndRejectAccess()"]:::leafStyle
+    it7 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
-
-    SECURITY["SecurityManagerTest"]:::branchAdmin
-    USER["UserTest"]:::branchAdmin
-    ROLE["RoleTest"]:::branchAdmin
-    PERMISSION["PermissionTest"]:::branchAdmin
-
-    ROOT --> SECURITY
+    SECURITYMANAGER["SecurityManager"]:::branchAdmin
+    ROOT --> SECURITYMANAGER
+    USER["User"]:::branchAdmin
     ROOT --> USER
+    ROLE["Role"]:::branchAdmin
     ROOT --> ROLE
+    PERMISSION["Permission"]:::branchAdmin
     ROOT --> PERMISSION
 
-    %% =====================================================
-    %% SecurityManagerTest
-    %% =====================================================
+    %% SecurityManager methods
+    securitymanager_1["shouldAuthenticateUser()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_1
+    securitymanager_2["shouldAuthorizeUser()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_2
+    securitymanager_3["shouldGrantPermission()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_3
+    securitymanager_4["shouldRevokePermission()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_4
+    securitymanager_5["shouldRejectInvalidPassword()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_5
+    securitymanager_6["shouldRejectLockedUser()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_6
+    securitymanager_7["shouldRejectDisabledUser()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_7
+    securitymanager_8["shouldCheckRolePermission()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_8
+    securitymanager_9["shouldGrantRolePermission()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_9
+    securitymanager_10["shouldVerifyPermissionInheritance()"]:::leafStyle
+    SECURITYMANAGER --> securitymanager_10
 
-    sm1["shouldAuthenticateUser()"]:::leafStyle
-    sm2["shouldAuthorizeUser()"]:::leafStyle
-    sm3["shouldGrantPermission()"]:::leafStyle
-    sm4["shouldRevokePermission()"]:::leafStyle
+    %% User methods
+    user_1["shouldCreateUser()"]:::leafStyle
+    USER --> user_1
+    user_2["shouldUpdatePassword()"]:::leafStyle
+    USER --> user_2
+    user_3["shouldLockUser()"]:::leafStyle
+    USER --> user_3
+    user_4["shouldUnlockUser()"]:::leafStyle
+    USER --> user_4
+    user_5["shouldEnableUser()"]:::leafStyle
+    USER --> user_5
+    user_6["shouldDisableUser()"]:::leafStyle
+    USER --> user_6
+    user_7["shouldValidatePasswordHash()"]:::leafStyle
+    USER --> user_7
 
-    SECURITY --> sm1
-    SECURITY --> sm2
-    SECURITY --> sm3
-    SECURITY --> sm4
+    %% Role methods
+    role_1["shouldCreateRole()"]:::leafStyle
+    ROLE --> role_1
+    role_2["shouldAssignPermission()"]:::leafStyle
+    ROLE --> role_2
+    role_3["shouldRemovePermission()"]:::leafStyle
+    ROLE --> role_3
+    role_4["shouldDeleteRole()"]:::leafStyle
+    ROLE --> role_4
+    role_5["shouldRenameRole()"]:::leafStyle
+    ROLE --> role_5
+    role_6["shouldListPermissions()"]:::leafStyle
+    ROLE --> role_6
 
-    %% =====================================================
-    %% UserTest
-    %% =====================================================
-
-    us1["shouldCreateUser()"]:::leafStyle
-    us2["shouldUpdatePassword()"]:::leafStyle
-    us3["shouldLockUser()"]:::leafStyle
-    us4["shouldUnlockUser()"]:::leafStyle
-
-    USER --> us1
-    USER --> us2
-    USER --> us3
-    USER --> us4
-
-    %% =====================================================
-    %% RoleTest
-    %% =====================================================
-
-    rl1["shouldCreateRole()"]:::leafStyle
-    rl2["shouldAssignPermission()"]:::leafStyle
-    rl3["shouldRemovePermission()"]:::leafStyle
-
-    ROLE --> rl1
-    ROLE --> rl2
-    ROLE --> rl3
-
-    %% =====================================================
-    %% PermissionTest
-    %% =====================================================
-
-    pm1["shouldCreatePermission()"]:::leafStyle
-    pm2["shouldComparePermissions()"]:::leafStyle
-    pm3["shouldValidatePermission()"]:::leafStyle
-
-    PERMISSION --> pm1
-    PERMISSION --> pm2
-    PERMISSION --> pm3
+    %% Permission methods
+    permission_1["shouldCreatePermission()"]:::leafStyle
+    PERMISSION --> permission_1
+    permission_2["shouldComparePermissions()"]:::leafStyle
+    PERMISSION --> permission_2
+    permission_3["shouldValidatePermission()"]:::leafStyle
+    PERMISSION --> permission_3
+    permission_4["shouldStoreAction()"]:::leafStyle
+    PERMISSION --> permission_4
+    permission_5["shouldStoreResource()"]:::leafStyle
+    PERMISSION --> permission_5
 
     %% =====================================================
     %% Styling
     %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
     classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -1840,94 +2229,98 @@ style LogRecord fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 ```
 --- 
 
-# Recovery Test 
+# Recovery Test
 ```mermaid
 flowchart LR
 
     %% =====================================================
     %% Root
     %% =====================================================
-
     ROOT((Recovery Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
+    INT_TEST["IntegrationTest"]:::branchTx
 
-    RECINT["RecoveryIntegrationTest"]:::branchTx
-
-    it1["shouldRecoverDatabaseFromWAL()"]:::leafStyle
-    it2["shouldReplayLogRecordsInOrder()"]:::leafStyle
-    it3["shouldRestoreConsistentDatabaseState()"]:::leafStyle
-    it4["shouldRecoverAfterSimulatedCrash()"]:::leafStyle
-
-    it1 --> RECINT
-    it2 --> RECINT
-    it3 --> RECINT
-    it4 --> RECINT
-
-    RECINT --> ROOT
+    it1["shouldRecoverAfterCrash()"]:::leafStyle
+    it1 --> INT_TEST
+    it2["shouldCommitTransactionWithWAL()"]:::leafStyle
+    it2 --> INT_TEST
+    it3["shouldRollbackTransactionWithMVCC()"]:::leafStyle
+    it3 --> INT_TEST
+    it4["shouldAcquireAndReleaseLocks()"]:::leafStyle
+    it4 --> INT_TEST
+    it5["shouldRecoverCommittedTransactions()"]:::leafStyle
+    it5 --> INT_TEST
+    it6["shouldRecoverRolledBackTransactions()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldHandleConcurrentTransactions()"]:::leafStyle
+    it7 --> INT_TEST
+    it8["shouldResolveDeadlockAutomatically()"]:::leafStyle
+    it8 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
+    WALMANAGERTEST["WALManagerTest"]:::branchTx
+    ROOT --> WALMANAGERTEST
+    RECOVERYMANAGERTEST["RecoveryManagerTest"]:::branchTx
+    ROOT --> RECOVERYMANAGERTEST
 
-    WAL["WALManagerTest"]:::branchAdmin
-    RECOVERY["RecoveryManagerTest"]:::branchAdmin
-    LOG["LogRecordTest"]:::branchAdmin
+    %% WALManagerTest methods
+    walmanagertest_1["shouldAppendLog()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_1
+    walmanagertest_2["shouldFlushLog()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_2
+    walmanagertest_3["shouldReplayLog()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_3
+    walmanagertest_4["shouldOrderLSN()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_4
+    walmanagertest_5["shouldAssignIncreasingLSN()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_5
+    walmanagertest_6["shouldWriteCommitRecord()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_6
+    walmanagertest_7["shouldWriteAbortRecord()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_7
+    walmanagertest_8["shouldRecoverLogFile()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_8
+    walmanagertest_9["shouldPersistLogRecord()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_9
+    walmanagertest_10["shouldVerifyWriteAheadLoggingRule()"]:::leafStyle
+    WALMANAGERTEST --> walmanagertest_10
 
-    ROOT --> WAL
-    ROOT --> RECOVERY
-    ROOT --> LOG
-
-    %% =====================================================
-    %% WALManagerTest
-    %% =====================================================
-
-    wal1["shouldAppendLogRecord()"]:::leafStyle
-    wal2["shouldFlushLogToDisk()"]:::leafStyle
-    wal3["shouldReplayLogRecords()"]:::leafStyle
-    wal4["shouldMaintainIncreasingLSN()"]:::leafStyle
-
-    WAL --> wal1
-    WAL --> wal2
-    WAL --> wal3
-    WAL --> wal4
-
-    %% =====================================================
-    %% RecoveryManagerTest
-    %% =====================================================
-
-    rm1["shouldRecoverDatabase()"]:::leafStyle
-    rm2["shouldRedoCommittedTransactions()"]:::leafStyle
-    rm3["shouldUndoUncommittedTransactions()"]:::leafStyle
-    rm4["shouldRestoreConsistentState()"]:::leafStyle
-
-    RECOVERY --> rm1
-    RECOVERY --> rm2
-    RECOVERY --> rm3
-    RECOVERY --> rm4
-
-    %% =====================================================
-    %% LogRecordTest
-    %% =====================================================
-
-    lr1["shouldCreateLogRecord()"]:::leafStyle
-    lr2["shouldStoreTransactionId()"]:::leafStyle
-    lr3["shouldStoreLogSequenceNumber()"]:::leafStyle
-    lr4["shouldStoreOperationType()"]:::leafStyle
-
-    LOG --> lr1
-    LOG --> lr2
-    LOG --> lr3
-    LOG --> lr4
+    %% RecoveryManagerTest methods
+    recoverymanagertest_1["shouldRecover()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_1
+    recoverymanagertest_2["shouldRedo()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_2
+    recoverymanagertest_3["shouldUndo()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_3
+    recoverymanagertest_4["shouldRecoverCheckpoint()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_4
+    recoverymanagertest_5["shouldScanLogRecords()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_5
+    recoverymanagertest_6["shouldRedoCommittedTransactions()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_6
+    recoverymanagertest_7["shouldUndoIncompleteTransactions()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_7
+    recoverymanagertest_8["shouldRestoreDatabaseState()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_8
+    recoverymanagertest_9["shouldSkipCommittedTransaction()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_9
+    recoverymanagertest_10["shouldFinishRecovery()"]:::leafStyle
+    RECOVERYMANAGERTEST --> recoverymanagertest_10
 
     %% =====================================================
-    %% Styles
+    %% Styling
     %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
     classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
@@ -1962,78 +2355,94 @@ style WALManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 ```
 --- 
 
-# Replication Test 
+# Replication Test
 ```mermaid
 flowchart LR
 
     %% =====================================================
     %% Root
     %% =====================================================
-
-    ROOT((Replication Test)):::rootStyle
+    ROOT((Replication Module Test)):::rootStyle
 
     %% =====================================================
     %% Integration Tests
     %% =====================================================
-
-    REPINT["ReplicationIntegrationTest"]:::branchTx
+    INT_TEST["IntegrationTest"]:::branchTx
 
     it1["shouldReplicateDataToReplica()"]:::leafStyle
+    it1 --> INT_TEST
     it2["shouldSynchronizeClusterNodes()"]:::leafStyle
+    it2 --> INT_TEST
     it3["shouldElectLeaderSuccessfully()"]:::leafStyle
+    it3 --> INT_TEST
     it4["shouldRecoverReplicationAfterNodeFailure()"]:::leafStyle
-
-    it1 --> REPINT
-    it2 --> REPINT
-    it3 --> REPINT
-    it4 --> REPINT
-
-    REPINT --> ROOT
+    it4 --> INT_TEST
+    it5["shouldReplicateCommittedTransactionAcrossCluster()"]:::leafStyle
+    it5 --> INT_TEST
+    it6["shouldSynchronizeReplicaUsingWAL()"]:::leafStyle
+    it6 --> INT_TEST
+    it7["shouldContinueReplicationAfterLeaderElection()"]:::leafStyle
+    it7 --> INT_TEST
+    it8["shouldRecoverReplicaAfterFailure()"]:::leafStyle
+    it8 --> INT_TEST
+    INT_TEST --> ROOT
 
     %% =====================================================
     %% Unit Tests
     %% =====================================================
+    REPLICATIONMANAGERTEST["ReplicationManagerTest"]:::branchTx
+    ROOT --> REPLICATIONMANAGERTEST
+    CLUSTERNODE["ClusterNode"]:::branchTx
+    ROOT --> CLUSTERNODE
 
-    REPMANAGER["ReplicationManagerTest"]:::branchReplication
-    NODE["ClusterNodeTest"]:::branchReplication
+    %% ReplicationManagerTest methods
+    replicationmanagertest_1["shouldReplicateData()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_1
+    replicationmanagertest_2["shouldSynchronizeReplicas()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_2
+    replicationmanagertest_3["shouldElectLeader()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_3
+    replicationmanagertest_4["shouldHandleReplicaFailure()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_4
+    replicationmanagertest_5["shouldReplicateCommittedTransaction()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_5
+    replicationmanagertest_6["shouldRetryReplication()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_6
+    replicationmanagertest_7["shouldSynchronizeReplicaState()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_7
+    replicationmanagertest_8["shouldSynchronizeMissingLogs()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_8
+    replicationmanagertest_9["shouldRejectReplicationWhenLeaderUnavailable()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_9
+    replicationmanagertest_10["shouldUpdateClusterLeader()"]:::leafStyle
+    REPLICATIONMANAGERTEST --> replicationmanagertest_10
 
-    ROOT --> REPMANAGER
-    ROOT --> NODE
-
-    %% =====================================================
-    %% ReplicationManagerTest
-    %% =====================================================
-
-    rm1["shouldReplicateData()"]:::leafStyle
-    rm2["shouldSynchronizeReplicas()"]:::leafStyle
-    rm3["shouldElectLeader()"]:::leafStyle
-    rm4["shouldHandleReplicaFailure()"]:::leafStyle
-
-    REPMANAGER --> rm1
-    REPMANAGER --> rm2
-    REPMANAGER --> rm3
-    REPMANAGER --> rm4
-
-    %% =====================================================
-    %% ClusterNodeTest
-    %% =====================================================
-
-    cn1["shouldCreateClusterNode()"]:::leafStyle
-    cn2["shouldUpdateNodeStatus()"]:::leafStyle
-    cn3["shouldConnectToCluster()"]:::leafStyle
-    cn4["shouldDisconnectFromCluster()"]:::leafStyle
-
-    NODE --> cn1
-    NODE --> cn2
-    NODE --> cn3
-    NODE --> cn4
+    %% ClusterNode methods
+    clusternode_1["shouldCreateClusterNode()"]:::leafStyle
+    CLUSTERNODE --> clusternode_1
+    clusternode_2["shouldConnectToCluster()"]:::leafStyle
+    CLUSTERNODE --> clusternode_2
+    clusternode_3["shouldDisconnectFromCluster()"]:::leafStyle
+    CLUSTERNODE --> clusternode_3
+    clusternode_4["shouldUpdateNodeStatus()"]:::leafStyle
+    CLUSTERNODE --> clusternode_4
+    clusternode_5["shouldHeartbeat()"]:::leafStyle
+    CLUSTERNODE --> clusternode_5
+    clusternode_6["shouldRecoverNode()"]:::leafStyle
+    CLUSTERNODE --> clusternode_6
+    clusternode_7["shouldDetectNodeFailure()"]:::leafStyle
+    CLUSTERNODE --> clusternode_7
+    clusternode_8["shouldSynchronizeNodeState()"]:::leafStyle
+    CLUSTERNODE --> clusternode_8
 
     %% =====================================================
     %% Styling
     %% =====================================================
-
     classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px;
-    classDef branchReplication fill:#ede7f6,stroke:#5e35b1,stroke-width:2px,color:#311b92,font-weight:bold;
+    classDef branchAdmin fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef branchCatalog fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,font-weight:bold;
+    classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef branchQuery fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```

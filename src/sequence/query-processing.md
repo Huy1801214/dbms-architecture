@@ -1,688 +1,1682 @@
-# Query Processing Unit Test 
+# Query Processing Unit Test
 
-## SQL Parser
+## SQLParserTest
 
 ### 1. shouldParseValidSQL()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
     participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
     participant Parser as SQLParser
     participant Lexer as Lexer
-    participant AST as AST
+    end
 
-    Test->>Parser: parse(valid SQL)
-
-    Parser->>Lexer: tokenize(sql)
-
+    Test->>Parser: parse("SELECT * FROM t")
+    Parser->>Lexer: tokenize()
     Lexer-->>Parser: tokens
-
-    Parser->>Parser: validateSyntax()
-
-    Parser->>AST: create AST
-
-    AST-->>Parser: AST object
-
-    Parser-->>Test: return AST
-
-    Test->>AST: verify AST structure
-
-    AST-->>Test: valid structure
+    Parser-->>Test: AST
 ```
 
-### 2. shouldTokenizeSQL()
+### 2. shouldParseSelectStatement()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
     participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
     participant Parser as SQLParser
-    participant Lexer as Lexer
+    end
 
-    Test->>Parser: tokenize(sql)
-
-    Parser->>Lexer: tokenize(sql)
-
-    Lexer->>Lexer: scan SQL characters
-
-    Lexer-->>Parser: tokenized result
-
-    Parser-->>Test: return tokens
-
-    Test->>Parser: verify tokens generated
+    Test->>Parser: parseSelect("SELECT a FROM t")
+    Parser-->>Test: SelectNode
 ```
 
-### 3. shouldValidateSQLSyntax()
+### 3. shouldParseInsertStatement()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
     participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parseInsert("INSERT INTO t VALUES (1)")
+    Parser-->>Test: InsertNode
+```
+
+### 4. shouldParseUpdateStatement()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parseUpdate("UPDATE t SET a=1")
+    Parser-->>Test: UpdateNode
+```
+
+### 5. shouldParseDeleteStatement()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parseDelete("DELETE FROM t")
+    Parser-->>Test: DeleteNode
+```
+
+### 6. shouldParseCreateTableStatement()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parseCreateTable("CREATE TABLE t")
+    Parser-->>Test: CreateTableNode
+```
+
+### 7. shouldParseDropTableStatement()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parseDropTable("DROP TABLE t")
+    Parser-->>Test: DropTableNode
+```
+
+### 8. shouldTokenizeSQL()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
     participant Parser as SQLParser
     participant Lexer as Lexer
+    end
 
-    Test->>Parser: parse(valid SQL)
-
-    Parser->>Lexer: tokenize(sql)
-
+    Test->>Parser: tokenize()
+    Parser->>Lexer: tokenize()
     Lexer-->>Parser: tokens
-
-    Parser->>Parser: validateSyntax(tokens)
-
-    Parser-->>Test: syntax valid
+    Parser-->>Test: tokens
 ```
 
-### 4. shouldRejectInvalidSQLSyntax()
+### 9. shouldValidateSQLSyntax()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
     participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
     participant Parser as SQLParser
-    participant Lexer as Lexer
+    end
 
-    Test->>Parser: parse(invalid SQL)
-
-    Parser->>Lexer: tokenize(sql)
-
-    Lexer-->>Parser: tokens
-
-    Parser->>Parser: validateSyntax(tokens)
-
-    Parser-->>Test: syntax error
+    Test->>Parser: validate("SELECT * FROM t")
+    Parser-->>Test: valid=true
 ```
 
-## Lexer
-
-### 5. shouldTokenizeSQLStatement()
+### 10. shouldRejectInvalidSQLSyntax()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: validate("SELECT * FROM")
+    Parser-->>Test: error: SyntaxError
+```
+
+### 11. shouldRejectUnsupportedSQL()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("CREATE DATABASE")
+    Parser-->>Test: error: UnsupportedOperation
+```
+
+### 12. shouldHandleNestedQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("SELECT * FROM (SELECT * FROM t)")
+    Parser-->>Test: NestedAST
+```
+
+### 13. shouldHandleAlias()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("SELECT a AS alias FROM t")
+    Parser-->>Test: AliasAST
+```
+
+### 14. shouldHandleJoinClause()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("SELECT * FROM t1 JOIN t2")
+    Parser-->>Test: JoinAST
+```
+
+### 15. shouldHandleGroupByClause()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("SELECT a FROM t GROUP BY a")
+    Parser-->>Test: GroupByAST
+```
+
+### 16. shouldHandleOrderByClause()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("SELECT a FROM t ORDER BY a")
+    Parser-->>Test: OrderByAST
+```
+
+### 17. shouldHandleLimitClause()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as SQLParserTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("SELECT a FROM t LIMIT 10")
+    Parser-->>Test: LimitAST
+```
+
+## LexerTest
+
+### 1. shouldTokenizeSQLStatement()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
     participant Lexer as Lexer
+    end
 
-    Test->>Lexer: tokenize(SQL statement)
-
-    Lexer->>Lexer: read characters
-
-    Lexer->>Lexer: create tokens
-
-    Lexer-->>Test: return tokens
-
-    Test->>Lexer: verify token lists
+    Test->>Lexer: tokenize("SELECT")
+    Lexer-->>Test: TOKEN(SELECT)
 ```
 
-### 6. shouldIgnoreWhitespace()
+### 2. shouldIgnoreWhitespace()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
     participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
     participant Lexer as Lexer
+    end
 
-    Test->>Lexer: tokenize(SQL with whitespace)
-
-    Lexer->>Lexer: scan characters
-
-    Lexer->>Lexer: ignore whitespace
-
-    Lexer->>Lexer: create tokens
-
-    Lexer-->>Test: return tokens
-
-    Test->>Lexer: verify whitespace ignored
+    Test->>Lexer: tokenize("SELECT   *")
+    Lexer-->>Test: [TOKEN(SELECT), TOKEN(ASTERISK)]
 ```
 
-### 7. shouldRecognizeKeywords()
+### 3. shouldIgnoreComments()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
     participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
     participant Lexer as Lexer
+    end
 
-    Test->>Lexer: tokenize(SQL keywords)
-
-    Lexer->>Lexer: scan keyword text
-
-    Lexer->>Lexer: recognize keywords
-
-    Lexer-->>Test: return keyword tokens
-
-    Test->>Lexer: verify keyword recognition
+    Test->>Lexer: tokenize("SELECT -- comment")
+    Lexer-->>Test: [TOKEN(SELECT)]
 ```
 
-## AST 
-
-### 8. shouldBuildASTFromSQL()
+### 4. shouldRecognizeKeywords()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
+    participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
+    participant Lexer as Lexer
+    end
+
+    Test->>Lexer: tokenize("SELECT INSERT UPDATE")
+    Lexer-->>Test: Keywords list
+```
+
+### 5. shouldRecognizeIdentifiers()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
+    participant Lexer as Lexer
+    end
+
+    Test->>Lexer: tokenize("student_name")
+    Lexer-->>Test: TOKEN(IDENTIFIER)
+```
+
+### 6. shouldRecognizeOperators()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
+    participant Lexer as Lexer
+    end
+
+    Test->>Lexer: tokenize("+=*")
+    Lexer-->>Test: Operators list
+```
+
+### 7. shouldRecognizeNumbers()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
+    participant Lexer as Lexer
+    end
+
+    Test->>Lexer: tokenize("123.45")
+    Lexer-->>Test: TOKEN(NUMBER)
+```
+
+### 8. shouldRecognizeStringLiteral()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
+    participant Lexer as Lexer
+    end
+
+    Test->>Lexer: tokenize("'john'")
+    Lexer-->>Test: TOKEN(STRING)
+```
+
+### 9. shouldRecognizeBooleanLiteral()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
+    participant Lexer as Lexer
+    end
+
+    Test->>Lexer: tokenize("TRUE")
+    Lexer-->>Test: TOKEN(BOOLEAN)
+```
+
+### 10. shouldRecognizeDelimiter()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LexerTest
+    end
+    box #fff3e0 Query Components
+    participant Lexer as Lexer
+    end
+
+    Test->>Lexer: tokenize(";,")
+    Lexer-->>Test: Delimiters list
+```
+
+## ASTTest
+
+### 1. shouldBuildASTFromSQL()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as ASTTest
-    participant Parser as SQLParser
+    end
+    box #fff3e0 Query Components
     participant AST as AST
+    end
 
-    Test->>Parser: parse(SQL)
-
-    Parser->>AST: create AST structure
-
-    AST->>AST: store query tree
-
-    AST-->>Parser: AST object
-
-    Parser-->>Test: return AST
-
-    Test->>AST: verify AST created
+    Test->>AST: build(tokens)
+    AST-->>Test: ASTRoot
 ```
 
-### 9. shouldStoreASTRootNode()
+### 2. shouldStoreASTRootNode()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
     participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
     participant AST as AST
+    end
 
-    Test->>AST: set root structure
-
-    AST->>AST: store root
-
+    Test->>AST: setRoot(node)
     AST-->>Test: root stored
-
-    Test->>AST: get root
-
-    AST-->>Test: return root node
-
-    Test->>AST: verify root exists
 ```
 
-## Logical Plan
-
-### 10. shouldCreateLogicalPlan()
+### 3. shouldBuildSelectNode()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as LogicalPlanTest
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
     participant AST as AST
-    participant Plan as LogicalPlan
+    end
 
-    Test->>AST: provide AST structure
-
-    AST->>Plan: create logical plan
-
-    Plan->>Plan: build logical operators
-
-    Plan-->>AST: logical plan created
-
-    AST-->>Test: return LogicalPlan
-
-    Test->>Plan: verify logical plan exists
-
-    Plan-->>Test: valid logical plan
+    Test->>AST: createSelectNode()
+    AST-->>Test: SelectNode
 ```
 
-### 11. shouldAddLogicalOperators()
+### 4. shouldBuildInsertNode()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
+    participant AST as AST
+    end
+
+    Test->>AST: createInsertNode()
+    AST-->>Test: InsertNode
+```
+
+### 5. shouldBuildUpdateNode()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
+    participant AST as AST
+    end
+
+    Test->>AST: createUpdateNode()
+    AST-->>Test: UpdateNode
+```
+
+### 6. shouldBuildDeleteNode()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
+    participant AST as AST
+    end
+
+    Test->>AST: createDeleteNode()
+    AST-->>Test: DeleteNode
+```
+
+### 7. shouldBuildJoinNode()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
+    participant AST as AST
+    end
+
+    Test->>AST: createJoinNode()
+    AST-->>Test: JoinNode
+```
+
+### 8. shouldBuildWhereNode()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
+    participant AST as AST
+    end
+
+    Test->>AST: createWhereNode()
+    AST-->>Test: WhereNode
+```
+
+### 9. shouldBuildGroupByNode()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
+    participant AST as AST
+    end
+
+    Test->>AST: createGroupByNode()
+    AST-->>Test: GroupByNode
+```
+
+### 10. shouldBuildOrderByNode()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as ASTTest
+    end
+    box #fff3e0 Query Components
+    participant AST as AST
+    end
+
+    Test->>AST: createOrderByNode()
+    AST-->>Test: OrderByNode
+```
+
+## LogicalPlanTest
+
+### 1. shouldCreateLogicalPlan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
     participant Plan as LogicalPlan
+    end
 
-    Test->>Plan: create LogicalPlan
-
-    Plan->>Plan: add logical operations
-
-    Plan->>Plan: store operator sequence
-
-    Plan-->>Test: logical plan updated
-
-    Test->>Plan: verify logical operators
-
-    Plan-->>Test: operators stored correctly
+    Test->>Plan: new LogicalPlan()
+    Plan-->>Test: LogicalPlan
 ```
 
-## Query Optimizer
-
-### 12. shouldOptimizeLogicalPlan()
+### 2. shouldAddLogicalOperators()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryOptimizerTest
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
     participant Plan as LogicalPlan
-    participant Optimizer as QueryOptimizer
-    participant Physical as PhysicalPlan
+    end
 
-    Test->>Plan: provide logical plan
-
-    Test->>Optimizer: optimize(logical plan)
-
-    Optimizer->>Plan: analyze plan structure
-
-    Optimizer->>Optimizer: apply optimization rules
-
-    Optimizer->>Physical: generate optimized plan
-
-    Physical-->>Optimizer: physical plan
-
-    Optimizer-->>Test: optimized result
-
-    Test->>Physical: verify optimized plan
+    Test->>Plan: addOperator(op)
+    Plan-->>Test: operator added
 ```
 
-### 13. shouldEstimateQueryCost()
+### 3. shouldCreateScanOperator()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryOptimizerTest
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
     participant Plan as LogicalPlan
-    participant Optimizer as QueryOptimizer
-    participant Stats as StatisticsManager
+    end
 
-    Test->>Plan: provide logical plan
-
-    Test->>Optimizer: estimateCost(plan)
-
-    Optimizer->>Stats: request statistics
-
-    Stats-->>Optimizer: return statistics
-
-    Optimizer->>Optimizer: calculate estimated cost
-
-    Optimizer-->>Test: return query cost
-
-    Test->>Optimizer: verify cost estimation
+    Test->>Plan: createScan("t")
+    Plan-->>Test: ScanOperator
 ```
 
-### 14. shouldChooseJoinOrder()
+### 4. shouldCreateFilterOperator()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryOptimizerTest
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
     participant Plan as LogicalPlan
-    participant Optimizer as QueryOptimizer
-    participant Stats as StatisticsManager
+    end
 
-    Test->>Plan: provide logical plan with joins
-
-    Test->>Optimizer: chooseJoinOrder(plan)
-
-    Optimizer->>Stats: request table statistics
-
-    Stats-->>Optimizer: return statistics
-
-    Optimizer->>Optimizer: evaluate join order
-
-    Optimizer-->>Test: return optimized join order
-
-    Test->>Optimizer: verify join order
+    Test->>Plan: createFilter("a > 1")
+    Plan-->>Test: FilterOperator
 ```
 
-### 15. shouldGeneratePhysicalPlan()
+### 5. shouldCreateProjectionOperator()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryOptimizerTest
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
     participant Plan as LogicalPlan
-    participant Optimizer as QueryOptimizer
-    participant Physical as PhysicalPlan
+    end
 
-    Test->>Plan: provide logical plan
+    Test->>Plan: createProjection("a")
+    Plan-->>Test: ProjectionOperator
+```
+
+### 6. shouldCreateJoinOperator()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as LogicalPlan
+    end
+
+    Test->>Plan: createJoin()
+    Plan-->>Test: JoinOperator
+```
+
+### 7. shouldCreateAggregationOperator()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as LogicalPlan
+    end
+
+    Test->>Plan: createAggregation()
+    Plan-->>Test: AggregationOperator
+```
+
+### 8. shouldCreateSortOperator()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as LogicalPlan
+    end
+
+    Test->>Plan: createSort()
+    Plan-->>Test: SortOperator
+```
+
+### 9. shouldCreateLimitOperator()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as LogicalPlan
+    end
+
+    Test->>Plan: createLimit()
+    Plan-->>Test: LimitOperator
+```
+
+### 10. shouldLinkLogicalOperators()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as LogicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as LogicalPlan
+    end
+
+    Test->>Plan: link(op1, op2)
+    Plan-->>Test: linked
+```
+
+## QueryOptimizerTest
+
+### 1. shouldOptimizeLogicalPlan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
 
     Test->>Optimizer: optimize(plan)
-
-    Optimizer->>Plan: analyze logical operations
-
-    Optimizer->>Physical: create physical plan
-
-    Physical->>Physical: store execution structure
-
-    Physical-->>Optimizer: physical plan created
-
-    Optimizer-->>Test: return physical plan
-
-    Test->>Physical: verify physical plan
+    Optimizer-->>Test: optimizedPlan
 ```
 
-## Physical Plan 
-
-### 16. shouldCreatePhysicalPlan()
+### 2. shouldEstimateQueryCost()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as PhysicalPlanTest
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
     participant Optimizer as QueryOptimizer
-    participant Logical as LogicalPlan
-    participant Physical as PhysicalPlan
+    end
 
-    Test->>Logical: provide logical plan
-
-    Test->>Optimizer: optimize(logical plan)
-
-    Optimizer->>Logical: analyze logical structure
-
-    Optimizer->>Physical: create physical plan
-
-    Physical->>Physical: initialize execution structure
-
-    Physical-->>Optimizer: physical plan created
-
-    Optimizer-->>Test: return physical plan
-
-    Test->>Physical: verify physical plan exists
-
-    Physical-->>Test: valid physical plan
+    Test->>Optimizer: estimateCost(plan)
+    Optimizer-->>Test: cost
 ```
 
-### 17. shouldStoreExecutionOperators()
+### 3. shouldChooseJoinOrder()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: chooseJoinOrder(tables)
+    Optimizer-->>Test: joinOrder
+```
+
+### 4. shouldGeneratePhysicalPlan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: generatePhysical(plan)
+    Optimizer-->>Test: physicalPlan
+```
+
+### 5. shouldPushDownPredicate()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: pushDownPredicate()
+    Optimizer-->>Test: pushed
+```
+
+### 6. shouldEliminateUnusedProjection()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: eliminateProjections()
+    Optimizer-->>Test: eliminated
+```
+
+### 7. shouldSimplifyExpression()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: simplifyExpression()
+    Optimizer-->>Test: simplified
+```
+
+### 8. shouldChooseIndexScan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: chooseIndexScan()
+    Optimizer-->>Test: IndexScanChosen
+```
+
+### 9. shouldChooseTableScan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: chooseTableScan()
+    Optimizer-->>Test: TableScanChosen
+```
+
+### 10. shouldOptimizeJoinStrategy()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: chooseJoinStrategy()
+    Optimizer-->>Test: HashJoinChosen
+```
+
+### 11. shouldOptimizeAggregation()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: optimizeAggregation()
+    Optimizer-->>Test: optimized
+```
+
+### 12. shouldReuseStatistics()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryOptimizerTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: reuseStats()
+    Optimizer-->>Test: reused
+```
+
+## PhysicalPlanTest
+
+### 1. shouldCreatePhysicalPlan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
-    participant Physical as PhysicalPlan
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
 
-    Test->>Physical: create physical plan
-
-    Physical->>Physical: store execution operators
-
-    Physical->>Physical: maintain execution order
-
-    Physical-->>Test: physical plan updated
-
-    Test->>Physical: verify execution structure
-
-    Physical-->>Test: operators stored correctly
+    Test->>Plan: new PhysicalPlan()
+    Plan-->>Test: PhysicalPlan
 ```
-## Query Executor
 
-### 18. shouldExecutePhysicalPlan()
+### 2. shouldStoreExecutionOperators()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryExecutorTest
-    participant Executor as QueryExecutor
-    participant Physical as PhysicalPlan
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
 
-    Test->>Executor: execute(physical plan)
-
-    Executor->>Physical: request execution plan
-
-    Physical-->>Executor: return execution structure
-
-    Executor->>Executor: execute plan
-
-    Executor-->>Test: execution completed
-
-    Test->>Executor: verify execution result
+    Test->>Plan: addOperator(op)
+    Plan-->>Test: operator stored
 ```
 
-### 19. shouldFetchResultRows()
+### 3. shouldCreateSequentialScan()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryExecutorTest
-    participant Executor as QueryExecutor
-    participant Physical as PhysicalPlan
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
 
-    Test->>Executor: execute(physical plan)
-
-    Executor->>Physical: execute physical operations
-
-    Physical-->>Executor: execution completed
-
-    Executor->>Executor: fetch()
-
-    Executor-->>Test: return query rows
-
-    Test->>Executor: verify fetched rows
+    Test->>Plan: createSeqScan()
+    Plan-->>Test: SeqScanOperator
 ```
 
-### 20. shouldCancelRunningQuery()
+### 4. shouldCreateIndexScan()
 ```mermaid
 sequenceDiagram
     autonumber
 
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
+
+    Test->>Plan: createIndexScan()
+    Plan-->>Test: IndexScanOperator
+```
+
+### 5. shouldCreateNestedLoopJoin()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
+
+    Test->>Plan: createNLJoin()
+    Plan-->>Test: NLJoinOperator
+```
+
+### 6. shouldCreateHashJoin()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
+
+    Test->>Plan: createHashJoin()
+    Plan-->>Test: HashJoinOperator
+```
+
+### 7. shouldCreateMergeJoin()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
+
+    Test->>Plan: createMergeJoin()
+    Plan-->>Test: MergeJoinOperator
+```
+
+### 8. shouldCreateSortOperator()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
+
+    Test->>Plan: createSort()
+    Plan-->>Test: SortOperator
+```
+
+### 9. shouldCreateAggregateOperator()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
+
+    Test->>Plan: createAggregate()
+    Plan-->>Test: AggregateOperator
+```
+
+### 10. shouldLinkExecutionTree()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as PhysicalPlanTest
+    end
+    box #fff3e0 Query Components
+    participant Plan as PhysicalPlan
+    end
+
+    Test->>Plan: link(op1, op2)
+    Plan-->>Test: executionTree
+```
+
+## QueryExecutorTest
+
+### 1. shouldExecutePhysicalPlan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
     participant Executor as QueryExecutor
+    end
 
-    Test->>Executor: execute(long running query)
+    Test->>Executor: execute(plan)
+    Executor-->>Test: resultSet
+```
 
-    Executor->>Executor: start execution
+### 2. shouldExecuteSequentialScan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeSeqScan()
+    Executor-->>Test: rows
+```
+
+### 3. shouldExecuteIndexScan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeIndexScan()
+    Executor-->>Test: rows
+```
+
+### 4. shouldExecuteJoin()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeJoin()
+    Executor-->>Test: joinedRows
+```
+
+### 5. shouldExecuteAggregation()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeAggregation()
+    Executor-->>Test: aggregatedRows
+```
+
+### 6. shouldExecuteSort()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeSort()
+    Executor-->>Test: sortedRows
+```
+
+### 7. shouldExecuteProjection()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeProjection()
+    Executor-->>Test: projectedRows
+```
+
+### 8. shouldExecuteFilter()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeFilter()
+    Executor-->>Test: filteredRows
+```
+
+### 9. shouldFetchResultRows()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: fetchNext()
+    Executor-->>Test: row
+```
+
+### 10. shouldReturnEmptyResult()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: fetchNext()
+    Executor-->>Test: empty
+```
+
+### 11. shouldCancelRunningQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
 
     Test->>Executor: cancel()
-
-    Executor->>Executor: stop execution
-
-    Executor-->>Test: query cancelled
-
-    Test->>Executor: verify cancelled state
+    Executor-->>Test: QueryCancelled=true
 ```
 
-## StatisticsManager
-
-### 21. shouldCollectTableStatistics()
+### 12. shouldReleaseExecutionResources()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as StatisticsManagerTest
-    participant Stats as StatisticsManager
-    participant Table as Table
-
-    Test->>Stats: collect(table)
-
-    Stats->>Table: request table information
-
-    Table-->>Stats: return table metadata
-
-    Stats->>Stats: calculate statistics
-
-    Stats-->>Test: statistics collected
-
-    Test->>Stats: verify statistics
-```
-
-### 22. shouldUpdateStatistics()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    participant Test as StatisticsManagerTest
-    participant Stats as StatisticsManager
-    participant Table as Table
-
-    Test->>Stats: updateStatistics(table)
-
-    Stats->>Table: get current table information
-
-    Table-->>Stats: return current state
-
-    Stats->>Stats: recalculate statistics
-
-    Stats-->>Test: statistics updated
-
-    Test->>Stats: verify updated statistics
-```
-
-### 23. shouldProvideStatisticsForOptimizer()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    participant Test as StatisticsManagerTest
-    participant Stats as StatisticsManager
-    participant Optimizer as QueryOptimizer
-
-    Test->>Stats: collect statistics
-
-    Stats->>Stats: store statistics
-
-    Test->>Optimizer: optimize(logical plan)
-
-    Optimizer->>Stats: request statistics
-
-    Stats-->>Optimizer: return statistics
-
-    Optimizer->>Optimizer: use statistics for optimization
-
-    Optimizer-->>Test: optimized result
-```
-# Query Processing Integration Test 
-
-### 24. shouldParseOptimizeAndExecuteQuery()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    participant Test as QueryProcessingIntegrationTest
-    participant Parser as SQLParser
-    participant AST as AST
-    participant Logical as LogicalPlan
-    participant Optimizer as QueryOptimizer
-    participant Physical as PhysicalPlan
+    box #e1f5fe Test Suite
+    participant Test as QueryExecutorTest
+    end
+    box #fff3e0 Query Components
     participant Executor as QueryExecutor
+    end
 
-    Test->>Parser: parse(SQL)
-
-    Parser->>AST: create AST
-
-    AST-->>Parser: AST created
-
-    Parser-->>Test: return AST
-
-    Test->>Logical: create logical plan
-
-    Logical-->>Test: logical plan created
-
-    Test->>Optimizer: optimize(logical plan)
-
-    Optimizer->>Physical: generate physical plan
-
-    Physical-->>Optimizer: physical plan
-
-    Optimizer-->>Test: optimized plan
-
-    Test->>Executor: execute(physical plan)
-
-    Executor-->>Test: query executed
+    Test->>Executor: release()
+    Executor-->>Test: released=true
 ```
 
-### 25. shouldGenerateLogicalAndPhysicalPlan()
+## StatisticsManagerTest
+
+### 1. shouldCollectTableStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryProcessingIntegrationTest
-    participant Parser as SQLParser
-    participant AST as AST
-    participant Logical as LogicalPlan
-    participant Optimizer as QueryOptimizer
-    participant Physical as PhysicalPlan
-
-    Test->>Parser: parse(SQL)
-
-    Parser->>AST: create AST
-
-    AST-->>Parser: AST
-
-    Test->>Logical: build logical plan
-
-    Logical-->>Test: logical plan
-
-    Test->>Optimizer: optimize(logical plan)
-
-    Optimizer->>Physical: create physical plan
-
-    Physical-->>Optimizer: physical plan
-
-    Optimizer-->>Test: return physical plan
-
-    Test->>Physical: verify physical plan
-```
-
-### 26. shouldExecuteOptimizedQueryPlan()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    participant Test as QueryProcessingIntegrationTest
-    participant Optimizer as QueryOptimizer
-    participant Physical as PhysicalPlan
-    participant Executor as QueryExecutor
-
-    Test->>Optimizer: optimize(logical plan)
-
-    Optimizer->>Physical: generate optimized plan
-
-    Physical-->>Optimizer: optimized physical plan
-
-    Optimizer-->>Test: physical plan
-
-    Test->>Executor: execute(physical plan)
-
-    Executor->>Physical: read execution structure
-
-    Physical-->>Executor: execution information
-
-    Executor-->>Test: execution completed
-```
-
-### 27. shouldCollectStatisticsDuringExecution()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    participant Test as QueryProcessingIntegrationTest
-    participant Table as Table
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
     participant Stats as StatisticsManager
-    participant Optimizer as QueryOptimizer
-    participant Executor as QueryExecutor
+    end
 
-    Test->>Stats: collect(table statistics)
-
-    Stats->>Table: read table information
-
-    Table-->>Stats: return metadata
-
-    Stats-->>Optimizer: provide statistics
-
-    Optimizer->>Optimizer: optimize query plan
-
-    Optimizer-->>Executor: optimized physical plan
-
-    Executor-->>Test: execute query
+    Test->>Stats: collectTableStats("t")
+    Stats-->>Test: stats
 ```
 
-## 28. shouldRejectInvalidSQLQuery()
+### 2. shouldCollectColumnStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    participant Test as QueryProcessingIntegrationTest
-    participant Parser as SQLParser
-    participant Lexer as Lexer
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
 
-    Test->>Parser: parse(invalid SQL)
-
-    Parser->>Lexer: tokenize(sql)
-
-    Lexer-->>Parser: tokens
-
-    Parser->>Parser: validateSyntax()
-
-    Parser-->>Test: reject invalid SQL
-
-    Test->>Parser: verify error handling
+    Test->>Stats: collectColumnStats("t", "c")
+    Stats-->>Test: stats
 ```
+
+### 3. shouldUpdateStatistics()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: updateStats("t")
+    Stats-->>Test: UpdateSuccess=true
+```
+
+### 4. shouldDeleteStatistics()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: deleteStats("t")
+    Stats-->>Test: DeleteSuccess=true
+```
+
+### 5. shouldEstimateRowCount()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: estimateRows("t")
+    Stats-->>Test: rowCount
+```
+
+### 6. shouldEstimateSelectivity()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: estimateSelectivity("t", "c > 1")
+    Stats-->>Test: selectivity
+```
+
+### 7. shouldEstimateDistinctValues()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: estimateDistinct("t", "c")
+    Stats-->>Test: distinctCount
+```
+
+### 8. shouldEstimateJoinCost()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: estimateJoinCost()
+    Stats-->>Test: cost
+```
+
+### 9. shouldProvideStatisticsForOptimizer()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: getStatsForOptimizer()
+    Stats-->>Test: statsMap
+```
+
+### 10. shouldPersistStatistics()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as StatisticsManagerTest
+    end
+    box #fff3e0 Query Components
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Stats: persist()
+    Stats-->>Test: PersistSuccess=true
+```
+
+# Query Processing Integration Test
+
+### 1. shouldParseOptimizeAndExecuteQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    participant Optimizer as QueryOptimizer
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Parser: parse()
+    Parser-->>Optimizer: AST
+    Optimizer-->>Executor: PhysicalPlan
+    Executor-->>Test: resultSet
+```
+
+### 2. shouldGenerateLogicalAndPhysicalPlan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Parser: parse()
+    Parser-->>Optimizer: AST
+    Optimizer-->>Test: physicalPlan
+```
+
+### 3. shouldExecuteOptimizedQueryPlan()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: execute(optimizedPlan)
+    Executor-->>Test: resultSet
+```
+
+### 4. shouldCollectStatisticsDuringExecution()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    participant Stats as StatisticsManager
+    end
+
+    Test->>Executor: execute()
+    Executor->>Stats: recordMetrics()
+    Stats-->>Test: updated stats
+```
+
+### 5. shouldRejectInvalidSQLQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Parser as SQLParser
+    end
+
+    Test->>Parser: parse("invalid SQL")
+    Parser-->>Test: error: SyntaxError
+```
+
+### 6. shouldOptimizeJoinQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Optimizer as QueryOptimizer
+    end
+
+    Test->>Optimizer: optimizeJoin()
+    Optimizer-->>Test: JoinPlanChosen
+```
+
+### 7. shouldExecuteIndexBasedQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeIndexQuery()
+    Executor-->>Test: indexResult
+```
+
+### 8. shouldExecuteAggregateQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeAggregateQuery()
+    Executor-->>Test: aggregateResult
+```
+
+### 9. shouldExecuteNestedQuery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeNestedQuery()
+    Executor-->>Test: nestedResult
+```
+
+### 10. shouldExecuteMultiTableJoin()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeMultiJoin()
+    Executor-->>Test: multiJoinResult
+```
+
+### 11. shouldExecuteDDLStatement()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeDDL()
+    Executor-->>Test: DDLCompleted=true
+```
+
+### 12. shouldExecuteDMLStatement()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as QueryProcessingIntegrationTest
+    end
+    box #fff3e0 Query Components
+    participant Executor as QueryExecutor
+    end
+
+    Test->>Executor: executeDML()
+    Executor-->>Test: DMLRowsAffected
+```
+

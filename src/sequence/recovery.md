@@ -1,295 +1,506 @@
-## Recovery Unit Test 
+# Recovery Unit Test
 
-## WAL Manager
+## WALManagerTest
 
-### 1. shouldAppendLogRecord()
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Test as WALManagerTest
-    participant WAL as WALManager
-    participant Log as LogRecord
-
-    Test->>WAL: append(logRecord)
-
-    WAL->>Log: validate()
-
-    Log-->>WAL: valid
-
-    WAL->>WAL: assignLSN()
-
-    WAL->>WAL: appendToBuffer()
-
-    WAL-->>Test: AppendSuccess=true
-```
-
-### 2. shouldFlushLogToDisk()
+### 1. shouldAppendLog()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
     participant WAL as WALManager
+    end
+
+    Test->>WAL: append(logRecord)
+    WAL->>WAL: assignLSN()
+    WAL-->>Test: LSN
+```
+
+### 2. shouldFlushLog()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    participant Disk as Disk
+    end
 
     Test->>WAL: flush()
-
-    WAL->>WAL: writeBufferedLogs()
-
-    WAL->>WAL: updateCurrentLSN()
-
+    WAL->>Disk: writePendingLogs()
+    Disk-->>WAL: success
     WAL-->>Test: FlushSuccess=true
 ```
 
-### 3. shouldReplayLogRecords()
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Test as WALManagerTest
-    participant WAL as WALManager
-    participant Log as LogRecord
-
-    Test->>WAL: replay()
-
-    loop Each LogRecord
-        WAL->>Log: apply()
-        Log-->>WAL: applied
-    end
-
-    WAL-->>Test: ReplayCompleted
-```
-
-### 4. shouldMaintainIncreasingLSN()
+### 3. shouldReplayLog()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
     participant WAL as WALManager
+    end
 
-    Test->>WAL: append(logRecord)
-
-    WAL->>WAL: generateNextLSN()
-
-    WAL->>WAL: comparePreviousLSN()
-
-    WAL-->>Test: LSNIncreasing=true
+    Test->>WAL: replay(lsn)
+    WAL->>WAL: readLog(lsn)
+    WAL-->>Test: logRecord
 ```
-## Recovery Manager
 
-### 5. shouldRecoverDatabase()
-```mermaid 
+### 4. shouldOrderLSN()
+```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    end
+
+    Test->>WAL: compare(lsn1, lsn2)
+    WAL-->>Test: comparisonResult
+```
+
+### 5. shouldAssignIncreasingLSN()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    end
+
+    Test->>WAL: append(log1)
+    WAL-->>Test: lsn1
+    Test->>WAL: append(log2)
+    WAL-->>Test: lsn2 (lsn2 > lsn1)
+```
+
+### 6. shouldWriteCommitRecord()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    end
+
+    Test->>WAL: writeCommit(txId)
+    WAL->>WAL: append(COMMIT)
+    WAL-->>Test: lsn
+```
+
+### 7. shouldWriteAbortRecord()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    end
+
+    Test->>WAL: writeAbort(txId)
+    WAL->>WAL: append(ABORT)
+    WAL-->>Test: lsn
+```
+
+### 8. shouldRecoverLogFile()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    participant Disk as Disk
+    end
+
+    Test->>WAL: recoverLogFile()
+    WAL->>Disk: scanLogFile()
+    Disk-->>WAL: rawLogData
+    WAL-->>Test: RecoverSuccess=true
+```
+
+### 9. shouldPersistLogRecord()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    participant Disk as Disk
+    end
+
+    Test->>WAL: persist(record)
+    WAL->>Disk: forceWrite(record)
+    Disk-->>WAL: persisted
+    WAL-->>Test: PersistSuccess=true
+```
+
+### 10. shouldVerifyWriteAheadLoggingRule()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as WALManagerTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    end
+
+    Test->>WAL: checkWALRule(pageLSN, flushedLSN)
+    WAL-->>Test: RuleSatisfied=true
+```
+
+## RecoveryManagerTest
+
+### 1. shouldRecover()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
     participant Recovery as RecoveryManager
     participant WAL as WALManager
+    end
 
     Test->>Recovery: recover()
+    Recovery->>WAL: scanFromCheckpoint()
+    WAL-->>Recovery: logRecords
+    Recovery->>Recovery: redoPhase()
+    Recovery->>Recovery: undoPhase()
+    Recovery-->>Test: RecoveryComplete=true
+```
 
-    Recovery->>WAL: replay()
+### 2. shouldRedo()
+```mermaid
+sequenceDiagram
+    autonumber
 
-    WAL-->>Recovery: replay completed
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
 
-    Recovery-->>Test: RecoverySuccess=true
+    Test->>Recovery: redoRecord(record)
+    Recovery->>Recovery: applyChange(record)
+    Recovery-->>Test: RedoSuccess=true
+```
+
+### 3. shouldUndo()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: undoRecord(record)
+    Recovery->>Recovery: applyInverseChange(record)
+    Recovery-->>Test: UndoSuccess=true
+```
+
+### 4. shouldRecoverCheckpoint()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    participant WAL as WALManager
+    end
+
+    Test->>Recovery: loadCheckpoint()
+    Recovery->>WAL: findLastCheckpoint()
+    WAL-->>Recovery: checkpointRecord
+    Recovery-->>Test: CheckpointLoaded=true
+```
+
+### 5. shouldScanLogRecords()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    participant WAL as WALManager
+    end
+
+    Test->>Recovery: scanLogs()
+    Recovery->>WAL: getReader()
+    WAL-->>Recovery: logReader
+    Recovery-->>Test: logsList
 ```
 
 ### 6. shouldRedoCommittedTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: redoPhase()
+    Recovery->>Recovery: identifyCommittedTx()
+    Recovery->>Recovery: applyChanges()
+    Recovery-->>Test: RedoComplete=true
+```
+
+### 7. shouldUndoIncompleteTransactions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: undoPhase()
+    Recovery->>Recovery: identifyActiveTx()
+    Recovery->>Recovery: rollbackChanges()
+    Recovery-->>Test: UndoComplete=true
+```
+
+### 8. shouldRestoreDatabaseState()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: restoreState()
+    Recovery->>Recovery: checkConsistency()
+    Recovery-->>Test: StateRestored=true
+```
+
+### 9. shouldSkipCommittedTransaction()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: redoRecord(record)
+    Recovery->>Recovery: checkAlreadyApplied()
+    Recovery-->>Test: skipped=true
+```
+
+### 10. shouldFinishRecovery()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryManagerTest
+    end
+    box #ffebee Recovery Components
     participant Recovery as RecoveryManager
     participant WAL as WALManager
+    end
 
-    Test->>Recovery: recover()
-
-    Recovery->>WAL: replayCommittedLogs()
-
-    WAL-->>Recovery: redo completed
-
-    Recovery-->>Test: RedoCompleted=true
-```
-
-### 7. shouldUndoUncommittedTransactions()
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Test as RecoveryManagerTest
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
-
-    Test->>Recovery: recover()
-
-    Recovery->>WAL: identifyUncommittedLogs()
-
-    WAL-->>Recovery: undo list
-
-    Recovery->>WAL: undo()
-
-    WAL-->>Recovery: undo completed
-
-    Recovery-->>Test: UndoCompleted=true
-```
-
-### 8. shouldRestoreConsistentState()
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Test as RecoveryManagerTest
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
-
-    Test->>Recovery: recover()
-
-    Recovery->>WAL: replay()
-
-    WAL-->>Recovery: recovery completed
-
-    Recovery->>Recovery: verifyConsistency()
-
-    Recovery-->>Test: DatabaseConsistent=true
-```
-
-## Log Record
-
-### 9. shouldCreateLogRecord()
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Test as LogRecordTest
-    participant Log as LogRecord
-
-    Test->>Log: create()
-
-    Log->>Log: initializeFields()
-
-    Log-->>Test: LogRecordCreated
-```
-
-### 10. shouldStoreTransactionId()
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Test as LogRecordTest
-    participant Log as LogRecord
-
-    Test->>Log: setTransactionId(txId)
-
-    Log->>Log: storeTransactionId()
-
-    Log-->>Test: TransactionIdStored
-```
-
-### 11. shouldStoreLogSequenceNumber()
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Test as LogRecordTest
-    participant Log as LogRecord
-
-    Test->>Log: setLSN(lsn)
-
-    Log->>Log: storeLSN()
-
-    Log-->>Test: LSNStored
-```
-
-### 12. shouldStoreOperationType()
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Test as LogRecordTest
-    participant Log as LogRecord
-
-    Test->>Log: setOperationType(operation)
-
-    Log->>Log: storeOperation()
-
-    Log-->>Test: OperationStored
+    Test->>Recovery: endRecovery()
+    Recovery->>WAL: writeCheckpoint()
+    WAL-->>Recovery: success
+    Recovery-->>Test: Finished=true
 ```
 
 # Recovery Integration Test
 
-### 13. shouldRecoverDatabaseFromWAL()
+### 1. shouldRecoverAfterCrash()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
     participant Recovery as RecoveryManager
     participant WAL as WALManager
-    participant Log as LogRecord
-
-    Test->>Recovery: recover()
-
-    Recovery->>WAL: replay()
-
-    loop Each LogRecord
-        WAL->>Log: apply()
-        Log-->>WAL: applied
     end
 
-    WAL-->>Recovery: recovery finished
+    Test->>Recovery: recover()
+    Recovery->>WAL: scanLogs()
+    Recovery->>Recovery: redo()
+    Recovery->>Recovery: undo()
+    Recovery-->>Test: DatabaseConsistent=true
+```
 
+### 2. shouldCommitTransactionWithWAL()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
+    participant WAL as WALManager
+    participant Disk as Disk
+    end
+
+    Test->>WAL: writeCommit(txId)
+    WAL->>Disk: flush()
+    Disk-->>WAL: flushed
+    WAL-->>Test: CommitComplete=true
+```
+
+### 3. shouldRollbackTransactionWithMVCC()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: rollback(txId)
+    Recovery->>Recovery: undo(txId)
+    Recovery-->>Test: RollbackComplete=true
+```
+
+### 4. shouldAcquireAndReleaseLocks()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: recover()
+    Recovery->>Recovery: releaseAllLocks()
+    Recovery-->>Test: LocksReleased=true
+```
+
+### 5. shouldRecoverCommittedTransactions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: recover()
+    Recovery->>Recovery: redoCommitted()
+    Recovery-->>Test: RedoCompleted=true
+```
+
+### 6. shouldRecoverRolledBackTransactions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: recover()
+    Recovery->>Recovery: undoRolledBack()
+    Recovery-->>Test: UndoCompleted=true
+```
+
+### 7. shouldHandleConcurrentTransactions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
+    participant Recovery as RecoveryManager
+    end
+
+    Test->>Recovery: recover()
+    Recovery->>Recovery: processConcurrentLogs()
     Recovery-->>Test: RecoverySuccess=true
 ```
 
-### 14. shouldReplayLogRecordsInOrder()
+### 8. shouldResolveDeadlockAutomatically()
 ```mermaid
 sequenceDiagram
     autonumber
+
+    box #e1f5fe Test Suite
     participant Test as RecoveryIntegrationTest
+    end
+    box #ffebee Recovery Components
     participant Recovery as RecoveryManager
-    participant WAL as WALManager
-    participant Log as LogRecord
-
-    Test->>Recovery: recover()
-
-    Recovery->>WAL: replay()
-
-    loop Ordered by LSN
-        WAL->>Log: apply()
-        Log-->>WAL: applied
     end
 
-    Recovery-->>Test: ReplayOrdered=true
-```
-
-### 15. shouldRestoreConsistentDatabaseState()
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Test as RecoveryIntegrationTest
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
-
     Test->>Recovery: recover()
-
-    Recovery->>WAL: replay()
-
-    WAL-->>Recovery: replay completed
-
-    Recovery->>Recovery: verifyConsistency()
-
-    Recovery-->>Test: ConsistentStateRestored=true
+    Recovery->>Recovery: detectAndAbortDeadlock()
+    Recovery-->>Test: DeadlockResolved=true
 ```
 
-### 16. shouldRecoverAfterSimulatedCrash()
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Test as RecoveryIntegrationTest
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
-    participant Log as LogRecord
-
-    Test->>Recovery: recover()
-
-    Recovery->>WAL: replay()
-
-    loop Recovery Log Records
-        WAL->>Log: apply()
-        Log-->>WAL: applied
-    end
-
-    WAL-->>Recovery: database restored
-
-    Recovery-->>Test: CrashRecoverySuccess=true
-```
