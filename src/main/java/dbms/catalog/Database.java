@@ -33,15 +33,46 @@ public class Database {
     }
 
     public void close() {
+        validateCurrentState();
+
+        status = DatabaseStatus.CLOSING;
+
+        flushDirtyPages();
+        releaseResources();
+
+        status = DatabaseStatus.OFFLINE;
+    }
+
+    private void flushDirtyPages() {
+
+    }
+
+    private void releaseResources() {
+
     }
 
     public void rename(String newName) {
+        validateCurrentState();
+        validateNewName(newName);
+        this.name = newName;
+    }
+
+    private void validateNewName(String newName) {
+
     }
 
     public void setOwner(String owner) {
+        validateCurrentState();
+        validateOwner(owner);
+        this.owner = owner;
     }
 
-    public void updateStatus(DatabaseStatus status) {
+    private void validateOwner(String owner) {
+
+    }
+
+    public void executeOperation() {
+        validateCurrentState();
     }
 
     public String getDatabaseId() {

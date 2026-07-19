@@ -646,8 +646,6 @@ flowchart LR
     DATABASEMANAGERTEST --> databasemanagertest_6
     databasemanagertest_7["shouldRejectUnknownDatabase()"]:::leafStyle
     DATABASEMANAGERTEST --> databasemanagertest_7
-    databasemanagertest_8["shouldUpdateDatabaseStatus()"]:::leafStyle
-    DATABASEMANAGERTEST --> databasemanagertest_8
 
     %% SecurityManagerTest methods
     securitymanagertest_1["shouldInitializeSecurityManager()"]:::leafStyle
@@ -925,10 +923,8 @@ flowchart LR
     DATABASETEST --> databasetest_3
     databasetest_4["shouldSetDatabaseOwner()"]:::leafStyle
     DATABASETEST --> databasetest_4
-    databasetest_5["shouldUpdateDatabaseStatus()"]:::leafStyle
+    databasetest_5["shouldRejectOperationWhenClosed()"]:::leafStyle
     DATABASETEST --> databasetest_5
-    databasetest_6["shouldRejectOperationWhenClosed()"]:::leafStyle
-    DATABASETEST --> databasetest_6
 
     %% SchemaTest methods
     schematest_1["shouldCreateTable()"]:::leafStyle

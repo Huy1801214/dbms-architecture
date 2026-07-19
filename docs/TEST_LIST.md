@@ -59,7 +59,6 @@
     * `shouldCloseDatabase()`
     * `shouldRenameDatabase()`
     * `shouldSetDatabaseOwner()`
-    * `shouldUpdateDatabaseStatus()`
     * `shouldRejectOperationWhenClosed()`
   * **SchemaTest**
     * `shouldCreateTable()`
@@ -200,7 +199,6 @@
     * `shouldListAllDatabases()`
     * `shouldRejectDuplicateDatabaseName()`
     * `shouldRejectUnknownDatabase()`
-    * `shouldUpdateDatabaseStatus()`
   * **ConfigurationRepositoryTest**
     * `shouldSaveConfigurationToDisk()`
   * **SecurityManagerTest**

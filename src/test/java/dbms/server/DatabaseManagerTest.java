@@ -68,13 +68,4 @@ public class DatabaseManagerTest {
         // Assert
     }
 
-    @Test
-    public void shouldUpdateDatabaseStatus() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
 }
