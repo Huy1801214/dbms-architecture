@@ -6,7 +6,6 @@
   - `shouldCloseDatabase()`
   - `shouldRenameDatabase()`
   - `shouldSetDatabaseOwner()`
-  - `shouldUpdateDatabaseStatus()`
   - `shouldRejectOperationWhenClosed()`
 
 ---

@@ -229,21 +229,6 @@ sequenceDiagram
     DM-->>Test: success
 ```
 
-### 8. shouldUpdateDatabaseStatus()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseManagerTest
-    end
-    box #e3f2fd DatabaseManager Component
-    participant DM as DatabaseManager
-    end
-
-    Test->>DM: shouldUpdateDatabaseStatus()
-    DM-->>Test: success
-```
-
 ## ConfigurationRepositoryTest
 
 ### 1. shouldSaveConfigurationToDisk()

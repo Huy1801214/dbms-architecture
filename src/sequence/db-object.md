@@ -39,75 +39,130 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldCloseDatabase()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+
+    Note over Test,D: Act
+    Test->>D: close()
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: status = CLOSING
+    D->>D: flushDirtyPages()
+    D->>D: releaseResources()
+    D->>D: status = OFFLINE
+
+    D-->>Test: status == OFFLINE
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals(OFFLINE, database.getStatus())
 ```
 
 ### 3. shouldRenameDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldRenameDatabase()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: name = "HuyDB"
+
+    Note over Test,D: Act
+    Test->>D: rename("AnhHuyDB")
+
+    activate D
+
+    D->>D: validateNewName()
+    D->>D: updateName()
+
+    D-->>Test: name == "AnhHuyDB"
+
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals("AnhHuyDB", database.getName())
 ```
 
 ### 4. shouldSetDatabaseOwner()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldSetDatabaseOwner()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: owner = "admin"
+
+    Note over Test,D: Act
+    Test->>D: changeOwner("user")
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateOwner("user")
+    D->>D: updateOwner()
+
+    D-->>Test: owner == "user"
+
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals("user", database.getOwner())
 ```
 
-### 5. shouldUpdateDatabaseStatus()
+### 5. shouldRejectOperationWhenClosed()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldUpdateDatabaseStatus()
-    D-->>Test: success
-```
+    Note over Test,D: Arrange
+    Test->>D: status = OFFLINE
 
-### 6. shouldRejectOperationWhenClosed()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
+    Note over Test,D: Act
+    Test->>D: executeOperation()
 
-    Test->>D: shouldRejectOperationWhenClosed()
-    D-->>Test: success
+    activate D
+
+    D->>D: validateCurrentState()
+
+    D-->>Test: throw DatabaseClosedException
+
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseClosedException)
 ```
 
 ## SchemaTest
