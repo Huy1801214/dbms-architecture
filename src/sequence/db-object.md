@@ -1,2066 +1,1636 @@
-# Database Object Unit Test
+Database Objects Module Unit Test
 
-## Database Test
+## DatabaseTest
 
-### 1. shouldCreateDatabase()
+### 1. shouldOpenDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
-    box #e8f5e9 Database Objects
-    participant Database as Database
+    box #e8f5e9 Database Component
+    participant D as Database
     end
 
-    Test->>Database: create()
-    Database->>Database: initialize()
-    Database-->>Test: DatabaseCreated=true
+    Test->>D: shouldOpenDatabase()
+    D-->>Test: success
 ```
 
-### 2. shouldOpenDatabase()
+### 2. shouldCloseDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
-    box #e8f5e9 Database Objects
-    participant Database as Database
+    box #e8f5e9 Database Component
+    participant D as Database
     end
 
-    Test->>Database: open()
-    Database->>Database: initialize()
-    Database->>Database: loadMetadata()
-    Database-->>Test: DatabaseOpened=true
+    Test->>D: shouldCloseDatabase()
+    D-->>Test: success
 ```
 
-### 3. shouldCloseDatabase()
+### 3. shouldRenameDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
-    box #e8f5e9 Database Objects
-    participant Database as Database
+    box #e8f5e9 Database Component
+    participant D as Database
     end
 
-    Test->>Database: close()
-    Database->>Database: flushPendingChanges()
-    Database->>Database: releaseResources()
-    Database-->>Test: DatabaseClosed=true
+    Test->>D: shouldRenameDatabase()
+    D-->>Test: success
 ```
 
-### 4. shouldRenameDatabase()
+### 4. shouldSetDatabaseOwner()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
-    box #e8f5e9 Database Objects
-    participant Database as Database
+    box #e8f5e9 Database Component
+    participant D as Database
     end
 
-    Test->>Database: rename("newName")
-    Database->>Database: updateName()
-    Database-->>Test: RenameSuccess=true
+    Test->>D: shouldSetDatabaseOwner()
+    D-->>Test: success
 ```
 
-### 5. shouldDropDatabase()
+### 5. shouldUpdateDatabaseStatus()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
-    box #e8f5e9 Database Objects
-    participant Database as Database
+    box #e8f5e9 Database Component
+    participant D as Database
     end
 
-    Test->>Database: drop()
-    Database->>Database: deleteFiles()
-    Database-->>Test: DropSuccess=true
+    Test->>D: shouldUpdateDatabaseStatus()
+    D-->>Test: success
 ```
 
-### 6. shouldSetDatabaseOwner()
+### 6. shouldRejectOperationWhenClosed()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
-    box #e8f5e9 Database Objects
-    participant Database as Database
+    box #e8f5e9 Database Component
+    participant D as Database
     end
 
-    Test->>Database: setOwner("owner")
-    Database->>Database: updateOwner()
-    Database-->>Test: OwnerSuccess=true
+    Test->>D: shouldRejectOperationWhenClosed()
+    D-->>Test: success
 ```
 
-### 7. shouldUpdateDatabaseStatus()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Objects
-    participant Database as Database
-    end
-
-    Test->>Database: updateStatus("status")
-    Database->>Database: setStatus()
-    Database-->>Test: StatusUpdated=true
-```
-
-### 8. shouldRejectOperationWhenClosed()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Objects
-    participant Database as Database
-    end
-
-    Test->>Database: getTable("Tbl")
-    Database->>Database: checkOpen()
-    Database-->>Test: error: DatabaseClosed
-```
-
-## Schema
+## SchemaTest
 
 ### 1. shouldCreateTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant Table as Table
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: createTable(table)
-    Schema->>Table: initialize()
-    Table-->>Schema: TableCreated
-    Schema->>Schema: registerTable()
-    Schema-->>Test: TableCreated=true
+    Test->>S: shouldCreateTable()
+    S-->>Test: success
 ```
 
 ### 2. shouldDropTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant Table as Table
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: dropTable(tableName)
-    Schema->>Table: validateExists()
-    Table-->>Schema: TableFound
-    Schema->>Schema: removeTable()
-    Schema-->>Test: TableDropped=true
+    Test->>S: shouldDropTable()
+    S-->>Test: success
 ```
 
 ### 3. shouldRenameTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant Table as Table
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: renameTable("old", "new")
-    Schema->>Table: rename("new")
-    Table-->>Schema: success
-    Schema-->>Test: RenameSuccess=true
+    Test->>S: shouldRenameTable()
+    S-->>Test: success
 ```
 
 ### 4. shouldCreateView()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant View as View
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: createView(view)
-    Schema->>View: validateDefinition()
-    View-->>Schema: DefinitionValid
-    Schema->>Schema: registerView()
-    Schema-->>Test: ViewCreated=true
+    Test->>S: shouldCreateView()
+    S-->>Test: success
 ```
 
 ### 5. shouldDropView()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant View as View
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: dropView("view")
-    Schema->>View: delete()
-    View-->>Schema: success
-    Schema-->>Test: ViewDropped=true
+    Test->>S: shouldDropView()
+    S-->>Test: success
 ```
 
 ### 6. shouldCreateStoredProcedure()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant Procedure as StoredProcedure
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: createProcedure(procedure)
-    Schema->>Procedure: validateDefinition()
-    Procedure-->>Schema: DefinitionValid
-    Schema->>Schema: registerProcedure()
-    Schema-->>Test: ProcedureCreated=true
+    Test->>S: shouldCreateStoredProcedure()
+    S-->>Test: success
 ```
 
 ### 7. shouldDropStoredProcedure()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant Procedure as StoredProcedure
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: dropProcedure("proc")
-    Schema->>Procedure: delete()
-    Procedure-->>Schema: success
-    Schema-->>Test: DropSuccess=true
+    Test->>S: shouldDropStoredProcedure()
+    S-->>Test: success
 ```
 
 ### 8. shouldCreateSequence()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant Seq as Sequence
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: createSequence(seq)
-    Schema->>Seq: initialize()
-    Seq-->>Schema: success
-    Schema->>Schema: registerSequence()
-    Schema-->>Test: SequenceCreated=true
+    Test->>S: shouldCreateSequence()
+    S-->>Test: success
 ```
 
 ### 9. shouldDropSequence()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
-    participant Seq as Sequence
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: dropSequence("seq")
-    Schema->>Seq: delete()
-    Seq-->>Schema: success
-    Schema-->>Test: DropSuccess=true
+    Test->>S: shouldDropSequence()
+    S-->>Test: success
 ```
 
 ### 10. shouldReturnExistingTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Database Objects
-    participant Schema as Schema
+    box #e8f5e9 Schema Component
+    participant S as Schema
     end
 
-    Test->>Schema: getTable("tbl")
-    Schema-->>Test: Table reference
+    Test->>S: shouldReturnExistingTable()
+    S-->>Test: success
 ```
 
-## Table
+## TableTest
 
 ### 1. shouldInsertRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Row as Row
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: insert(values)
-    Table->>Row: create(values)
-    Row-->>Table: RowCreated
-    Table->>Table: updateRowCount()
-    Table-->>Test: InsertSuccess=true
+    Test->>T: shouldInsertRow()
+    T-->>Test: success
 ```
 
 ### 2. shouldUpdateRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Row as Row
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: update(rowId, values)
-    Table->>Row: find(rowId)
-    Row-->>Table: RowFound
-    Table->>Row: update(values)
-    Row-->>Table: RowUpdated
-    Table-->>Test: UpdateSuccess=true
+    Test->>T: shouldUpdateRow()
+    T-->>Test: success
 ```
 
 ### 3. shouldDeleteRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Row as Row
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: delete(rowId)
-    Table->>Row: find(rowId)
-    Row-->>Table: RowFound
-    Table->>Row: delete()
-    Row-->>Table: RowDeleted
-    Table->>Table: updateRowCount()
-    Table-->>Test: DeleteSuccess=true
+    Test->>T: shouldDeleteRow()
+    T-->>Test: success
 ```
 
 ### 4. shouldTruncateTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: truncate()
-    Table->>Table: removeAllRows()
-    Table->>Table: resetRowCount()
-    Table-->>Test: TruncateSuccess=true
+    Test->>T: shouldTruncateTable()
+    T-->>Test: success
 ```
 
 ### 5. shouldAnalyzeTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: analyze()
-    Table->>Table: collectStatistics()
-    Table->>Table: updateMetadata()
-    Table-->>Test: AnalyzeSuccess=true
+    Test->>T: shouldAnalyzeTable()
+    T-->>Test: success
 ```
 
 ### 6. shouldIncreaseRowCount()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: insert(row)
-    Table->>Table: rowCount++
-    Table-->>Test: RowCountIncreased=true
+    Test->>T: shouldIncreaseRowCount()
+    T-->>Test: success
 ```
 
 ### 7. shouldDecreaseRowCount()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: delete(rowId)
-    Table->>Table: rowCount--
-    Table-->>Test: RowCountDecreased=true
+    Test->>T: shouldDecreaseRowCount()
+    T-->>Test: success
 ```
 
-### 8. shouldRejectDuplicatePrimaryKey()
+### 8. shouldReturnInsertedRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant PK as PrimaryKey
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: insert(row)
-    Table->>PK: checkUniqueness()
-    PK-->>Table: duplicate found
-    Table-->>Test: error: DuplicatePrimaryKey
+    Test->>T: shouldReturnInsertedRow()
+    T-->>Test: success
 ```
 
-### 9. shouldValidateConstraintsBeforeInsert()
+### 9. shouldReturnUpdatedRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TableTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Constraint as Constraint
+    box #e8f5e9 Table Component
+    participant T as Table
     end
 
-    Test->>Table: insert(row)
-    Table->>Constraint: validate(row)
-    Constraint-->>Table: valid
-    Table-->>Test: InsertSuccess=true
+    Test->>T: shouldReturnUpdatedRow()
+    T-->>Test: success
 ```
 
-### 10. shouldValidateConstraintsBeforeUpdate()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as TableTest
-    end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Constraint as Constraint
-    end
-
-    Test->>Table: update(row)
-    Table->>Constraint: validate(row)
-    Constraint-->>Table: valid
-    Table-->>Test: UpdateSuccess=true
-```
-
-### 11. shouldReturnInsertedRow()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as TableTest
-    end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    end
-
-    Test->>Table: insert(row)
-    Table-->>Test: InsertedRow
-```
-
-### 12. shouldReturnUpdatedRow()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as TableTest
-    end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    end
-
-    Test->>Table: update(row)
-    Table-->>Test: UpdatedRow
-```
-
-## Column
+## ColumnTest
 
 ### 1. shouldCreateColumn()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: create("colName", DataType)
-    Column-->>Test: ColumnCreated
+    Test->>C: shouldCreateColumn()
+    C-->>Test: success
 ```
 
 ### 2. shouldValidateColumnDefinition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
-    participant DataType as DataType
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: validateDefinition()
-    Column->>DataType: validate(dataType)
-    DataType-->>Column: DataTypeValid
-    Column->>Column: validateAttributes()
-    Column-->>Test: ValidationPassed=true
+    Test->>C: shouldValidateColumnDefinition()
+    C-->>Test: success
 ```
 
 ### 3. shouldRejectInvalidDataType()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
-    participant DataType as DataType
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: validateDefinition()
-    Column->>DataType: validate(dataType)
-    DataType-->>Column: DataTypeInvalid
-    Column-->>Test: error: InvalidDataType
+    Test->>C: shouldRejectInvalidDataType()
+    C-->>Test: success
 ```
 
 ### 4. shouldRejectInvalidLength()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: validateDefinition()
-    Column->>Column: checkLength()
-    Column-->>Test: error: InvalidLength
+    Test->>C: shouldRejectInvalidLength()
+    C-->>Test: success
 ```
 
 ### 5. shouldAcceptNullableColumn()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: setNullable(true)
-    Column-->>Test: NullableUpdated
+    Test->>C: shouldAcceptNullableColumn()
+    C-->>Test: success
 ```
 
 ### 6. shouldRejectNullForNotNullColumn()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: validateValue(null)
-    Column-->>Test: error: NullNotAllowed
+    Test->>C: shouldRejectNullForNotNullColumn()
+    C-->>Test: success
 ```
 
 ### 7. shouldUpdateColumnMetadata()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: updateMetadata(metadata)
-    Column->>Column: updateAttributes()
-    Column->>Column: persistMetadata()
-    Column-->>Test: MetadataUpdated=true
+    Test->>C: shouldUpdateColumnMetadata()
+    C-->>Test: success
 ```
 
 ### 8. shouldChangeDefaultValue()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ColumnTest
     end
-    box #e8f5e9 Database Objects
-    participant Column as Column
+    box #e8f5e9 Column Component
+    participant C as Column
     end
 
-    Test->>Column: setDefaultValue(val)
-    Column-->>Test: DefaultValueUpdated
+    Test->>C: shouldChangeDefaultValue()
+    C-->>Test: success
 ```
 
-## Row
+## RowTest
 
 ### 1. shouldCreateRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: create(values)
-    Row->>Row: initializeValues()
-    Row->>Row: assignRowId()
-    Row-->>Test: RowCreated=true
+    Test->>R: shouldCreateRow()
+    R-->>Test: success
 ```
 
 ### 2. shouldUpdateRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: update(values)
-    Row->>Row: updateValues()
-    Row-->>Test: RowUpdated
+    Test->>R: shouldUpdateRow()
+    R-->>Test: success
 ```
 
-### 3. shouldDeleteRow()
+### 3. shouldMarkRowDeleted()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: delete()
-    Row->>Row: markDeleted()
-    Row->>Row: releaseResources()
-    Row-->>Test: DeleteSuccess=true
+    Test->>R: shouldMarkRowDeleted()
+    R-->>Test: success
 ```
 
 ### 4. shouldReadRow()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: read()
-    Row-->>Test: rowData
+    Test->>R: shouldReadRow()
+    R-->>Test: success
 ```
 
 ### 5. shouldCloneRowVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: clone()
-    Row-->>Test: clonedRow
+    Test->>R: shouldCloneRowVersion()
+    R-->>Test: success
 ```
 
 ### 6. shouldUpdateRowVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: updateVersion()
-    Row->>Row: incrementVersion()
-    Row->>Row: updateTransactionId()
-    Row-->>Test: VersionUpdated=true
+    Test->>R: shouldUpdateRowVersion()
+    R-->>Test: success
 ```
 
 ### 7. shouldStoreTransactionId()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: setTransactionId(txId)
-    Row-->>Test: Success
+    Test->>R: shouldStoreTransactionId()
+    R-->>Test: success
 ```
 
 ### 8. shouldReturnColumnValue()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: getValue("col")
-    Row-->>Test: value
+    Test->>R: shouldReturnColumnValue()
+    R-->>Test: success
 ```
 
 ### 9. shouldReplaceColumnValue()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: replaceValue("col", newVal)
-    Row-->>Test: Success
+    Test->>R: shouldReplaceColumnValue()
+    R-->>Test: success
 ```
 
 ### 10. shouldMarkRowDeleted()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RowTest
     end
-    box #e8f5e9 Database Objects
-    participant Row as Row
+    box #e8f5e9 Row Component
+    participant R as Row
     end
 
-    Test->>Row: markDeleted()
-    Row-->>Test: Success
+    Test->>R: shouldMarkRowDeleted()
+    R-->>Test: success
 ```
 
-## Constraint
+## ConstraintTest
 
 ### 1. shouldValidatePrimaryKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant PK as PrimaryKey
-    participant Row as Row
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>PK: validate(row)
-    PK->>Row: getPrimaryKeyValue()
-    Row-->>PK: primaryKeyValue
-    PK->>PK: checkUniqueness()
-    PK-->>Test: ValidationPassed=true
+    Test->>C: shouldValidatePrimaryKey()
+    C-->>Test: success
 ```
 
 ### 2. shouldRejectDuplicatePrimaryKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant PK as PrimaryKey
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>PK: validate(row)
-    PK->>PK: checkUniqueness()
-    PK-->>Test: error: DuplicatePrimaryKey
+    Test->>C: shouldRejectDuplicatePrimaryKey()
+    C-->>Test: success
 ```
 
 ### 3. shouldValidateForeignKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant FK as ForeignKey
-    participant Parent as Table
-    participant Row as Row
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>FK: validate(row)
-    FK->>Row: getForeignKeyValue()
-    Row-->>FK: foreignKeyValue
-    FK->>Parent: exists(foreignKeyValue)
-    Parent-->>FK: ReferenceFound
-    FK-->>Test: ValidationPassed=true
+    Test->>C: shouldValidateForeignKey()
+    C-->>Test: success
 ```
 
 ### 4. shouldRejectBrokenForeignKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant FK as ForeignKey
-    participant Parent as Table
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>FK: validate(row)
-    FK->>Parent: exists(val)
-    Parent-->>FK: ReferenceNotFound
-    FK-->>Test: error: BrokenForeignKey
+    Test->>C: shouldRejectBrokenForeignKey()
+    C-->>Test: success
 ```
 
 ### 5. shouldValidateUniqueConstraint()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant Unique as UniqueConstraint
-    participant Row as Row
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>Unique: validate(row)
-    Unique->>Row: getColumnValue()
-    Row-->>Unique: value
-    Unique->>Unique: checkUniqueness()
-    Unique-->>Test: ValidationPassed=true
+    Test->>C: shouldValidateUniqueConstraint()
+    C-->>Test: success
 ```
 
 ### 6. shouldRejectDuplicateUniqueValue()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant Unique as UniqueConstraint
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>Unique: validate(row)
-    Unique->>Unique: checkUniqueness()
-    Unique-->>Test: error: DuplicateUniqueValue
+    Test->>C: shouldRejectDuplicateUniqueValue()
+    C-->>Test: success
 ```
 
 ### 7. shouldValidateCheckConstraint()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant Check as CheckConstraint
-    participant Row as Row
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>Check: validate(row)
-    Check->>Row: getValues()
-    Row-->>Check: values
-    Check->>Check: evaluateExpression()
-    Check-->>Test: ValidationPassed=true
+    Test->>C: shouldValidateCheckConstraint()
+    C-->>Test: success
 ```
 
 ### 8. shouldRejectInvalidCheckConstraint()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Database Objects
-    participant Check as CheckConstraint
+    box #e8f5e9 Constraint Component
+    participant C as Constraint
     end
 
-    Test->>Check: validate(row)
-    Check->>Check: evaluateExpression()
-    Check-->>Test: error: ExpressionUnsatisfied
+    Test->>C: shouldRejectInvalidCheckConstraint()
+    C-->>Test: success
 ```
 
-### 9. shouldRejectInvalidForeignKey()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
-    end
-    box #e8f5e9 Database Objects
-    participant FK as ForeignKey
-    end
-
-    Test->>FK: validate(row)
-    FK-->>Test: error: InvalidForeignKey
-```
-
-## Index
+## BTreeIndexTest
 
 ### 1. shouldInsertKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as BTreeIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 BTreeIndex Component
+    participant BTI as BTreeIndex
     end
 
-    Test->>Index: insertKey(key, rowId)
-    Index->>Index: updateIndexStructure()
-    Index-->>Test: InsertSuccess=true
+    Test->>BTI: shouldInsertKey()
+    BTI-->>Test: success
 ```
 
 ### 2. shouldSearchKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as BTreeIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 BTreeIndex Component
+    participant BTI as BTreeIndex
     end
 
-    Test->>Index: search(key)
-    Index->>Index: locateKey()
-    Index-->>Test: rowId
+    Test->>BTI: shouldSearchKey()
+    BTI-->>Test: success
 ```
 
 ### 3. shouldDeleteKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as BTreeIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 BTreeIndex Component
+    participant BTI as BTreeIndex
     end
 
-    Test->>Index: deleteKey(key)
-    Index->>Index: removeKey()
-    Index-->>Test: DeleteSuccess=true
+    Test->>BTI: shouldDeleteKey()
+    BTI-->>Test: success
 ```
 
 ### 4. shouldUpdateKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as BTreeIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 BTreeIndex Component
+    participant BTI as BTreeIndex
     end
 
-    Test->>Index: updateKey(oldKey, newKey)
-    Index->>Index: removeKey(oldKey)
-    Index->>Index: insertKey(newKey)
-    Index-->>Test: UpdateSuccess=true
+    Test->>BTI: shouldUpdateKey()
+    BTI-->>Test: success
 ```
 
 ### 5. shouldHandleDuplicateKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as BTreeIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 BTreeIndex Component
+    participant BTI as BTreeIndex
     end
 
-    Test->>Index: insertKey(duplicateKey)
-    Index-->>Test: error: DuplicateKey
+    Test->>BTI: shouldHandleDuplicateKey()
+    BTI-->>Test: success
 ```
 
 ### 6. shouldRebuildIndex()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as BTreeIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
-    participant Table as Table
+    box #e8f5e9 BTreeIndex Component
+    participant BTI as BTreeIndex
     end
 
-    Test->>Index: rebuild()
-    Index->>Table: scanRows()
-    Table-->>Index: rows
-    Index->>Index: rebuildStructure()
-    Index-->>Test: RebuildSuccess=true
+    Test->>BTI: shouldRebuildIndex()
+    BTI-->>Test: success
 ```
 
-### 7. shouldReturnOrderedKeys()
+## HashIndexTest
+
+### 1. shouldInsertKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as HashIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 HashIndex Component
+    participant HI as HashIndex
     end
 
-    Test->>Index: getKeys()
-    Index-->>Test: sorted keys list
+    Test->>HI: shouldInsertKey()
+    HI-->>Test: success
 ```
 
-### 8. shouldRejectInvalidKey()
+### 2. shouldSearchKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as HashIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 HashIndex Component
+    participant HI as HashIndex
     end
 
-    Test->>Index: insertKey(null)
-    Index-->>Test: error: InvalidKey
+    Test->>HI: shouldSearchKey()
+    HI-->>Test: success
 ```
 
-### 9. shouldSplitNode()
+### 3. shouldDeleteKey()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as HashIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 HashIndex Component
+    participant HI as HashIndex
     end
 
-    Test->>Index: splitNode(node)
-    Index-->>Test: split completed
+    Test->>HI: shouldDeleteKey()
+    HI-->>Test: success
 ```
 
-### 10. shouldMergeNode()
+## BitmapIndexTest
+
+### 1. shouldSearchBitmap()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as IndexTest
+    participant Test as BitmapIndexTest
     end
-    box #e8f5e9 Database Objects
-    participant Index as Index
+    box #e8f5e9 BitmapIndex Component
+    participant BI as BitmapIndex
     end
 
-    Test->>Index: mergeNode(node1, node2)
-    Index-->>Test: merge completed
+    Test->>BI: shouldSearchBitmap()
+    BI-->>Test: success
 ```
 
-## Partition
+### 2. shouldUpdateBitmap()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as BitmapIndexTest
+    end
+    box #e8f5e9 BitmapIndex Component
+    participant BI as BitmapIndex
+    end
+
+    Test->>BI: shouldUpdateBitmap()
+    BI-->>Test: success
+```
+
+## PartitionTest
 
 ### 1. shouldPartitionTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PartitionTest
     end
-    box #e8f5e9 Database Objects
-    participant Partition as Partition
-    participant Table as Table
+    box #e8f5e9 Partition Component
+    participant P as Partition
     end
 
-    Test->>Partition: partitionTable()
-    Partition->>Table: reorganizeRows()
-    Table-->>Partition: completed
-    Partition-->>Test: PartitionCreated=true
+    Test->>P: shouldPartitionTable()
+    P-->>Test: success
 ```
 
 ### 2. shouldDropPartition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PartitionTest
     end
-    box #e8f5e9 Database Objects
-    participant Partition as Partition
+    box #e8f5e9 Partition Component
+    participant P as Partition
     end
 
-    Test->>Partition: dropPartition("p1")
-    Partition-->>Test: DropSuccess=true
+    Test->>P: shouldDropPartition()
+    P-->>Test: success
 ```
 
 ### 3. shouldLocatePartition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PartitionTest
     end
-    box #e8f5e9 Database Objects
-    participant Partition as Partition
+    box #e8f5e9 Partition Component
+    participant P as Partition
     end
 
-    Test->>Partition: locatePartition(key)
-    Partition->>Partition: searchPartition()
-    Partition-->>Test: TargetPartition
+    Test->>P: shouldLocatePartition()
+    P-->>Test: success
 ```
 
 ### 4. shouldSplitPartition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PartitionTest
     end
-    box #e8f5e9 Database Objects
-    participant Partition as Partition
+    box #e8f5e9 Partition Component
+    participant P as Partition
     end
 
-    Test->>Partition: splitPartition("p1")
-    Partition-->>Test: SplitSuccess=true
+    Test->>P: shouldSplitPartition()
+    P-->>Test: success
 ```
 
 ### 5. shouldMergePartition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PartitionTest
     end
-    box #e8f5e9 Database Objects
-    participant Partition as Partition
+    box #e8f5e9 Partition Component
+    participant P as Partition
     end
 
-    Test->>Partition: mergePartitions("p1", "p2")
-    Partition-->>Test: MergeSuccess=true
+    Test->>P: shouldMergePartition()
+    P-->>Test: success
 ```
 
 ### 6. shouldMoveRowBetweenPartitions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PartitionTest
     end
-    box #e8f5e9 Database Objects
-    participant Partition as Partition
+    box #e8f5e9 Partition Component
+    participant P as Partition
     end
 
-    Test->>Partition: moveRow(row, "p1", "p2")
-    Partition-->>Test: MoveSuccess=true
+    Test->>P: shouldMoveRowBetweenPartitions()
+    P-->>Test: success
 ```
 
-### 7. shouldLocateCorrectPartition()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as PartitionTest
-    end
-    box #e8f5e9 Database Objects
-    participant Partition as Partition
-    end
-
-    Test->>Partition: locatePartition(key)
-    Partition-->>Test: TargetPartition
-```
-
-## View
+## ViewTest
 
 ### 1. shouldCreateView()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ViewTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
+    box #e8f5e9 View Component
+    participant V as View
     end
 
-    Test->>View: create(definition)
-    View-->>Test: ViewCreated
+    Test->>V: shouldCreateView()
+    V-->>Test: success
 ```
 
-### 2. shouldReadUnderlyingTable()
+### 2. shouldValidateViewDefinition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ViewTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
-    participant Table as Table
+    box #e8f5e9 View Component
+    participant V as View
     end
 
-    Test->>View: readUnderlying()
-    View->>Table: read()
-    Table-->>View: rows
-    View-->>Test: rows
+    Test->>V: shouldValidateViewDefinition()
+    V-->>Test: success
 ```
 
-### 3. shouldValidateViewDefinition()
+### 3. shouldExecuteViewQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ViewTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
+    box #e8f5e9 View Component
+    participant V as View
     end
 
-    Test->>View: validate()
-    View-->>Test: ValidationPassed=true
+    Test->>V: shouldExecuteViewQuery()
+    V-->>Test: success
 ```
 
-### 4. shouldExecuteViewQuery()
+### 4. shouldRefreshViewDefinition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ViewTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
-    participant Table as Table
+    box #e8f5e9 View Component
+    participant V as View
     end
 
-    Test->>View: executeQuery()
-    View->>Table: readRows()
-    Table-->>View: resultSet
-    View-->>Test: QueryResult
+    Test->>V: shouldRefreshViewDefinition()
+    V-->>Test: success
 ```
 
-### 5. shouldRefreshViewDefinition()
+### 5. shouldRejectInvalidViewDefinition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ViewTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
+    box #e8f5e9 View Component
+    participant V as View
     end
 
-    Test->>View: refreshDefinition()
-    View->>View: reloadDefinition()
-    View-->>Test: RefreshSuccess=true
+    Test->>V: shouldRejectInvalidViewDefinition()
+    V-->>Test: success
 ```
 
-### 6. shouldRejectInvalidViewDefinition()
+### 6. shouldReturnViewResult()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ViewTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
+    box #e8f5e9 View Component
+    participant V as View
     end
 
-    Test->>View: validate()
-    View-->>Test: error: InvalidViewDefinition
+    Test->>V: shouldReturnViewResult()
+    V-->>Test: success
 ```
 
-### 7. shouldReturnViewResult()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ViewTest
-    end
-    box #e8f5e9 Database Objects
-    participant View as View
-    end
-
-    Test->>View: getResult()
-    View-->>Test: Result
-```
-
-## Store Procedure
+## StoredProcedureTest
 
 ### 1. shouldCreateProcedure()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StoredProcedureTest
     end
-    box #e8f5e9 Database Objects
-    participant Proc as StoredProcedure
+    box #e8f5e9 StoredProcedure Component
+    participant SP as StoredProcedure
     end
 
-    Test->>Proc: create(definition)
-    Proc-->>Test: ProcCreated
+    Test->>SP: shouldCreateProcedure()
+    SP-->>Test: success
 ```
 
 ### 2. shouldExecuteProcedure()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StoredProcedureTest
     end
-    box #e8f5e9 Database Objects
-    participant Proc as StoredProcedure
-    participant Table as Table
+    box #e8f5e9 StoredProcedure Component
+    participant SP as StoredProcedure
     end
 
-    Test->>Proc: execute()
-    Proc->>Table: executeSQL()
-    Table-->>Proc: execution completed
-    Proc-->>Test: ProcedureSuccess=true
+    Test->>SP: shouldExecuteProcedure()
+    SP-->>Test: success
 ```
 
 ### 3. shouldPassProcedureParameters()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StoredProcedureTest
     end
-    box #e8f5e9 Database Objects
-    participant Proc as StoredProcedure
-    participant Table as Table
+    box #e8f5e9 StoredProcedure Component
+    participant SP as StoredProcedure
     end
 
-    Test->>Proc: execute(parameters)
-    Proc->>Table: executeSQL(parameters)
-    Table-->>Proc: execution completed
-    Proc-->>Test: ParameterExecutionSuccess=true
+    Test->>SP: shouldPassProcedureParameters()
+    SP-->>Test: success
 ```
 
 ### 4. shouldReturnProcedureResult()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StoredProcedureTest
     end
-    box #e8f5e9 Database Objects
-    participant Proc as StoredProcedure
+    box #e8f5e9 StoredProcedure Component
+    participant SP as StoredProcedure
     end
 
-    Test->>Proc: execute()
-    Proc-->>Test: result
+    Test->>SP: shouldReturnProcedureResult()
+    SP-->>Test: success
 ```
 
 ### 5. shouldHandleProcedureException()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StoredProcedureTest
     end
-    box #e8f5e9 Database Objects
-    participant Proc as StoredProcedure
+    box #e8f5e9 StoredProcedure Component
+    participant SP as StoredProcedure
     end
 
-    Test->>Proc: execute()
-    Proc-->>Test: error: ExecutionFailed
+    Test->>SP: shouldHandleProcedureException()
+    SP-->>Test: success
 ```
 
-## Trigger
+## TriggerTest
 
 ### 1. shouldCreateTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: create(definition)
-    Trigger-->>Test: TriggerCreated
+    Test->>T: shouldCreateTrigger()
+    T-->>Test: success
 ```
 
 ### 2. shouldFireTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: fire()
-    Trigger->>Trigger: evaluateCondition()
-    Trigger->>Trigger: executeAction()
-    Trigger-->>Test: TriggerExecuted=true
+    Test->>T: shouldFireTrigger()
+    T-->>Test: success
 ```
 
 ### 3. shouldExecuteBeforeInsertTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
-    participant Table as Table
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: beforeInsert(row)
-    Trigger->>Trigger: validateCondition()
-    Trigger->>Table: allowInsert()
-    Table-->>Trigger: accepted
-    Trigger-->>Test: BeforeInsertExecuted=true
+    Test->>T: shouldExecuteBeforeInsertTrigger()
+    T-->>Test: success
 ```
 
 ### 4. shouldExecuteAfterInsertTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: afterInsert(row)
-    Trigger-->>Test: AfterInsertExecuted=true
+    Test->>T: shouldExecuteAfterInsertTrigger()
+    T-->>Test: success
 ```
 
 ### 5. shouldExecuteBeforeUpdateTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: beforeUpdate(row)
-    Trigger-->>Test: BeforeUpdateExecuted=true
+    Test->>T: shouldExecuteBeforeUpdateTrigger()
+    T-->>Test: success
 ```
 
 ### 6. shouldExecuteAfterUpdateTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Table: update(row)
-    Table->>Trigger: afterUpdate(row)
-    Trigger->>Trigger: executeAction()
-    Trigger-->>Table: completed
-    Table-->>Test: AfterUpdateExecuted=true
+    Test->>T: shouldExecuteAfterUpdateTrigger()
+    T-->>Test: success
 ```
 
 ### 7. shouldExecuteBeforeDeleteTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: beforeDelete(row)
-    Trigger-->>Test: BeforeDeleteExecuted=true
+    Test->>T: shouldExecuteBeforeDeleteTrigger()
+    T-->>Test: success
 ```
 
 ### 8. shouldExecuteAfterDeleteTrigger()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: afterDelete(row)
-    Trigger-->>Test: AfterDeleteExecuted=true
+    Test->>T: shouldExecuteAfterDeleteTrigger()
+    T-->>Test: success
 ```
 
 ### 9. shouldCancelOperationWhenTriggerFails()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TriggerTest
     end
-    box #e8f5e9 Database Objects
-    participant Trigger as Trigger
+    box #e8f5e9 Trigger Component
+    participant T as Trigger
     end
 
-    Test->>Trigger: beforeInsert(row)
-    Trigger->>Trigger: evaluate()
-    Trigger-->>Test: error: TriggerFailed
+    Test->>T: shouldCancelOperationWhenTriggerFails()
+    T-->>Test: success
 ```
 
-## Sequence
+## SequenceTest
 
 ### 1. shouldCreateSequence()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SequenceTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
+    box #e8f5e9 Sequence Component
+    participant S as Sequence
     end
 
-    Test->>Seq: create(definition)
-    Seq-->>Test: SequenceCreated
+    Test->>S: shouldCreateSequence()
+    S-->>Test: success
 ```
 
 ### 2. shouldGenerateNextValue()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SequenceTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
+    box #e8f5e9 Sequence Component
+    participant S as Sequence
     end
 
-    Test->>Seq: nextValue()
-    Seq->>Seq: increment()
-    Seq-->>Test: nextValue
+    Test->>S: shouldGenerateNextValue()
+    S-->>Test: success
 ```
 
 ### 3. shouldIncrementSequence()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SequenceTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
+    box #e8f5e9 Sequence Component
+    participant S as Sequence
     end
 
-    Test->>Seq: increment()
-    Seq->>Seq: currentValue++
-    Seq-->>Test: IncrementSuccess=true
+    Test->>S: shouldIncrementSequence()
+    S-->>Test: success
 ```
 
 ### 4. shouldResetSequence()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SequenceTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
+    box #e8f5e9 Sequence Component
+    participant S as Sequence
     end
 
-    Test->>Seq: reset()
-    Seq->>Seq: currentValue = startValue
-    Seq-->>Test: ResetSuccess=true
+    Test->>S: shouldResetSequence()
+    S-->>Test: success
 ```
 
 ### 5. shouldRespectStartValue()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SequenceTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
+    box #e8f5e9 Sequence Component
+    participant S as Sequence
     end
 
-    Test->>Seq: getStartValue()
-    Seq-->>Test: startValue
+    Test->>S: shouldRespectStartValue()
+    S-->>Test: success
 ```
 
 ### 6. shouldReturnCurrentValue()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SequenceTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
+    box #e8f5e9 Sequence Component
+    participant S as Sequence
     end
 
-    Test->>Seq: currentValue()
-    Seq-->>Test: currentValue
+    Test->>S: shouldReturnCurrentValue()
+    S-->>Test: success
 ```
 
 ### 7. shouldRespectIncrementStep()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SequenceTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
+    box #e8f5e9 Sequence Component
+    participant S as Sequence
     end
 
-    Test->>Seq: nextValue()
-    Seq->>Seq: currentValue += step
-    Seq-->>Test: nextValue
+    Test->>S: shouldRespectIncrementStep()
+    S-->>Test: success
 ```
 
-# Database Object Integration Test
+# Database Object Unit Test
 
 ### 1. shouldCreateDatabaseWithSchemaAndTable()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant DB as Database
-    participant Schema as Schema
-    participant Table as Table
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>DB: createDatabase()
-    DB->>Schema: createSchema()
-    Schema->>Table: createTable()
-    Table-->>Schema: created
-    Schema-->>DB: schema created
-    DB-->>Test: DatabaseReady=true
+    Test->>System: shouldCreateDatabaseWithSchemaAndTable()
+    System-->>Test: success
 ```
 
 ### 2. shouldInsertRowWithConstraints()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Constraint as Constraint
-    participant Row as Row
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Table: insert(row)
-    Table->>Constraint: validate(row)
-    Constraint-->>Table: valid
-    Table->>Row: create()
-    Row-->>Table: row stored
-    Table-->>Test: InsertSuccess=true
+    Test->>System: shouldInsertRowWithConstraints()
+    System-->>Test: success
 ```
 
 ### 3. shouldUpdateRowAndRefreshIndex()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Row as Row
-    participant Index as Index
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Table: update(rowId, values)
-    Table->>Row: update(values)
-    Row-->>Table: row updated
-    Table->>Index: updateKey(oldVal, newVal)
-    Index-->>Table: index refreshed
-    Table-->>Test: UpdateSuccess=true
+    Test->>System: shouldUpdateRowAndRefreshIndex()
+    System-->>Test: success
 ```
 
 ### 4. shouldDeleteRowAndUpdateIndex()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Row as Row
-    participant Index as Index
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Table: delete(rowId)
-    Table->>Row: delete()
-    Row-->>Table: row deleted
-    Table->>Index: deleteKey(key)
-    Index-->>Table: key removed
-    Table-->>Test: DeleteSuccess=true
+    Test->>System: shouldDeleteRowAndUpdateIndex()
+    System-->>Test: success
 ```
 
 ### 5. shouldUseIndexForQueryExecution()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Constraint as Constraint
-    participant Row as Row
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Table: insert(row)
-    Table->>Constraint: validate(row)
-    Constraint-->>Table: valid
-    Table->>Row: create()
-    Row-->>Table: row stored
-    Table-->>Test: InsertSuccess=true
+    Test->>System: shouldUseIndexForQueryExecution()
+    System-->>Test: success
 ```
 
 ### 6. shouldExecuteTriggerDuringInsert()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Trigger as Trigger
-    participant Row as Row
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Table: insert(row)
-    Table->>Trigger: beforeInsert()
-    Trigger-->>Table: approved
-    Table->>Row: create()
-    Row-->>Table: stored
-    Table->>Trigger: afterInsert()
-    Trigger-->>Table: completed
-    Table-->>Test: InsertCompleted=true
+    Test->>System: shouldExecuteTriggerDuringInsert()
+    System-->>Test: success
 ```
 
 ### 7. shouldExecuteTriggerDuringUpdate()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Table as Table
-    participant Trigger as Trigger
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Table: update(row)
-    Table->>Trigger: beforeUpdate()
-    Trigger-->>Table: approved
-    Table->>Trigger: afterUpdate()
-    Trigger-->>Table: completed
-    Table-->>Test: UpdateCompleted=true
+    Test->>System: shouldExecuteTriggerDuringUpdate()
+    System-->>Test: success
 ```
 
 ### 8. shouldExecuteStoredProcedureSuccessfully()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Proc as StoredProcedure
-    participant Table as Table
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Proc: execute()
-    Proc->>Table: executeSQL()
-    Table-->>Proc: execution completed
-    Proc-->>Test: ProcedureSuccess=true
+    Test->>System: shouldExecuteStoredProcedureSuccessfully()
+    System-->>Test: success
 ```
 
 ### 9. shouldReadDataFromView()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
-    participant Table as Table
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>View: executeQuery()
-    View->>Table: readRows()
-    Table-->>View: result set
-    View-->>Test: QueryResult
+    Test->>System: shouldReadDataFromView()
+    System-->>Test: success
 ```
 
 ### 10. shouldGenerateSequenceValueForInsert()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant Seq as Sequence
-    participant Table as Table
-    participant Row as Row
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Seq: nextValue()
-    Seq-->>Table: generated id
-    Table->>Row: create(id)
-    Row-->>Table: stored
-    Table-->>Test: InsertSuccess=true
+    Test->>System: shouldGenerateSequenceValueForInsert()
+    System-->>Test: success
 ```
 
 ### 11. shouldValidateForeignKeyAcrossTables()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant FK as ForeignKey
-    participant Table as Table
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>FK: validate(row)
-    FK->>Table: exists(key)
-    Table-->>FK: found
-    FK-->>Test: ValidationSuccess=true
+    Test->>System: shouldValidateForeignKeyAcrossTables()
+    System-->>Test: success
 ```
 
 ### 12. shouldRefreshViewAfterTableUpdate()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsIntegrationTest
+    participant Test as DatabaseObjectsModuleIntegrationTest
     end
-    box #e8f5e9 Database Objects
-    participant View as View
-    participant Table as Table
+    box #e8f5e9 Database Objects Module Components
+    participant System as System
     end
 
-    Test->>Table: update(row)
-    Table->>View: refresh()
-    View-->>Table: refreshed
-    Table-->>Test: RefreshSuccess=true
+    Test->>System: shouldRefreshViewAfterTableUpdate()
+    System-->>Test: success
 ```
-

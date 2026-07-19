@@ -60,15 +60,6 @@ public class StorageIntegrationTest {
     }
 
     @Test
-    public void shouldRecoverPageAfterCrash() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
     public void shouldSynchronizeBufferPoolAndDisk() {
         // Arrange
         

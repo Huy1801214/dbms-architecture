@@ -33,24 +33,6 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void shouldOpenDatabase() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldCloseDatabase() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
     public void shouldGetDatabaseByName() {
         // Arrange
         
@@ -79,24 +61,6 @@ public class DatabaseManagerTest {
 
     @Test
     public void shouldRejectUnknownDatabase() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldPersistDatabaseMetadata() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldLoadExistingDatabases() {
         // Arrange
         
         // Act

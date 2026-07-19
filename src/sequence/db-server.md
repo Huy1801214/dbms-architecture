@@ -1,4 +1,4 @@
-# Database Server Unit Test
+Database Server Module Unit Test
 
 ## DatabaseServerTest
 
@@ -6,188 +6,120 @@
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: start()
-    Server->>Server: initialize()
-    Server->>Server: changeStatus(RUNNING)
-    Server-->>Test: assertRunning()
+    Test->>DS: shouldStartDatabaseServer()
+    DS-->>Test: success
 ```
 
 ### 2. shouldStopDatabaseServer()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: stop()
-    Server->>Server: shutdownServices()
-    Server->>Server: changeStatus(STOPPED)
-    Server-->>Test: assertStopped()
+    Test->>DS: shouldStopDatabaseServer()
+    DS-->>Test: success
 ```
 
 ### 3. shouldRestartDatabaseServer()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: restart()
-    Server->>Server: stop()
-    Server->>Server: start()
-    Server-->>Test: assertRestarted()
+    Test->>DS: shouldRestartDatabaseServer()
+    DS-->>Test: success
 ```
 
 ### 4. shouldInitializeManagersOnStartup()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant Config as ConfigurationManager
-    participant Security as SecurityManager
-    participant Monitor as MonitoringManager
-    participant DBManager as DatabaseManager
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: start()
-    Server->>Config: initialize()
-    Server->>Security: initialize()
-    Server->>Monitor: initialize()
-    Server->>DBManager: initialize()
-    Server-->>Test: assertManagersInitialized()
+    Test->>DS: shouldInitializeManagersOnStartup()
+    DS-->>Test: success
 ```
 
 ### 5. shouldShutdownManagersGracefully()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant Config as ConfigurationManager
-    participant Security as SecurityManager
-    participant Monitor as MonitoringManager
-    participant DBManager as DatabaseManager
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: stop()
-    Server->>DBManager: shutdown()
-    Server->>Monitor: shutdown()
-    Server->>Security: shutdown()
-    Server->>Config: shutdown()
-    Server-->>Test: assertManagersStopped()
+    Test->>DS: shouldShutdownManagersGracefully()
+    DS-->>Test: success
 ```
 
 ### 6. shouldAcceptClientConnection()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: connectClient()
-    Server->>Server: validateConnectionLimit()
-    Server-->>Test: ConnectionSuccess=true
+    Test->>DS: shouldAcceptClientConnection()
+    DS-->>Test: success
 ```
 
 ### 7. shouldRejectConnectionWhenStopped()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: connectClient()
-    Server->>Server: checkStatus()
-    Server-->>Test: error: ServerNotRunning
+    Test->>DS: shouldRejectConnectionWhenStopped()
+    DS-->>Test: success
 ```
 
 ### 8. shouldTrackActiveConnections()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseServerTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
+    box #e3f2fd DatabaseServer Component
+    participant DS as DatabaseServer
     end
 
-    Test->>Server: getActiveConnectionsCount()
-    Server-->>Test: activeConnectionsCount
-```
-
-### 9. shouldCloseIdleConnections()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as DatabaseServerTest
-    end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    end
-
-    Test->>Server: cleanupIdleConnections()
-    Server->>Server: terminateIdleSessions()
-    Server-->>Test: idleConnectionsClosed
-```
-
-### 10. shouldRecoverAfterUnexpectedShutdown()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as DatabaseServerTest
-    end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant DBManager as DatabaseManager
-    end
-
-    Test->>Server: recover()
-    Server->>DBManager: reloadMetadata()
-    Server->>Server: checkIntegrity()
-    Server-->>Test: RecoverySuccess=true
+    Test->>DS: shouldTrackActiveConnections()
+    DS-->>Test: success
 ```
 
 ## DatabaseManagerTest
@@ -196,375 +128,137 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
-    participant Database as Database
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: createDatabase(name)
-    Manager->>Database: new Database()
-    Manager->>Database: open()
-    Manager-->>Test: assertCreated()
+    Test->>DM: shouldCreateDatabase()
+    DM-->>Test: success
 ```
 
 ### 2. shouldDropDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
-    participant Database as Database
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: dropDatabase(name)
-    Manager->>Database: close()
-    Manager->>Manager: removeDatabase()
-    Manager-->>Test: assertRemoved()
+    Test->>DM: shouldDropDatabase()
+    DM-->>Test: success
 ```
 
 ### 3. shouldRenameDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: renameDatabase(oldName, newName)
-    Manager->>Manager: updateDatabaseName()
-    Manager-->>Test: RenameSuccess=true
+    Test->>DM: shouldRenameDatabase()
+    DM-->>Test: success
 ```
 
-### 4. shouldOpenDatabase()
+### 4. shouldGetDatabaseByName()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
-    participant Database as Database
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: openDatabase(name)
-    Manager->>Database: open()
-    Database-->>Manager: success
-    Manager-->>Test: OpenSuccess=true
+    Test->>DM: shouldGetDatabaseByName()
+    DM-->>Test: success
 ```
 
-### 5. shouldCloseDatabase()
+### 5. shouldListAllDatabases()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
-    participant Database as Database
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: closeDatabase(name)
-    Manager->>Database: close()
-    Database-->>Manager: success
-    Manager-->>Test: CloseSuccess=true
+    Test->>DM: shouldListAllDatabases()
+    DM-->>Test: success
 ```
 
-### 6. shouldGetDatabaseByName()
+### 6. shouldRejectDuplicateDatabaseName()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: getDatabase(name)
-    Manager-->>Test: Database
+    Test->>DM: shouldRejectDuplicateDatabaseName()
+    DM-->>Test: success
 ```
 
-### 7. shouldListAllDatabases()
+### 7. shouldRejectUnknownDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: listDatabases()
-    Manager-->>Test: databasesList
+    Test->>DM: shouldRejectUnknownDatabase()
+    DM-->>Test: success
 ```
 
-### 8. shouldRejectDuplicateDatabaseName()
+### 8. shouldUpdateDatabaseStatus()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
     end
 
-    Test->>Manager: createDatabase(name)
-    Manager->>Manager: checkDuplicate()
-    Manager-->>Test: error: DuplicateDatabaseName
+    Test->>DM: shouldUpdateDatabaseStatus()
+    DM-->>Test: success
 ```
 
-### 9. shouldRejectUnknownDatabase()
+## ConfigurationRepositoryTest
+
+### 1. shouldSaveConfigurationToDisk()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseManagerTest
+    participant Test as ConfigurationRepositoryTest
     end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
-    end
-
-    Test->>Manager: getDatabase(unknownName)
-    Manager-->>Test: error: DatabaseNotFound
-```
-
-### 10. shouldPersistDatabaseMetadata()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as DatabaseManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
+    box #e3f2fd ConfigurationRepository Component
+    participant CR as ConfigurationRepository
     end
 
-    Test->>Manager: persistMetadata()
-    Manager->>Manager: saveToDisk()
-    Manager-->>Test: PersistSuccess=true
-```
-
-### 11. shouldLoadExistingDatabases()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as DatabaseManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
-    end
-
-    Test->>Manager: loadDatabases()
-    Manager->>Manager: readFromDisk()
-    Manager-->>Test: LoadSuccess=true
-```
-
-### 12. shouldUpdateDatabaseStatus()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as DatabaseManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Manager as DatabaseManager
-    end
-
-    Test->>Manager: updateDatabaseStatus(name, status)
-    Manager-->>Test: StatusUpdated=true
-```
-
-## ConfigurationManagerTest
-
-### 1. shouldLoadConfiguration()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: load()
-    Config->>Config: readFromFile()
-    Config-->>Test: ConfigLoaded=true
-```
-
-### 2. shouldReloadConfiguration()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: reload()
-    Config->>Config: clearCache()
-    Config->>Config: load()
-    Config-->>Test: ReloadSuccess=true
-```
-
-### 3. shouldUpdateConfiguration()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: updateProperty(key, val)
-    Config-->>Test: UpdateSuccess=true
-```
-
-### 4. shouldPersistConfiguration()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: persist()
-    Config->>Config: writeToFile()
-    Config-->>Test: PersistSuccess=true
-```
-
-### 5. shouldRestoreDefaultConfiguration()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: restoreDefaults()
-    Config-->>Test: RestoreSuccess=true
-```
-
-### 6. shouldValidateConfiguration()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: validate()
-    Config-->>Test: ValidationSuccess=true
-```
-
-### 7. shouldRejectInvalidConfiguration()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: validate()
-    Config-->>Test: error: InvalidConfiguration
-```
-
-### 8. shouldReadConfigurationProperty()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: getProperty(key)
-    Config-->>Test: value
-```
-
-### 9. shouldUpdateConfigurationProperty()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: setProperty(key, val)
-    Config-->>Test: success
-```
-
-### 10. shouldSaveConfigurationToDisk()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as ConfigurationManagerTest
-    end
-    box #e3f2fd Server Managers
-    participant Config as ConfigurationManager
-    end
-
-    Test->>Config: save()
-    Config->>Config: write()
-    Config-->>Test: SaveSuccess=true
+    Test->>CR: shouldSaveConfigurationToDisk()
+    CR-->>Test: success
 ```
 
 ## SecurityManagerTest
@@ -573,96 +267,182 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Security as SecurityManager
+    box #e3f2fd SecurityManager Component
+    participant SM as SecurityManager
     end
 
-    Test->>Security: initialize()
-    Security-->>Test: InitSuccess=true
+    Test->>SM: shouldInitializeSecurityManager()
+    SM-->>Test: success
 ```
 
-### 2. shouldLoadSecurityConfiguration()
+### 2. shouldAuthenticateUser()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Security as SecurityManager
+    box #e3f2fd SecurityManager Component
+    participant SM as SecurityManager
     end
 
-    Test->>Security: loadConfig()
-    Security-->>Test: ConfigLoaded=true
+    Test->>SM: shouldAuthenticateUser()
+    SM-->>Test: success
 ```
 
-### 3. shouldEnableAuthentication()
+### 3. shouldRejectInvalidCredential()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Security as SecurityManager
+    box #e3f2fd SecurityManager Component
+    participant SM as SecurityManager
     end
 
-    Test->>Security: enableAuth()
-    Security-->>Test: AuthEnabled=true
+    Test->>SM: shouldRejectInvalidCredential()
+    SM-->>Test: success
 ```
 
-### 4. shouldDisableAuthentication()
+### 4. shouldAuthorizeUser()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Security as SecurityManager
+    box #e3f2fd SecurityManager Component
+    participant SM as SecurityManager
     end
 
-    Test->>Security: disableAuth()
-    Security-->>Test: AuthDisabled=true
+    Test->>SM: shouldAuthorizeUser()
+    SM-->>Test: success
 ```
 
-### 5. shouldEnableAuthorization()
+### 5. shouldGrantPermission()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Security as SecurityManager
+    box #e3f2fd SecurityManager Component
+    participant SM as SecurityManager
     end
 
-    Test->>Security: enableAuthz()
-    Security-->>Test: AuthzEnabled=true
+    Test->>SM: shouldGrantPermission()
+    SM-->>Test: success
 ```
 
-### 6. shouldDisableAuthorization()
+### 6. shouldRevokePermission()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SecurityManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Security as SecurityManager
+    box #e3f2fd SecurityManager Component
+    participant SM as SecurityManager
     end
 
-    Test->>Security: disableAuthz()
-    Security-->>Test: AuthzDisabled=true
+    Test->>SM: shouldRevokePermission()
+    SM-->>Test: success
+```
+
+## SecurityValidatorTest
+
+### 1. shouldRejectInvalidPassword()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SecurityValidatorTest
+    end
+    box #e3f2fd SecurityValidator Component
+    participant SV as SecurityValidator
+    end
+
+    Test->>SV: shouldRejectInvalidPassword()
+    SV-->>Test: success
+```
+
+### 2. shouldRejectLockedUser()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SecurityValidatorTest
+    end
+    box #e3f2fd SecurityValidator Component
+    participant SV as SecurityValidator
+    end
+
+    Test->>SV: shouldRejectLockedUser()
+    SV-->>Test: success
+```
+
+### 3. shouldRejectDisabledUser()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SecurityValidatorTest
+    end
+    box #e3f2fd SecurityValidator Component
+    participant SV as SecurityValidator
+    end
+
+    Test->>SV: shouldRejectDisabledUser()
+    SV-->>Test: success
+```
+
+### 4. shouldCheckRolePermission()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SecurityValidatorTest
+    end
+    box #e3f2fd SecurityValidator Component
+    participant SV as SecurityValidator
+    end
+
+    Test->>SV: shouldCheckRolePermission()
+    SV-->>Test: success
+```
+
+### 5. shouldGrantRolePermission()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SecurityValidatorTest
+    end
+    box #e3f2fd SecurityValidator Component
+    participant SV as SecurityValidator
+    end
+
+    Test->>SV: shouldGrantRolePermission()
+    SV-->>Test: success
+```
+
+### 6. shouldVerifyPermissionInheritance()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SecurityValidatorTest
+    end
+    box #e3f2fd SecurityValidator Component
+    participant SV as SecurityValidator
+    end
+
+    Test->>SV: shouldVerifyPermissionInheritance()
+    SV-->>Test: success
 ```
 
 ## MonitoringManagerTest
@@ -671,262 +451,225 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: collectMetrics()
-    Monitor-->>Test: metricsRecord
+    Test->>MM: shouldCollectServerMetrics()
+    MM-->>Test: success
 ```
 
 ### 2. shouldCollectMemoryUsage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: getMemoryUsage()
-    Monitor-->>Test: memoryBytes
+    Test->>MM: shouldCollectMemoryUsage()
+    MM-->>Test: success
 ```
 
 ### 3. shouldCollectCPUUsage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: getCPUUsage()
-    Monitor-->>Test: cpuPercent
+    Test->>MM: shouldCollectCPUUsage()
+    MM-->>Test: success
 ```
 
 ### 4. shouldCollectDiskUsage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: getDiskUsage()
-    Monitor-->>Test: diskBytes
+    Test->>MM: shouldCollectDiskUsage()
+    MM-->>Test: success
 ```
 
 ### 5. shouldCollectConnectionStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: getConnectionStats()
-    Monitor-->>Test: stats
+    Test->>MM: shouldCollectConnectionStatistics()
+    MM-->>Test: success
 ```
 
 ### 6. shouldReportServerStatus()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: getStatusReport()
-    Monitor-->>Test: reportString
+    Test->>MM: shouldReportServerStatus()
+    MM-->>Test: success
 ```
 
 ### 7. shouldReportDatabaseStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: getDbStats()
-    Monitor-->>Test: dbStats
+    Test->>MM: shouldReportDatabaseStatistics()
+    MM-->>Test: success
 ```
 
 ### 8. shouldResetStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MonitoringManagerTest
     end
-    box #e3f2fd Server Managers
-    participant Monitor as MonitoringManager
+    box #e3f2fd MonitoringManager Component
+    participant MM as MonitoringManager
     end
 
-    Test->>Monitor: resetStats()
-    Monitor-->>Test: ResetSuccess=true
+    Test->>MM: shouldResetStatistics()
+    MM-->>Test: success
 ```
 
-# Database Server Integration Test
+# Database Server Unit Test
 
 ### 1. shouldStartEntireDatabaseServer()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseServerIntegrationTest
+    participant Test as DatabaseServerModuleIntegrationTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant Config as ConfigurationManager
-    participant Security as SecurityManager
-    participant Monitor as MonitoringManager
-    participant DBManager as DatabaseManager
+    box #e3f2fd Database Server Module Components
+    participant System as System
     end
 
-    Test->>Server: start()
-    Server->>Config: load()
-    Server->>Security: initialize()
-    Server->>Monitor: start()
-    Server->>DBManager: initialize()
-    Server-->>Test: ServerRunning=true
+    Test->>System: shouldStartEntireDatabaseServer()
+    System-->>Test: success
 ```
 
 ### 2. shouldInitializeAllManagers()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseServerIntegrationTest
+    participant Test as DatabaseServerModuleIntegrationTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant Config as ConfigurationManager
-    participant Security as SecurityManager
-    participant Monitor as MonitoringManager
-    participant DBManager as DatabaseManager
+    box #e3f2fd Database Server Module Components
+    participant System as System
     end
 
-    Test->>Server: start()
-    Server->>Config: initialize()
-    Server->>Security: initialize()
-    Server->>Monitor: initialize()
-    Server->>DBManager: initialize()
-    Server-->>Test: AllManagersActive=true
+    Test->>System: shouldInitializeAllManagers()
+    System-->>Test: success
 ```
 
 ### 3. shouldCreateDatabaseThroughServer()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseServerIntegrationTest
+    participant Test as DatabaseServerModuleIntegrationTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant DBManager as DatabaseManager
-    participant Database as Database
+    box #e3f2fd Database Server Module Components
+    participant System as System
     end
 
-    Test->>Server: createDatabase(name)
-    Server->>DBManager: createDatabase(name)
-    DBManager->>Database: new Database()
-    DBManager-->>Server: dbCreated
-    Server-->>Test: DatabaseCreated=true
+    Test->>System: shouldCreateDatabaseThroughServer()
+    System-->>Test: success
 ```
 
 ### 4. shouldOpenExistingDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseServerIntegrationTest
+    participant Test as DatabaseServerModuleIntegrationTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant DBManager as DatabaseManager
+    box #e3f2fd Database Server Module Components
+    participant System as System
     end
 
-    Test->>Server: openDatabase(name)
-    Server->>DBManager: openDatabase(name)
-    DBManager-->>Server: dbOpened
-    Server-->>Test: DatabaseOpened=true
+    Test->>System: shouldOpenExistingDatabase()
+    System-->>Test: success
 ```
 
 ### 5. shouldShutdownServerGracefully()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseServerIntegrationTest
+    participant Test as DatabaseServerModuleIntegrationTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant DBManager as DatabaseManager
-    participant Monitor as MonitoringManager
-    participant Security as SecurityManager
-    participant Config as ConfigurationManager
+    box #e3f2fd Database Server Module Components
+    participant System as System
     end
 
-    Test->>Server: stop()
-    Server->>DBManager: closeAllDatabases()
-    Server->>Monitor: stop()
-    Server->>Security: shutdown()
-    Server->>Config: persist()
-    Server-->>Test: ShutdownComplete=true
+    Test->>System: shouldShutdownServerGracefully()
+    System-->>Test: success
 ```
 
 ### 6. shouldRestartServerWithoutDataLoss()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as DatabaseServerIntegrationTest
+    participant Test as DatabaseServerModuleIntegrationTest
     end
-    box #e3f2fd Server Managers
-    participant Server as DatabaseServer
-    participant DBManager as DatabaseManager
+    box #e3f2fd Database Server Module Components
+    participant System as System
     end
 
-    Test->>Server: restart()
-    Server->>Server: stop()
-    Server->>Server: start()
-    Server->>DBManager: reloadMetadata()
-    DBManager-->>Server: restored
-    Server-->>Test: RestartSuccess=true
+    Test->>System: shouldRestartServerWithoutDataLoss()
+    System-->>Test: success
 ```
 
+### 7. shouldRejectDatabaseOperationWhenServerStopped()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseServerModuleIntegrationTest
+    end
+    box #e3f2fd Database Server Module Components
+    participant System as System
+    end
+
+    Test->>System: shouldRejectDatabaseOperationWhenServerStopped()
+    System-->>Test: success
+```

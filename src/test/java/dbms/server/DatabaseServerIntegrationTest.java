@@ -59,4 +59,13 @@ public class DatabaseServerIntegrationTest {
         // Assert
     }
 
+    @Test
+    public void shouldRejectDatabaseOperationWhenServerStopped() {
+        // Arrange
+        
+        // Act
+        
+        // Assert
+    }
+
 }

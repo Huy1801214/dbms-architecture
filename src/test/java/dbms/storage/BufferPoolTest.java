@@ -33,15 +33,6 @@ public class BufferPoolTest {
     }
 
     @Test
-    public void shouldAllocateNewPage() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
     public void shouldFlushDirtyPage() {
         // Arrange
         
@@ -70,15 +61,6 @@ public class BufferPoolTest {
 
     @Test
     public void shouldReplaceVictimPage() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldMarkPageDirty() {
         // Arrange
         
         // Act

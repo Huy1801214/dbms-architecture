@@ -1,4 +1,4 @@
-# Recovery Unit Test
+Recovery Module Unit Test
 
 ## WALManagerTest
 
@@ -6,175 +6,150 @@
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: append(logRecord)
-    WAL->>WAL: assignLSN()
-    WAL-->>Test: LSN
+    Test->>WALM: shouldAppendLog()
+    WALM-->>Test: success
 ```
 
 ### 2. shouldFlushLog()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
-    participant Disk as Disk
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: flush()
-    WAL->>Disk: writePendingLogs()
-    Disk-->>WAL: success
-    WAL-->>Test: FlushSuccess=true
+    Test->>WALM: shouldFlushLog()
+    WALM-->>Test: success
 ```
 
 ### 3. shouldReplayLog()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: replay(lsn)
-    WAL->>WAL: readLog(lsn)
-    WAL-->>Test: logRecord
+    Test->>WALM: shouldReplayLog()
+    WALM-->>Test: success
 ```
 
 ### 4. shouldOrderLSN()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: compare(lsn1, lsn2)
-    WAL-->>Test: comparisonResult
+    Test->>WALM: shouldOrderLSN()
+    WALM-->>Test: success
 ```
 
 ### 5. shouldAssignIncreasingLSN()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: append(log1)
-    WAL-->>Test: lsn1
-    Test->>WAL: append(log2)
-    WAL-->>Test: lsn2 (lsn2 > lsn1)
+    Test->>WALM: shouldAssignIncreasingLSN()
+    WALM-->>Test: success
 ```
 
 ### 6. shouldWriteCommitRecord()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: writeCommit(txId)
-    WAL->>WAL: append(COMMIT)
-    WAL-->>Test: lsn
+    Test->>WALM: shouldWriteCommitRecord()
+    WALM-->>Test: success
 ```
 
 ### 7. shouldWriteAbortRecord()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: writeAbort(txId)
-    WAL->>WAL: append(ABORT)
-    WAL-->>Test: lsn
+    Test->>WALM: shouldWriteAbortRecord()
+    WALM-->>Test: success
 ```
 
 ### 8. shouldRecoverLogFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
-    participant Disk as Disk
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: recoverLogFile()
-    WAL->>Disk: scanLogFile()
-    Disk-->>WAL: rawLogData
-    WAL-->>Test: RecoverSuccess=true
+    Test->>WALM: shouldRecoverLogFile()
+    WALM-->>Test: success
 ```
 
 ### 9. shouldPersistLogRecord()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
-    participant Disk as Disk
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: persist(record)
-    WAL->>Disk: forceWrite(record)
-    Disk-->>WAL: persisted
-    WAL-->>Test: PersistSuccess=true
+    Test->>WALM: shouldPersistLogRecord()
+    WALM-->>Test: success
 ```
 
 ### 10. shouldVerifyWriteAheadLoggingRule()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as WALManagerTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
+    box #ffebee WALManager Component
+    participant WALM as WALManager
     end
 
-    Test->>WAL: checkWALRule(pageLSN, flushedLSN)
-    WAL-->>Test: RuleSatisfied=true
+    Test->>WALM: shouldVerifyWriteAheadLoggingRule()
+    WALM-->>Test: success
 ```
 
 ## RecoveryManagerTest
@@ -183,324 +158,270 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: recover()
-    Recovery->>WAL: scanFromCheckpoint()
-    WAL-->>Recovery: logRecords
-    Recovery->>Recovery: redoPhase()
-    Recovery->>Recovery: undoPhase()
-    Recovery-->>Test: RecoveryComplete=true
+    Test->>RM: shouldRecover()
+    RM-->>Test: success
 ```
 
 ### 2. shouldRedo()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: redoRecord(record)
-    Recovery->>Recovery: applyChange(record)
-    Recovery-->>Test: RedoSuccess=true
+    Test->>RM: shouldRedo()
+    RM-->>Test: success
 ```
 
 ### 3. shouldUndo()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: undoRecord(record)
-    Recovery->>Recovery: applyInverseChange(record)
-    Recovery-->>Test: UndoSuccess=true
+    Test->>RM: shouldUndo()
+    RM-->>Test: success
 ```
 
 ### 4. shouldRecoverCheckpoint()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: loadCheckpoint()
-    Recovery->>WAL: findLastCheckpoint()
-    WAL-->>Recovery: checkpointRecord
-    Recovery-->>Test: CheckpointLoaded=true
+    Test->>RM: shouldRecoverCheckpoint()
+    RM-->>Test: success
 ```
 
 ### 5. shouldScanLogRecords()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: scanLogs()
-    Recovery->>WAL: getReader()
-    WAL-->>Recovery: logReader
-    Recovery-->>Test: logsList
+    Test->>RM: shouldScanLogRecords()
+    RM-->>Test: success
 ```
 
 ### 6. shouldRedoCommittedTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: redoPhase()
-    Recovery->>Recovery: identifyCommittedTx()
-    Recovery->>Recovery: applyChanges()
-    Recovery-->>Test: RedoComplete=true
+    Test->>RM: shouldRedoCommittedTransactions()
+    RM-->>Test: success
 ```
 
 ### 7. shouldUndoIncompleteTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: undoPhase()
-    Recovery->>Recovery: identifyActiveTx()
-    Recovery->>Recovery: rollbackChanges()
-    Recovery-->>Test: UndoComplete=true
+    Test->>RM: shouldUndoIncompleteTransactions()
+    RM-->>Test: success
 ```
 
 ### 8. shouldRestoreDatabaseState()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: restoreState()
-    Recovery->>Recovery: checkConsistency()
-    Recovery-->>Test: StateRestored=true
+    Test->>RM: shouldRestoreDatabaseState()
+    RM-->>Test: success
 ```
 
 ### 9. shouldSkipCommittedTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: redoRecord(record)
-    Recovery->>Recovery: checkAlreadyApplied()
-    Recovery-->>Test: skipped=true
+    Test->>RM: shouldSkipCommittedTransaction()
+    RM-->>Test: success
 ```
 
 ### 10. shouldFinishRecovery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as RecoveryManagerTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
+    box #ffebee RecoveryManager Component
+    participant RM as RecoveryManager
     end
 
-    Test->>Recovery: endRecovery()
-    Recovery->>WAL: writeCheckpoint()
-    WAL-->>Recovery: success
-    Recovery-->>Test: Finished=true
+    Test->>RM: shouldFinishRecovery()
+    RM-->>Test: success
 ```
 
-# Recovery Integration Test
+# Recovery Unit Test
 
 ### 1. shouldRecoverAfterCrash()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
-    participant WAL as WALManager
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>Recovery: recover()
-    Recovery->>WAL: scanLogs()
-    Recovery->>Recovery: redo()
-    Recovery->>Recovery: undo()
-    Recovery-->>Test: DatabaseConsistent=true
+    Test->>System: shouldRecoverAfterCrash()
+    System-->>Test: success
 ```
 
 ### 2. shouldCommitTransactionWithWAL()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant WAL as WALManager
-    participant Disk as Disk
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>WAL: writeCommit(txId)
-    WAL->>Disk: flush()
-    Disk-->>WAL: flushed
-    WAL-->>Test: CommitComplete=true
+    Test->>System: shouldCommitTransactionWithWAL()
+    System-->>Test: success
 ```
 
 ### 3. shouldRollbackTransactionWithMVCC()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>Recovery: rollback(txId)
-    Recovery->>Recovery: undo(txId)
-    Recovery-->>Test: RollbackComplete=true
+    Test->>System: shouldRollbackTransactionWithMVCC()
+    System-->>Test: success
 ```
 
 ### 4. shouldAcquireAndReleaseLocks()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>Recovery: recover()
-    Recovery->>Recovery: releaseAllLocks()
-    Recovery-->>Test: LocksReleased=true
+    Test->>System: shouldAcquireAndReleaseLocks()
+    System-->>Test: success
 ```
 
 ### 5. shouldRecoverCommittedTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>Recovery: recover()
-    Recovery->>Recovery: redoCommitted()
-    Recovery-->>Test: RedoCompleted=true
+    Test->>System: shouldRecoverCommittedTransactions()
+    System-->>Test: success
 ```
 
 ### 6. shouldRecoverRolledBackTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>Recovery: recover()
-    Recovery->>Recovery: undoRolledBack()
-    Recovery-->>Test: UndoCompleted=true
+    Test->>System: shouldRecoverRolledBackTransactions()
+    System-->>Test: success
 ```
 
 ### 7. shouldHandleConcurrentTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>Recovery: recover()
-    Recovery->>Recovery: processConcurrentLogs()
-    Recovery-->>Test: RecoverySuccess=true
+    Test->>System: shouldHandleConcurrentTransactions()
+    System-->>Test: success
 ```
 
 ### 8. shouldResolveDeadlockAutomatically()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as RecoveryIntegrationTest
+    participant Test as RecoveryModuleIntegrationTest
     end
-    box #ffebee Recovery Components
-    participant Recovery as RecoveryManager
+    box #ffebee Recovery Module Components
+    participant System as System
     end
 
-    Test->>Recovery: recover()
-    Recovery->>Recovery: detectAndAbortDeadlock()
-    Recovery-->>Test: DeadlockResolved=true
+    Test->>System: shouldResolveDeadlockAutomatically()
+    System-->>Test: success
 ```
-

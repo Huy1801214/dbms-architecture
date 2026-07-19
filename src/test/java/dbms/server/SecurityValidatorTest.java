@@ -3,10 +3,10 @@ package dbms.server;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SecurityManagerTest {
+public class SecurityValidatorTest {
 
     @Test
-    public void shouldInitializeSecurityManager() {
+    public void shouldRejectInvalidPassword() {
         // Arrange
         
         // Act
@@ -15,7 +15,7 @@ public class SecurityManagerTest {
     }
 
     @Test
-    public void shouldAuthenticateUser() {
+    public void shouldRejectLockedUser() {
         // Arrange
         
         // Act
@@ -24,7 +24,7 @@ public class SecurityManagerTest {
     }
 
     @Test
-    public void shouldRejectInvalidCredential() {
+    public void shouldRejectDisabledUser() {
         // Arrange
         
         // Act
@@ -33,7 +33,7 @@ public class SecurityManagerTest {
     }
 
     @Test
-    public void shouldAuthorizeUser() {
+    public void shouldCheckRolePermission() {
         // Arrange
         
         // Act
@@ -42,7 +42,7 @@ public class SecurityManagerTest {
     }
 
     @Test
-    public void shouldGrantPermission() {
+    public void shouldGrantRolePermission() {
         // Arrange
         
         // Act
@@ -51,7 +51,7 @@ public class SecurityManagerTest {
     }
 
     @Test
-    public void shouldRevokePermission() {
+    public void shouldVerifyPermissionInheritance() {
         // Arrange
         
         // Act

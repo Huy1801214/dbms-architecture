@@ -15,15 +15,6 @@ public class ViewTest {
     }
 
     @Test
-    public void shouldReadUnderlyingTable() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
     public void shouldValidateViewDefinition() {
         // Arrange
         

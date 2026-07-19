@@ -77,13 +77,4 @@ public class ConstraintTest {
         // Assert
     }
 
-    @Test
-    public void shouldRejectInvalidForeignKey() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
 }

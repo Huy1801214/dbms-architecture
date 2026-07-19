@@ -55,11 +55,9 @@
 ## 2. Database Objects Module
 * **Unit Tests**:
   * **DatabaseTest**
-    * `shouldCreateDatabase()`
     * `shouldOpenDatabase()`
     * `shouldCloseDatabase()`
     * `shouldRenameDatabase()`
-    * `shouldDropDatabase()`
     * `shouldSetDatabaseOwner()`
     * `shouldUpdateDatabaseStatus()`
     * `shouldRejectOperationWhenClosed()`
@@ -82,9 +80,6 @@
     * `shouldAnalyzeTable()`
     * `shouldIncreaseRowCount()`
     * `shouldDecreaseRowCount()`
-    * `shouldRejectDuplicatePrimaryKey()`
-    * `shouldValidateConstraintsBeforeInsert()`
-    * `shouldValidateConstraintsBeforeUpdate()`
     * `shouldReturnInsertedRow()`
     * `shouldReturnUpdatedRow()`
   * **ColumnTest**
@@ -99,7 +94,7 @@
   * **RowTest**
     * `shouldCreateRow()`
     * `shouldUpdateRow()`
-    * `shouldDeleteRow()`
+    * `shouldMarkRowDeleted()`
     * `shouldReadRow()`
     * `shouldCloneRowVersion()`
     * `shouldUpdateRowVersion()`
@@ -116,18 +111,20 @@
     * `shouldRejectDuplicateUniqueValue()`
     * `shouldValidateCheckConstraint()`
     * `shouldRejectInvalidCheckConstraint()`
-    * `shouldRejectInvalidForeignKey()`
-  * **IndexTest**
+  * **BTreeIndexTest**
     * `shouldInsertKey()`
     * `shouldSearchKey()`
     * `shouldDeleteKey()`
     * `shouldUpdateKey()`
     * `shouldHandleDuplicateKey()`
     * `shouldRebuildIndex()`
-    * `shouldReturnOrderedKeys()`
-    * `shouldRejectInvalidKey()`
-    * `shouldSplitNode()`
-    * `shouldMergeNode()`
+  * **HashIndexTest**   
+    * `shouldInsertKey()`
+    * `shouldSearchKey()`
+    * `shouldDeleteKey()` 
+  * **BitmapIndexTest**  
+    * `shouldSearchBitmap()`
+    * `shouldUpdateBitmap()` 
   * **PartitionTest**
     * `shouldPartitionTable()`
     * `shouldDropPartition()`
@@ -135,10 +132,8 @@
     * `shouldSplitPartition()`
     * `shouldMergePartition()`
     * `shouldMoveRowBetweenPartitions()`
-    * `shouldLocateCorrectPartition()`
   * **ViewTest**
     * `shouldCreateView()`
-    * `shouldReadUnderlyingTable()`
     * `shouldValidateViewDefinition()`
     * `shouldExecuteViewQuery()`
     * `shouldRefreshViewDefinition()`
@@ -195,40 +190,35 @@
     * `shouldAcceptClientConnection()`
     * `shouldRejectConnectionWhenStopped()`
     * `shouldTrackActiveConnections()`
-    * `shouldCloseIdleConnections()`
-    * `shouldRecoverAfterUnexpectedShutdown()`
   * **DatabaseManagerTest**
     * `shouldCreateDatabase()`
     * `shouldDropDatabase()`
     * `shouldRenameDatabase()`
-    * `shouldOpenDatabase()`
-    * `shouldCloseDatabase()`
+
+
     * `shouldGetDatabaseByName()`
     * `shouldListAllDatabases()`
     * `shouldRejectDuplicateDatabaseName()`
     * `shouldRejectUnknownDatabase()`
-    * `shouldPersistDatabaseMetadata()`
-    * `shouldLoadExistingDatabases()`
     * `shouldUpdateDatabaseStatus()`
-  * **ConfigurationManagerTest**
-    * `shouldLoadConfiguration()`
-    * `shouldReloadConfiguration()`
-    * `shouldUpdateConfiguration()`
-    * `shouldPersistConfiguration()`
-    * `shouldRestoreDefaultConfiguration()`
-    * `shouldValidateConfiguration()`
-    * `shouldRejectInvalidConfiguration()`
-    * `shouldReadConfigurationProperty()`
-    * `shouldUpdateConfigurationProperty()`
+  * **ConfigurationRepositoryTest**
     * `shouldSaveConfigurationToDisk()`
   * **SecurityManagerTest**
     * `shouldInitializeSecurityManager()`
-    * `shouldLoadSecurityConfiguration()`
-    * `shouldEnableAuthentication()`
-    * `shouldDisableAuthentication()`
-    * `shouldEnableAuthorization()`
-    * `shouldDisableAuthorization()`
-  * **MonitoringManagerTest**
+    * `shouldAuthenticateUser()`
+    * `shouldRejectInvalidCredential()`
+    * `shouldAuthorizeUser()`
+    * `shouldGrantPermission()`
+    * `shouldRevokePermission()`
+  * **SecurityValidatorTest**
+    * `shouldRejectInvalidPassword()`
+    * `shouldRejectLockedUser()`
+    * `shouldRejectDisabledUser()`
+    * `shouldCheckRolePermission()`
+    * `shouldGrantRolePermission()`
+    * `shouldVerifyPermissionInheritance()`
+
+* **MonitoringManagerTest**
     * `shouldCollectServerMetrics()`
     * `shouldCollectMemoryUsage()`
     * `shouldCollectCPUUsage()`
@@ -244,6 +234,7 @@
   * `shouldOpenExistingDatabase()`
   * `shouldShutdownServerGracefully()`
   * `shouldRestartServerWithoutDataLoss()`
+  * `shouldRejectDatabaseOperationWhenServerStopped()`
 
 ---
 
@@ -483,17 +474,14 @@
     * `shouldPinPage()`
     * `shouldUnpinPage()`
     * `shouldFetchExistingPage()`
-    * `shouldAllocateNewPage()`
     * `shouldFlushDirtyPage()`
     * `shouldEvictPage()`
     * `shouldRejectEvictPinnedPage()`
     * `shouldReplaceVictimPage()`
-    * `shouldMarkPageDirty()`
     * `shouldClearDirtyFlagAfterFlush()`
     * `shouldTrackPinCount()`
     * `shouldReturnCachedPage()`
   * **PageManagerTest**
-    * `shouldCreatePage()`
     * `shouldReadPage()`
     * `shouldWritePage()`
     * `shouldAllocatePage()`
@@ -501,10 +489,6 @@
     * `shouldReuseFreedPage()`
     * `shouldAssignUniquePageId()`
     * `shouldMaintainPageMetadata()`
-    * `shouldMarkPageDirty()`
-    * `shouldClearDirtyFlag()`
-    * `shouldCreateCheckpoint()`
-    * `shouldRestoreCheckpoint()`
   * **FileManagerTest**
     * `shouldCreateDataFile()`
     * `shouldOpenDataFile()`
@@ -534,7 +518,6 @@
   * `shouldReloadPageIntoBufferPool()`
   * `shouldEvictPageUsingReplacementPolicy()`
   * `shouldPersistPageAcrossRestart()`
-  * `shouldRecoverPageAfterCrash()`
   * `shouldSynchronizeBufferPoolAndDisk()`
 
 ---

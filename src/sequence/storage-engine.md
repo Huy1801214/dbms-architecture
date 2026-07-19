@@ -1,4 +1,4 @@
-# Storage Engine Unit Test
+Storage Engine Module Unit Test
 
 ## BufferPoolTest
 
@@ -6,425 +6,257 @@
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: pinPage(pageId)
-    Buffer->>Buffer: incrementPinCount(pageId)
-    Buffer-->>Test: page
+    Test->>BP: shouldPinPage()
+    BP-->>Test: success
 ```
 
 ### 2. shouldUnpinPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: unpinPage(pageId)
-    Buffer->>Buffer: decrementPinCount(pageId)
-    Buffer-->>Test: success
+    Test->>BP: shouldUnpinPage()
+    BP-->>Test: success
 ```
 
 ### 3. shouldFetchExistingPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: fetchPage(pageId)
-    Buffer->>Buffer: lookupCache(pageId)
-    Buffer-->>Test: page
+    Test->>BP: shouldFetchExistingPage()
+    BP-->>Test: success
 ```
 
-### 4. shouldAllocateNewPage()
+### 4. shouldFlushDirtyPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    participant PageManager as PageManager
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: allocatePage()
-    Buffer->>PageManager: allocatePage()
-    PageManager-->>Buffer: page
-    Buffer-->>Test: page
+    Test->>BP: shouldFlushDirtyPage()
+    BP-->>Test: success
 ```
 
-### 5. shouldFlushDirtyPage()
+### 5. shouldEvictPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    participant FileManager as FileManager
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: flushPage(pageId)
-    Buffer->>FileManager: writePage(pageId, data)
-    FileManager-->>Buffer: success
-    Buffer->>Buffer: clearDirty(pageId)
-    Buffer-->>Test: FlushSuccess=true
+    Test->>BP: shouldEvictPage()
+    BP-->>Test: success
 ```
 
-### 6. shouldEvictPage()
+### 6. shouldRejectEvictPinnedPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    participant FileManager as FileManager
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: evictPage()
-    Buffer->>Buffer: selectVictim()
-    Buffer->>FileManager: writePage(victim)
-    FileManager-->>Buffer: success
-    Buffer-->>Test: EvictSuccess=true
+    Test->>BP: shouldRejectEvictPinnedPage()
+    BP-->>Test: success
 ```
 
-### 7. shouldRejectEvictPinnedPage()
+### 7. shouldReplaceVictimPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: evictPage()
-    Buffer->>Buffer: checkPinned()
-    Buffer-->>Test: error: PinnedPageCannotBeEvicted
+    Test->>BP: shouldReplaceVictimPage()
+    BP-->>Test: success
 ```
 
-### 8. shouldReplaceVictimPage()
+### 8. shouldClearDirtyFlagAfterFlush()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: fetchPage(pageId)
-    Buffer->>Buffer: evictPage()
-    Buffer-->>Test: pageLoaded
+    Test->>BP: shouldClearDirtyFlagAfterFlush()
+    BP-->>Test: success
 ```
 
-### 9. shouldMarkPageDirty()
+### 9. shouldTrackPinCount()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: markDirty(pageId)
-    Buffer->>Buffer: setDirtyFlag(pageId, true)
-    Buffer-->>Test: success
+    Test->>BP: shouldTrackPinCount()
+    BP-->>Test: success
 ```
 
-### 10. shouldClearDirtyFlagAfterFlush()
+### 10. shouldReturnCachedPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as BufferPoolTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
+    box #e0f2f1 BufferPool Component
+    participant BP as BufferPool
     end
 
-    Test->>Buffer: flushPage(pageId)
-    Buffer->>Buffer: setDirtyFlag(pageId, false)
-    Buffer-->>Test: success
-```
-
-### 11. shouldTrackPinCount()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as BufferPoolTest
-    end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    end
-
-    Test->>Buffer: getPinCount(pageId)
-    Buffer-->>Test: pinCount
-```
-
-### 12. shouldReturnCachedPage()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as BufferPoolTest
-    end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    end
-
-    Test->>Buffer: fetchPage(pageId)
-    Buffer->>Buffer: checkCache(pageId)
-    Buffer-->>Test: cachedPage
+    Test->>BP: shouldReturnCachedPage()
+    BP-->>Test: success
 ```
 
 ## PageManagerTest
 
-### 1. shouldCreatePage()
+### 1. shouldReadPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant Page as Page
+    box #e0f2f1 PageManager Component
+    participant PM as PageManager
     end
 
-    Test->>PageManager: createPage()
-    PageManager->>Page: new Page()
-    Page-->>PageManager: page
-    PageManager-->>Test: page
+    Test->>PM: shouldReadPage()
+    PM-->>Test: success
 ```
 
-### 2. shouldReadPage()
+### 2. shouldWritePage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
+    box #e0f2f1 PageManager Component
+    participant PM as PageManager
     end
 
-    Test->>PageManager: readPage(pageId)
-    PageManager->>FileManager: read()
-    FileManager-->>PageManager: rawBytes
-    PageManager-->>Test: page
+    Test->>PM: shouldWritePage()
+    PM-->>Test: success
 ```
 
-### 3. shouldWritePage()
+### 3. shouldAllocatePage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
+    box #e0f2f1 PageManager Component
+    participant PM as PageManager
     end
 
-    Test->>PageManager: writePage(page)
-    PageManager->>FileManager: write()
-    FileManager-->>PageManager: success
-    PageManager-->>Test: WriteSuccess=true
+    Test->>PM: shouldAllocatePage()
+    PM-->>Test: success
 ```
 
-### 4. shouldAllocatePage()
+### 4. shouldDeallocatePage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
+    box #e0f2f1 PageManager Component
+    participant PM as PageManager
     end
 
-    Test->>PageManager: allocatePage()
-    PageManager->>PageManager: assignNewId()
-    PageManager-->>Test: pageId
+    Test->>PM: shouldDeallocatePage()
+    PM-->>Test: success
 ```
 
-### 5. shouldDeallocatePage()
+### 5. shouldReuseFreedPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
+    box #e0f2f1 PageManager Component
+    participant PM as PageManager
     end
 
-    Test->>PageManager: deallocatePage(pageId)
-    PageManager->>PageManager: addToFreeList(pageId)
-    PageManager-->>Test: success
+    Test->>PM: shouldReuseFreedPage()
+    PM-->>Test: success
 ```
 
-### 6. shouldReuseFreedPage()
+### 6. shouldAssignUniquePageId()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
+    box #e0f2f1 PageManager Component
+    participant PM as PageManager
     end
 
-    Test->>PageManager: allocatePage()
-    PageManager->>PageManager: getFromFreeList()
-    PageManager-->>Test: reusedPageId
+    Test->>PM: shouldAssignUniquePageId()
+    PM-->>Test: success
 ```
 
-### 7. shouldAssignUniquePageId()
+### 7. shouldMaintainPageMetadata()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
+    box #e0f2f1 PageManager Component
+    participant PM as PageManager
     end
 
-    Test->>PageManager: allocatePage()
-    PageManager-->>Test: id1
-    Test->>PageManager: allocatePage()
-    PageManager-->>Test: id2 (id2 != id1)
-```
-
-### 8. shouldMaintainPageMetadata()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as PageManagerTest
-    end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    end
-
-    Test->>PageManager: getMetadata(pageId)
-    PageManager-->>Test: metadata
-```
-
-### 9. shouldMarkPageDirty()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as PageManagerTest
-    end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    end
-
-    Test->>PageManager: markDirty(pageId)
-    PageManager-->>Test: success
-```
-
-### 10. shouldClearDirtyFlag()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as PageManagerTest
-    end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    end
-
-    Test->>PageManager: clearDirty(pageId)
-    PageManager-->>Test: success
-```
-
-### 11. shouldCreateCheckpoint()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as PageManagerTest
-    end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
-    end
-
-    Test->>PageManager: checkpoint()
-    PageManager->>FileManager: flushAll()
-    FileManager-->>PageManager: success
-    PageManager-->>Test: CheckpointSuccess=true
-```
-
-### 12. shouldRestoreCheckpoint()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as PageManagerTest
-    end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
-    end
-
-    Test->>PageManager: restore(checkpointId)
-    PageManager->>FileManager: read(checkpointId)
-    FileManager-->>PageManager: state
-    PageManager-->>Test: RestoreSuccess=true
+    Test->>PM: shouldMaintainPageMetadata()
+    PM-->>Test: success
 ```
 
 ## FileManagerTest
@@ -433,222 +265,180 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: create("file.db")
-    FileManager->>Disk: createNewFile()
-    Disk-->>FileManager: success
-    FileManager-->>Test: FileCreated=true
+    Test->>FM: shouldCreateDataFile()
+    FM-->>Test: success
 ```
 
 ### 2. shouldOpenDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: open("file.db")
-    FileManager->>Disk: openFile()
-    Disk-->>FileManager: fileHandle
-    FileManager-->>Test: OpenSuccess=true
+    Test->>FM: shouldOpenDataFile()
+    FM-->>Test: success
 ```
 
 ### 3. shouldCloseDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: close()
-    FileManager->>Disk: closeHandle()
-    Disk-->>FileManager: success
-    FileManager-->>Test: CloseSuccess=true
+    Test->>FM: shouldCloseDataFile()
+    FM-->>Test: success
 ```
 
 ### 4. shouldReadDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: read(offset, buffer)
-    FileManager->>Disk: readBytes()
-    Disk-->>FileManager: bytesRead
-    FileManager-->>Test: bytesRead
+    Test->>FM: shouldReadDataFile()
+    FM-->>Test: success
 ```
 
 ### 5. shouldWriteDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: write(offset, buffer)
-    FileManager->>Disk: writeBytes()
-    Disk-->>FileManager: success
-    FileManager-->>Test: WriteSuccess=true
+    Test->>FM: shouldWriteDataFile()
+    FM-->>Test: success
 ```
 
 ### 6. shouldDeleteDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: delete("file.db")
-    FileManager->>Disk: deleteFile()
-    Disk-->>FileManager: success
-    FileManager-->>Test: DeleteSuccess=true
+    Test->>FM: shouldDeleteDataFile()
+    FM-->>Test: success
 ```
 
 ### 7. shouldRenameDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: rename("old", "new")
-    FileManager->>Disk: renameFile()
-    Disk-->>FileManager: success
-    FileManager-->>Test: RenameSuccess=true
+    Test->>FM: shouldRenameDataFile()
+    FM-->>Test: success
 ```
 
 ### 8. shouldExpandDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: expand(size)
-    FileManager->>Disk: setFileSize()
-    Disk-->>FileManager: success
-    FileManager-->>Test: ExpandSuccess=true
+    Test->>FM: shouldExpandDataFile()
+    FM-->>Test: success
 ```
 
 ### 9. shouldShrinkDataFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: shrink(size)
-    FileManager->>Disk: truncateFile()
-    Disk-->>FileManager: success
-    FileManager-->>Test: ShrinkSuccess=true
+    Test->>FM: shouldShrinkDataFile()
+    FM-->>Test: success
 ```
 
 ### 10. shouldCheckFileExistence()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: exists("file.db")
-    FileManager-->>Test: exists=true
+    Test->>FM: shouldCheckFileExistence()
+    FM-->>Test: success
 ```
 
 ### 11. shouldSynchronizeFileToDisk()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
-    participant Disk as Disk
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: sync()
-    FileManager->>Disk: fsync()
-    Disk-->>FileManager: success
-    FileManager-->>Test: SyncSuccess=true
+    Test->>FM: shouldSynchronizeFileToDisk()
+    FM-->>Test: success
 ```
 
 ### 12. shouldHandleMissingFile()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as FileManagerTest
     end
-    box #e0f2f1 Storage Components
-    participant FileManager as FileManager
+    box #e0f2f1 FileManager Component
+    participant FM as FileManager
     end
 
-    Test->>FileManager: open("missing.db")
-    FileManager-->>Test: error: FileNotFound
+    Test->>FM: shouldHandleMissingFile()
+    FM-->>Test: success
 ```
 
 ## PageTest
@@ -657,285 +447,225 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: new Page(id)
-    Page-->>Test: PageCreated
+    Test->>P: shouldCreatePage()
+    P-->>Test: success
 ```
 
 ### 2. shouldReadPageData()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: getData()
-    Page-->>Test: bytes
+    Test->>P: shouldReadPageData()
+    P-->>Test: success
 ```
 
 ### 3. shouldWritePageData()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: writeData(bytes)
-    Page-->>Test: success
+    Test->>P: shouldWritePageData()
+    P-->>Test: success
 ```
 
 ### 4. shouldUpdatePageHeader()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: updateHeader(header)
-    Page-->>Test: success
+    Test->>P: shouldUpdatePageHeader()
+    P-->>Test: success
 ```
 
 ### 5. shouldMarkPageDirty()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: setDirty(true)
-    Page-->>Test: success
+    Test->>P: shouldMarkPageDirty()
+    P-->>Test: success
 ```
 
 ### 6. shouldClearDirtyFlag()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: setDirty(false)
-    Page-->>Test: success
+    Test->>P: shouldClearDirtyFlag()
+    P-->>Test: success
 ```
 
 ### 7. shouldIncrementPageLSN()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: setLSN(lsn)
-    Page-->>Test: success
+    Test->>P: shouldIncrementPageLSN()
+    P-->>Test: success
 ```
 
 ### 8. shouldResetPage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PageTest
     end
-    box #e0f2f1 Storage Components
-    participant Page as Page
+    box #e0f2f1 Page Component
+    participant P as Page
     end
 
-    Test->>Page: reset()
-    Page-->>Test: success
+    Test->>P: shouldResetPage()
+    P-->>Test: success
 ```
 
-# Storage Engine Integration Test
+# Storage Engine Unit Test
 
 ### 1. shouldAllocateAndWritePage()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
+    participant Test as StorageEngineModuleIntegrationTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
+    box #e0f2f1 Storage Engine Module Components
+    participant System as System
     end
 
-    Test->>PageManager: allocatePage()
-    PageManager-->>Test: pageId
-    Test->>PageManager: writePage(pageId, data)
-    PageManager->>FileManager: write()
-    FileManager-->>PageManager: success
-    PageManager-->>Test: WriteSuccess=true
+    Test->>System: shouldAllocateAndWritePage()
+    System-->>Test: success
 ```
 
 ### 2. shouldReadPageFromDisk()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
+    participant Test as StorageEngineModuleIntegrationTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
+    box #e0f2f1 Storage Engine Module Components
+    participant System as System
     end
 
-    Test->>PageManager: readPage(pageId)
-    PageManager->>FileManager: read()
-    FileManager-->>PageManager: pageData
-    PageManager-->>Test: page
+    Test->>System: shouldReadPageFromDisk()
+    System-->>Test: success
 ```
 
 ### 3. shouldFlushDirtyPageToDisk()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
+    participant Test as StorageEngineModuleIntegrationTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    participant FileManager as FileManager
+    box #e0f2f1 Storage Engine Module Components
+    participant System as System
     end
 
-    Test->>Buffer: flushPage(pageId)
-    Buffer->>FileManager: write()
-    FileManager-->>Buffer: success
-    Buffer-->>Test: Flushed=true
+    Test->>System: shouldFlushDirtyPageToDisk()
+    System-->>Test: success
 ```
 
 ### 4. shouldReloadPageIntoBufferPool()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
+    participant Test as StorageEngineModuleIntegrationTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    participant FileManager as FileManager
+    box #e0f2f1 Storage Engine Module Components
+    participant System as System
     end
 
-    Test->>Buffer: fetchPage(pageId)
-    Buffer->>FileManager: read()
-    FileManager-->>Buffer: pageData
-    Buffer-->>Test: page
+    Test->>System: shouldReloadPageIntoBufferPool()
+    System-->>Test: success
 ```
 
 ### 5. shouldEvictPageUsingReplacementPolicy()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
+    participant Test as StorageEngineModuleIntegrationTest
     end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    participant FileManager as FileManager
+    box #e0f2f1 Storage Engine Module Components
+    participant System as System
     end
 
-    Test->>Buffer: fetchPage(pageId)
-    Buffer->>Buffer: evictVictim()
-    Buffer->>FileManager: write(victim)
-    FileManager-->>Buffer: success
-    Buffer-->>Test: EvictedAndFetched=true
+    Test->>System: shouldEvictPageUsingReplacementPolicy()
+    System-->>Test: success
 ```
 
 ### 6. shouldPersistPageAcrossRestart()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
+    participant Test as StorageEngineModuleIntegrationTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
+    box #e0f2f1 Storage Engine Module Components
+    participant System as System
     end
 
-    Test->>PageManager: writePage(page)
-    PageManager->>FileManager: sync()
-    FileManager-->>PageManager: success
-    Test->>PageManager: restart()
-    Test->>PageManager: readPage(pageId)
-    PageManager-->>Test: page
+    Test->>System: shouldPersistPageAcrossRestart()
+    System-->>Test: success
 ```
 
-### 7. shouldRecoverPageAfterCrash()
+### 7. shouldSynchronizeBufferPoolAndDisk()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
+    participant Test as StorageEngineModuleIntegrationTest
     end
-    box #e0f2f1 Storage Components
-    participant PageManager as PageManager
-    participant FileManager as FileManager
+    box #e0f2f1 Storage Engine Module Components
+    participant System as System
     end
 
-    Test->>PageManager: recover()
-    PageManager->>FileManager: read()
-    PageManager-->>Test: recoveredState
+    Test->>System: shouldSynchronizeBufferPoolAndDisk()
+    System-->>Test: success
 ```
-
-### 8. shouldSynchronizeBufferPoolAndDisk()
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e1f5fe Test Suite
-    participant Test as StorageIntegrationTest
-    end
-    box #e0f2f1 Storage Components
-    participant Buffer as BufferPool
-    participant FileManager as FileManager
-    end
-
-    Test->>Buffer: syncAll()
-    Buffer->>FileManager: flushAll()
-    FileManager-->>Buffer: success
-    Buffer-->>Test: Synced=true
-```
-

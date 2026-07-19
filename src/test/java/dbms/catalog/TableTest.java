@@ -69,33 +69,6 @@ public class TableTest {
     }
 
     @Test
-    public void shouldRejectDuplicatePrimaryKey() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldValidateConstraintsBeforeInsert() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldValidateConstraintsBeforeUpdate() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
     public void shouldReturnInsertedRow() {
         // Arrange
         

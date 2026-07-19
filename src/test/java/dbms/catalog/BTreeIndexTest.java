@@ -3,7 +3,7 @@ package dbms.catalog;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class IndexTest {
+public class BTreeIndexTest {
 
     @Test
     public void shouldInsertKey() {
@@ -52,42 +52,6 @@ public class IndexTest {
 
     @Test
     public void shouldRebuildIndex() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldReturnOrderedKeys() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldRejectInvalidKey() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldSplitNode() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldMergeNode() {
         // Arrange
         
         // Act

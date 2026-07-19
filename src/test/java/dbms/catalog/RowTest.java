@@ -24,7 +24,7 @@ public class RowTest {
     }
 
     @Test
-    public void shouldDeleteRow() {
+    public void shouldMarkRowDeleted() {
         // Arrange
         
         // Act
@@ -79,15 +79,6 @@ public class RowTest {
 
     @Test
     public void shouldReplaceColumnValue() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldMarkRowDeleted() {
         // Arrange
         
         // Act

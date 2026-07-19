@@ -59,13 +59,4 @@ public class PartitionTest {
         // Assert
     }
 
-    @Test
-    public void shouldLocateCorrectPartition() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
 }

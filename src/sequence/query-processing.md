@@ -1,4 +1,4 @@
-# Query Processing Unit Test
+Query Processing Module Unit Test
 
 ## SQLParserTest
 
@@ -6,278 +6,255 @@
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
-    participant Lexer as Lexer
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("SELECT * FROM t")
-    Parser->>Lexer: tokenize()
-    Lexer-->>Parser: tokens
-    Parser-->>Test: AST
+    Test->>SQLP: shouldParseValidSQL()
+    SQLP-->>Test: success
 ```
 
 ### 2. shouldParseSelectStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parseSelect("SELECT a FROM t")
-    Parser-->>Test: SelectNode
+    Test->>SQLP: shouldParseSelectStatement()
+    SQLP-->>Test: success
 ```
 
 ### 3. shouldParseInsertStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parseInsert("INSERT INTO t VALUES (1)")
-    Parser-->>Test: InsertNode
+    Test->>SQLP: shouldParseInsertStatement()
+    SQLP-->>Test: success
 ```
 
 ### 4. shouldParseUpdateStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parseUpdate("UPDATE t SET a=1")
-    Parser-->>Test: UpdateNode
+    Test->>SQLP: shouldParseUpdateStatement()
+    SQLP-->>Test: success
 ```
 
 ### 5. shouldParseDeleteStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parseDelete("DELETE FROM t")
-    Parser-->>Test: DeleteNode
+    Test->>SQLP: shouldParseDeleteStatement()
+    SQLP-->>Test: success
 ```
 
 ### 6. shouldParseCreateTableStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parseCreateTable("CREATE TABLE t")
-    Parser-->>Test: CreateTableNode
+    Test->>SQLP: shouldParseCreateTableStatement()
+    SQLP-->>Test: success
 ```
 
 ### 7. shouldParseDropTableStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parseDropTable("DROP TABLE t")
-    Parser-->>Test: DropTableNode
+    Test->>SQLP: shouldParseDropTableStatement()
+    SQLP-->>Test: success
 ```
 
 ### 8. shouldTokenizeSQL()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
-    participant Lexer as Lexer
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: tokenize()
-    Parser->>Lexer: tokenize()
-    Lexer-->>Parser: tokens
-    Parser-->>Test: tokens
+    Test->>SQLP: shouldTokenizeSQL()
+    SQLP-->>Test: success
 ```
 
 ### 9. shouldValidateSQLSyntax()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: validate("SELECT * FROM t")
-    Parser-->>Test: valid=true
+    Test->>SQLP: shouldValidateSQLSyntax()
+    SQLP-->>Test: success
 ```
 
 ### 10. shouldRejectInvalidSQLSyntax()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: validate("SELECT * FROM")
-    Parser-->>Test: error: SyntaxError
+    Test->>SQLP: shouldRejectInvalidSQLSyntax()
+    SQLP-->>Test: success
 ```
 
 ### 11. shouldRejectUnsupportedSQL()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("CREATE DATABASE")
-    Parser-->>Test: error: UnsupportedOperation
+    Test->>SQLP: shouldRejectUnsupportedSQL()
+    SQLP-->>Test: success
 ```
 
 ### 12. shouldHandleNestedQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("SELECT * FROM (SELECT * FROM t)")
-    Parser-->>Test: NestedAST
+    Test->>SQLP: shouldHandleNestedQuery()
+    SQLP-->>Test: success
 ```
 
 ### 13. shouldHandleAlias()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("SELECT a AS alias FROM t")
-    Parser-->>Test: AliasAST
+    Test->>SQLP: shouldHandleAlias()
+    SQLP-->>Test: success
 ```
 
 ### 14. shouldHandleJoinClause()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("SELECT * FROM t1 JOIN t2")
-    Parser-->>Test: JoinAST
+    Test->>SQLP: shouldHandleJoinClause()
+    SQLP-->>Test: success
 ```
 
 ### 15. shouldHandleGroupByClause()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("SELECT a FROM t GROUP BY a")
-    Parser-->>Test: GroupByAST
+    Test->>SQLP: shouldHandleGroupByClause()
+    SQLP-->>Test: success
 ```
 
 ### 16. shouldHandleOrderByClause()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("SELECT a FROM t ORDER BY a")
-    Parser-->>Test: OrderByAST
+    Test->>SQLP: shouldHandleOrderByClause()
+    SQLP-->>Test: success
 ```
 
 ### 17. shouldHandleLimitClause()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as SQLParserTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 SQLParser Component
+    participant SQLP as SQLParser
     end
 
-    Test->>Parser: parse("SELECT a FROM t LIMIT 10")
-    Parser-->>Test: LimitAST
+    Test->>SQLP: shouldHandleLimitClause()
+    SQLP-->>Test: success
 ```
 
 ## LexerTest
@@ -286,160 +263,150 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("SELECT")
-    Lexer-->>Test: TOKEN(SELECT)
+    Test->>L: shouldTokenizeSQLStatement()
+    L-->>Test: success
 ```
 
 ### 2. shouldIgnoreWhitespace()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("SELECT   *")
-    Lexer-->>Test: [TOKEN(SELECT), TOKEN(ASTERISK)]
+    Test->>L: shouldIgnoreWhitespace()
+    L-->>Test: success
 ```
 
 ### 3. shouldIgnoreComments()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("SELECT -- comment")
-    Lexer-->>Test: [TOKEN(SELECT)]
+    Test->>L: shouldIgnoreComments()
+    L-->>Test: success
 ```
 
 ### 4. shouldRecognizeKeywords()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("SELECT INSERT UPDATE")
-    Lexer-->>Test: Keywords list
+    Test->>L: shouldRecognizeKeywords()
+    L-->>Test: success
 ```
 
 ### 5. shouldRecognizeIdentifiers()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("student_name")
-    Lexer-->>Test: TOKEN(IDENTIFIER)
+    Test->>L: shouldRecognizeIdentifiers()
+    L-->>Test: success
 ```
 
 ### 6. shouldRecognizeOperators()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("+=*")
-    Lexer-->>Test: Operators list
+    Test->>L: shouldRecognizeOperators()
+    L-->>Test: success
 ```
 
 ### 7. shouldRecognizeNumbers()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("123.45")
-    Lexer-->>Test: TOKEN(NUMBER)
+    Test->>L: shouldRecognizeNumbers()
+    L-->>Test: success
 ```
 
 ### 8. shouldRecognizeStringLiteral()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("'john'")
-    Lexer-->>Test: TOKEN(STRING)
+    Test->>L: shouldRecognizeStringLiteral()
+    L-->>Test: success
 ```
 
 ### 9. shouldRecognizeBooleanLiteral()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize("TRUE")
-    Lexer-->>Test: TOKEN(BOOLEAN)
+    Test->>L: shouldRecognizeBooleanLiteral()
+    L-->>Test: success
 ```
 
 ### 10. shouldRecognizeDelimiter()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LexerTest
     end
-    box #fff3e0 Query Components
-    participant Lexer as Lexer
+    box #fff8e1 Lexer Component
+    participant L as Lexer
     end
 
-    Test->>Lexer: tokenize(";,")
-    Lexer-->>Test: Delimiters list
+    Test->>L: shouldRecognizeDelimiter()
+    L-->>Test: success
 ```
 
 ## ASTTest
@@ -448,160 +415,150 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: build(tokens)
-    AST-->>Test: ASTRoot
+    Test->>AST: shouldBuildASTFromSQL()
+    AST-->>Test: success
 ```
 
 ### 2. shouldStoreASTRootNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: setRoot(node)
-    AST-->>Test: root stored
+    Test->>AST: shouldStoreASTRootNode()
+    AST-->>Test: success
 ```
 
 ### 3. shouldBuildSelectNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createSelectNode()
-    AST-->>Test: SelectNode
+    Test->>AST: shouldBuildSelectNode()
+    AST-->>Test: success
 ```
 
 ### 4. shouldBuildInsertNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createInsertNode()
-    AST-->>Test: InsertNode
+    Test->>AST: shouldBuildInsertNode()
+    AST-->>Test: success
 ```
 
 ### 5. shouldBuildUpdateNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createUpdateNode()
-    AST-->>Test: UpdateNode
+    Test->>AST: shouldBuildUpdateNode()
+    AST-->>Test: success
 ```
 
 ### 6. shouldBuildDeleteNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createDeleteNode()
-    AST-->>Test: DeleteNode
+    Test->>AST: shouldBuildDeleteNode()
+    AST-->>Test: success
 ```
 
 ### 7. shouldBuildJoinNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createJoinNode()
-    AST-->>Test: JoinNode
+    Test->>AST: shouldBuildJoinNode()
+    AST-->>Test: success
 ```
 
 ### 8. shouldBuildWhereNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createWhereNode()
-    AST-->>Test: WhereNode
+    Test->>AST: shouldBuildWhereNode()
+    AST-->>Test: success
 ```
 
 ### 9. shouldBuildGroupByNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createGroupByNode()
-    AST-->>Test: GroupByNode
+    Test->>AST: shouldBuildGroupByNode()
+    AST-->>Test: success
 ```
 
 ### 10. shouldBuildOrderByNode()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as ASTTest
     end
-    box #fff3e0 Query Components
+    box #fff8e1 AST Component
     participant AST as AST
     end
 
-    Test->>AST: createOrderByNode()
-    AST-->>Test: OrderByNode
+    Test->>AST: shouldBuildOrderByNode()
+    AST-->>Test: success
 ```
 
 ## LogicalPlanTest
@@ -610,160 +567,150 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: new LogicalPlan()
-    Plan-->>Test: LogicalPlan
+    Test->>LP: shouldCreateLogicalPlan()
+    LP-->>Test: success
 ```
 
 ### 2. shouldAddLogicalOperators()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: addOperator(op)
-    Plan-->>Test: operator added
+    Test->>LP: shouldAddLogicalOperators()
+    LP-->>Test: success
 ```
 
 ### 3. shouldCreateScanOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: createScan("t")
-    Plan-->>Test: ScanOperator
+    Test->>LP: shouldCreateScanOperator()
+    LP-->>Test: success
 ```
 
 ### 4. shouldCreateFilterOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: createFilter("a > 1")
-    Plan-->>Test: FilterOperator
+    Test->>LP: shouldCreateFilterOperator()
+    LP-->>Test: success
 ```
 
 ### 5. shouldCreateProjectionOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: createProjection("a")
-    Plan-->>Test: ProjectionOperator
+    Test->>LP: shouldCreateProjectionOperator()
+    LP-->>Test: success
 ```
 
 ### 6. shouldCreateJoinOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: createJoin()
-    Plan-->>Test: JoinOperator
+    Test->>LP: shouldCreateJoinOperator()
+    LP-->>Test: success
 ```
 
 ### 7. shouldCreateAggregationOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: createAggregation()
-    Plan-->>Test: AggregationOperator
+    Test->>LP: shouldCreateAggregationOperator()
+    LP-->>Test: success
 ```
 
 ### 8. shouldCreateSortOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: createSort()
-    Plan-->>Test: SortOperator
+    Test->>LP: shouldCreateSortOperator()
+    LP-->>Test: success
 ```
 
 ### 9. shouldCreateLimitOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: createLimit()
-    Plan-->>Test: LimitOperator
+    Test->>LP: shouldCreateLimitOperator()
+    LP-->>Test: success
 ```
 
 ### 10. shouldLinkLogicalOperators()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LogicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as LogicalPlan
+    box #fff8e1 LogicalPlan Component
+    participant LP as LogicalPlan
     end
 
-    Test->>Plan: link(op1, op2)
-    Plan-->>Test: linked
+    Test->>LP: shouldLinkLogicalOperators()
+    LP-->>Test: success
 ```
 
 ## QueryOptimizerTest
@@ -772,192 +719,180 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: optimize(plan)
-    Optimizer-->>Test: optimizedPlan
+    Test->>QO: shouldOptimizeLogicalPlan()
+    QO-->>Test: success
 ```
 
 ### 2. shouldEstimateQueryCost()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: estimateCost(plan)
-    Optimizer-->>Test: cost
+    Test->>QO: shouldEstimateQueryCost()
+    QO-->>Test: success
 ```
 
 ### 3. shouldChooseJoinOrder()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: chooseJoinOrder(tables)
-    Optimizer-->>Test: joinOrder
+    Test->>QO: shouldChooseJoinOrder()
+    QO-->>Test: success
 ```
 
 ### 4. shouldGeneratePhysicalPlan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: generatePhysical(plan)
-    Optimizer-->>Test: physicalPlan
+    Test->>QO: shouldGeneratePhysicalPlan()
+    QO-->>Test: success
 ```
 
 ### 5. shouldPushDownPredicate()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: pushDownPredicate()
-    Optimizer-->>Test: pushed
+    Test->>QO: shouldPushDownPredicate()
+    QO-->>Test: success
 ```
 
 ### 6. shouldEliminateUnusedProjection()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: eliminateProjections()
-    Optimizer-->>Test: eliminated
+    Test->>QO: shouldEliminateUnusedProjection()
+    QO-->>Test: success
 ```
 
 ### 7. shouldSimplifyExpression()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: simplifyExpression()
-    Optimizer-->>Test: simplified
+    Test->>QO: shouldSimplifyExpression()
+    QO-->>Test: success
 ```
 
 ### 8. shouldChooseIndexScan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: chooseIndexScan()
-    Optimizer-->>Test: IndexScanChosen
+    Test->>QO: shouldChooseIndexScan()
+    QO-->>Test: success
 ```
 
 ### 9. shouldChooseTableScan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: chooseTableScan()
-    Optimizer-->>Test: TableScanChosen
+    Test->>QO: shouldChooseTableScan()
+    QO-->>Test: success
 ```
 
 ### 10. shouldOptimizeJoinStrategy()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: chooseJoinStrategy()
-    Optimizer-->>Test: HashJoinChosen
+    Test->>QO: shouldOptimizeJoinStrategy()
+    QO-->>Test: success
 ```
 
 ### 11. shouldOptimizeAggregation()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: optimizeAggregation()
-    Optimizer-->>Test: optimized
+    Test->>QO: shouldOptimizeAggregation()
+    QO-->>Test: success
 ```
 
 ### 12. shouldReuseStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryOptimizerTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 QueryOptimizer Component
+    participant QO as QueryOptimizer
     end
 
-    Test->>Optimizer: reuseStats()
-    Optimizer-->>Test: reused
+    Test->>QO: shouldReuseStatistics()
+    QO-->>Test: success
 ```
 
 ## PhysicalPlanTest
@@ -966,160 +901,150 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: new PhysicalPlan()
-    Plan-->>Test: PhysicalPlan
+    Test->>PP: shouldCreatePhysicalPlan()
+    PP-->>Test: success
 ```
 
 ### 2. shouldStoreExecutionOperators()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: addOperator(op)
-    Plan-->>Test: operator stored
+    Test->>PP: shouldStoreExecutionOperators()
+    PP-->>Test: success
 ```
 
 ### 3. shouldCreateSequentialScan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: createSeqScan()
-    Plan-->>Test: SeqScanOperator
+    Test->>PP: shouldCreateSequentialScan()
+    PP-->>Test: success
 ```
 
 ### 4. shouldCreateIndexScan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: createIndexScan()
-    Plan-->>Test: IndexScanOperator
+    Test->>PP: shouldCreateIndexScan()
+    PP-->>Test: success
 ```
 
 ### 5. shouldCreateNestedLoopJoin()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: createNLJoin()
-    Plan-->>Test: NLJoinOperator
+    Test->>PP: shouldCreateNestedLoopJoin()
+    PP-->>Test: success
 ```
 
 ### 6. shouldCreateHashJoin()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: createHashJoin()
-    Plan-->>Test: HashJoinOperator
+    Test->>PP: shouldCreateHashJoin()
+    PP-->>Test: success
 ```
 
 ### 7. shouldCreateMergeJoin()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: createMergeJoin()
-    Plan-->>Test: MergeJoinOperator
+    Test->>PP: shouldCreateMergeJoin()
+    PP-->>Test: success
 ```
 
 ### 8. shouldCreateSortOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: createSort()
-    Plan-->>Test: SortOperator
+    Test->>PP: shouldCreateSortOperator()
+    PP-->>Test: success
 ```
 
 ### 9. shouldCreateAggregateOperator()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: createAggregate()
-    Plan-->>Test: AggregateOperator
+    Test->>PP: shouldCreateAggregateOperator()
+    PP-->>Test: success
 ```
 
 ### 10. shouldLinkExecutionTree()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as PhysicalPlanTest
     end
-    box #fff3e0 Query Components
-    participant Plan as PhysicalPlan
+    box #fff8e1 PhysicalPlan Component
+    participant PP as PhysicalPlan
     end
 
-    Test->>Plan: link(op1, op2)
-    Plan-->>Test: executionTree
+    Test->>PP: shouldLinkExecutionTree()
+    PP-->>Test: success
 ```
 
 ## QueryExecutorTest
@@ -1128,192 +1053,180 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: execute(plan)
-    Executor-->>Test: resultSet
+    Test->>QE: shouldExecutePhysicalPlan()
+    QE-->>Test: success
 ```
 
 ### 2. shouldExecuteSequentialScan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: executeSeqScan()
-    Executor-->>Test: rows
+    Test->>QE: shouldExecuteSequentialScan()
+    QE-->>Test: success
 ```
 
 ### 3. shouldExecuteIndexScan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: executeIndexScan()
-    Executor-->>Test: rows
+    Test->>QE: shouldExecuteIndexScan()
+    QE-->>Test: success
 ```
 
 ### 4. shouldExecuteJoin()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: executeJoin()
-    Executor-->>Test: joinedRows
+    Test->>QE: shouldExecuteJoin()
+    QE-->>Test: success
 ```
 
 ### 5. shouldExecuteAggregation()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: executeAggregation()
-    Executor-->>Test: aggregatedRows
+    Test->>QE: shouldExecuteAggregation()
+    QE-->>Test: success
 ```
 
 ### 6. shouldExecuteSort()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: executeSort()
-    Executor-->>Test: sortedRows
+    Test->>QE: shouldExecuteSort()
+    QE-->>Test: success
 ```
 
 ### 7. shouldExecuteProjection()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: executeProjection()
-    Executor-->>Test: projectedRows
+    Test->>QE: shouldExecuteProjection()
+    QE-->>Test: success
 ```
 
 ### 8. shouldExecuteFilter()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: executeFilter()
-    Executor-->>Test: filteredRows
+    Test->>QE: shouldExecuteFilter()
+    QE-->>Test: success
 ```
 
 ### 9. shouldFetchResultRows()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: fetchNext()
-    Executor-->>Test: row
+    Test->>QE: shouldFetchResultRows()
+    QE-->>Test: success
 ```
 
 ### 10. shouldReturnEmptyResult()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: fetchNext()
-    Executor-->>Test: empty
+    Test->>QE: shouldReturnEmptyResult()
+    QE-->>Test: success
 ```
 
 ### 11. shouldCancelRunningQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: cancel()
-    Executor-->>Test: QueryCancelled=true
+    Test->>QE: shouldCancelRunningQuery()
+    QE-->>Test: success
 ```
 
 ### 12. shouldReleaseExecutionResources()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as QueryExecutorTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 QueryExecutor Component
+    participant QE as QueryExecutor
     end
 
-    Test->>Executor: release()
-    Executor-->>Test: released=true
+    Test->>QE: shouldReleaseExecutionResources()
+    QE-->>Test: success
 ```
 
 ## StatisticsManagerTest
@@ -1322,361 +1235,330 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: collectTableStats("t")
-    Stats-->>Test: stats
+    Test->>SM: shouldCollectTableStatistics()
+    SM-->>Test: success
 ```
 
 ### 2. shouldCollectColumnStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: collectColumnStats("t", "c")
-    Stats-->>Test: stats
+    Test->>SM: shouldCollectColumnStatistics()
+    SM-->>Test: success
 ```
 
 ### 3. shouldUpdateStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: updateStats("t")
-    Stats-->>Test: UpdateSuccess=true
+    Test->>SM: shouldUpdateStatistics()
+    SM-->>Test: success
 ```
 
 ### 4. shouldDeleteStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: deleteStats("t")
-    Stats-->>Test: DeleteSuccess=true
+    Test->>SM: shouldDeleteStatistics()
+    SM-->>Test: success
 ```
 
 ### 5. shouldEstimateRowCount()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: estimateRows("t")
-    Stats-->>Test: rowCount
+    Test->>SM: shouldEstimateRowCount()
+    SM-->>Test: success
 ```
 
 ### 6. shouldEstimateSelectivity()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: estimateSelectivity("t", "c > 1")
-    Stats-->>Test: selectivity
+    Test->>SM: shouldEstimateSelectivity()
+    SM-->>Test: success
 ```
 
 ### 7. shouldEstimateDistinctValues()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: estimateDistinct("t", "c")
-    Stats-->>Test: distinctCount
+    Test->>SM: shouldEstimateDistinctValues()
+    SM-->>Test: success
 ```
 
 ### 8. shouldEstimateJoinCost()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: estimateJoinCost()
-    Stats-->>Test: cost
+    Test->>SM: shouldEstimateJoinCost()
+    SM-->>Test: success
 ```
 
 ### 9. shouldProvideStatisticsForOptimizer()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: getStatsForOptimizer()
-    Stats-->>Test: statsMap
+    Test->>SM: shouldProvideStatisticsForOptimizer()
+    SM-->>Test: success
 ```
 
 ### 10. shouldPersistStatistics()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as StatisticsManagerTest
     end
-    box #fff3e0 Query Components
-    participant Stats as StatisticsManager
+    box #fff8e1 StatisticsManager Component
+    participant SM as StatisticsManager
     end
 
-    Test->>Stats: persist()
-    Stats-->>Test: PersistSuccess=true
+    Test->>SM: shouldPersistStatistics()
+    SM-->>Test: success
 ```
 
-# Query Processing Integration Test
+# Query Processing Unit Test
 
 ### 1. shouldParseOptimizeAndExecuteQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
-    participant Optimizer as QueryOptimizer
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Parser: parse()
-    Parser-->>Optimizer: AST
-    Optimizer-->>Executor: PhysicalPlan
-    Executor-->>Test: resultSet
+    Test->>System: shouldParseOptimizeAndExecuteQuery()
+    System-->>Test: success
 ```
 
 ### 2. shouldGenerateLogicalAndPhysicalPlan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Parser: parse()
-    Parser-->>Optimizer: AST
-    Optimizer-->>Test: physicalPlan
+    Test->>System: shouldGenerateLogicalAndPhysicalPlan()
+    System-->>Test: success
 ```
 
 ### 3. shouldExecuteOptimizedQueryPlan()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: execute(optimizedPlan)
-    Executor-->>Test: resultSet
+    Test->>System: shouldExecuteOptimizedQueryPlan()
+    System-->>Test: success
 ```
 
 ### 4. shouldCollectStatisticsDuringExecution()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
-    participant Stats as StatisticsManager
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: execute()
-    Executor->>Stats: recordMetrics()
-    Stats-->>Test: updated stats
+    Test->>System: shouldCollectStatisticsDuringExecution()
+    System-->>Test: success
 ```
 
 ### 5. shouldRejectInvalidSQLQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Parser as SQLParser
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Parser: parse("invalid SQL")
-    Parser-->>Test: error: SyntaxError
+    Test->>System: shouldRejectInvalidSQLQuery()
+    System-->>Test: success
 ```
 
 ### 6. shouldOptimizeJoinQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Optimizer as QueryOptimizer
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Optimizer: optimizeJoin()
-    Optimizer-->>Test: JoinPlanChosen
+    Test->>System: shouldOptimizeJoinQuery()
+    System-->>Test: success
 ```
 
 ### 7. shouldExecuteIndexBasedQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: executeIndexQuery()
-    Executor-->>Test: indexResult
+    Test->>System: shouldExecuteIndexBasedQuery()
+    System-->>Test: success
 ```
 
 ### 8. shouldExecuteAggregateQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: executeAggregateQuery()
-    Executor-->>Test: aggregateResult
+    Test->>System: shouldExecuteAggregateQuery()
+    System-->>Test: success
 ```
 
 ### 9. shouldExecuteNestedQuery()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: executeNestedQuery()
-    Executor-->>Test: nestedResult
+    Test->>System: shouldExecuteNestedQuery()
+    System-->>Test: success
 ```
 
 ### 10. shouldExecuteMultiTableJoin()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: executeMultiJoin()
-    Executor-->>Test: multiJoinResult
+    Test->>System: shouldExecuteMultiTableJoin()
+    System-->>Test: success
 ```
 
 ### 11. shouldExecuteDDLStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: executeDDL()
-    Executor-->>Test: DDLCompleted=true
+    Test->>System: shouldExecuteDDLStatement()
+    System-->>Test: success
 ```
 
 ### 12. shouldExecuteDMLStatement()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as QueryProcessingIntegrationTest
+    participant Test as QueryProcessingModuleIntegrationTest
     end
-    box #fff3e0 Query Components
-    participant Executor as QueryExecutor
+    box #fff8e1 Query Processing Module Components
+    participant System as System
     end
 
-    Test->>Executor: executeDML()
-    Executor-->>Test: DMLRowsAffected
+    Test->>System: shouldExecuteDMLStatement()
+    System-->>Test: success
 ```
-

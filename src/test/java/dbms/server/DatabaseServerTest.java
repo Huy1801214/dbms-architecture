@@ -77,22 +77,4 @@ public class DatabaseServerTest {
         // Assert
     }
 
-    @Test
-    public void shouldCloseIdleConnections() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldRecoverAfterUnexpectedShutdown() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
 }

@@ -6,15 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DatabaseTest {
 
     @Test
-    public void shouldCreateDatabase() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
     public void shouldOpenDatabase() {
         // Arrange
         
@@ -34,15 +25,6 @@ public class DatabaseTest {
 
     @Test
     public void shouldRenameDatabase() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldDropDatabase() {
         // Arrange
         
         // Act
