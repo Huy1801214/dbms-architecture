@@ -3,10 +3,10 @@ package dbms.catalog;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MetadataIntegrationTest {
+public class BTreeIndexTest {
 
     @Test
-    public void shouldRegisterDatabaseMetadata() {
+    public void shouldInsertKey() {
         // Arrange
         
         // Act
@@ -15,7 +15,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRegisterSchemaMetadata() {
+    public void shouldSearchKey() {
         // Arrange
         
         // Act
@@ -24,7 +24,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRegisterTableMetadata() {
+    public void shouldDeleteKey() {
         // Arrange
         
         // Act
@@ -33,7 +33,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRegisterIndexMetadata() {
+    public void shouldUpdateKey() {
         // Arrange
         
         // Act
@@ -42,7 +42,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldUpdateCatalogAfterSchemaChange() {
+    public void shouldHandleDuplicateKey() {
         // Arrange
         
         // Act
@@ -51,25 +51,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRefreshMetadataAfterDDL() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldSynchronizeMetadataCache() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldReloadMetadataAfterRestart() {
+    public void shouldRebuildIndex() {
         // Arrange
         
         // Act

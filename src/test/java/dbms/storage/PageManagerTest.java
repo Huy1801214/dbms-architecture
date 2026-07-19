@@ -1,12 +1,12 @@
-package dbms.catalog;
+package dbms.storage;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MetadataIntegrationTest {
+public class PageManagerTest {
 
     @Test
-    public void shouldRegisterDatabaseMetadata() {
+    public void shouldReadPage() {
         // Arrange
         
         // Act
@@ -15,7 +15,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRegisterSchemaMetadata() {
+    public void shouldWritePage() {
         // Arrange
         
         // Act
@@ -24,7 +24,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRegisterTableMetadata() {
+    public void shouldAllocatePage() {
         // Arrange
         
         // Act
@@ -33,7 +33,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRegisterIndexMetadata() {
+    public void shouldDeallocatePage() {
         // Arrange
         
         // Act
@@ -42,7 +42,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldUpdateCatalogAfterSchemaChange() {
+    public void shouldReuseFreedPage() {
         // Arrange
         
         // Act
@@ -51,7 +51,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldRefreshMetadataAfterDDL() {
+    public void shouldAssignUniquePageId() {
         // Arrange
         
         // Act
@@ -60,16 +60,7 @@ public class MetadataIntegrationTest {
     }
 
     @Test
-    public void shouldSynchronizeMetadataCache() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldReloadMetadataAfterRestart() {
+    public void shouldMaintainPageMetadata() {
         // Arrange
         
         // Act

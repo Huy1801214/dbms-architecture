@@ -1,4 +1,4 @@
-# Transaction & Lock Unit Test
+Transaction & Lock Module Unit Test
 
 ## TransactionManagerTest
 
@@ -6,212 +6,180 @@
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant Tx as Transaction
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: beginTransaction()
-    Manager->>Tx: new Transaction()
-    Manager->>Manager: register(Tx)
-    Manager-->>Test: Tx
+    Test->>TM: shouldBeginTransaction()
+    TM-->>Test: success
 ```
 
 ### 2. shouldCommitTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant Tx as Transaction
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: commit(txId)
-    Manager->>Tx: commit()
-    Tx-->>Manager: success
-    Manager->>Manager: remove(txId)
-    Manager-->>Test: CommitSuccess=true
+    Test->>TM: shouldCommitTransaction()
+    TM-->>Test: success
 ```
 
 ### 3. shouldRollbackTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant Tx as Transaction
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: rollback(txId)
-    Manager->>Tx: rollback()
-    Tx-->>Manager: success
-    Manager->>Manager: remove(txId)
-    Manager-->>Test: RollbackSuccess=true
+    Test->>TM: shouldRollbackTransaction()
+    TM-->>Test: success
 ```
 
 ### 4. shouldRecoverTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant WAL as WALManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: recover()
-    Manager->>WAL: scanActiveTx()
-    WAL-->>Manager: activeTxList
-    Manager-->>Test: Recovered=true
+    Test->>TM: shouldRecoverTransactions()
+    TM-->>Test: success
 ```
 
 ### 5. shouldSuspendTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: suspend(txId)
-    Manager->>Manager: updateState(SUSPENDED)
-    Manager-->>Test: SuspendSuccess=true
+    Test->>TM: shouldSuspendTransaction()
+    TM-->>Test: success
 ```
 
 ### 6. shouldResumeTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: resume(txId)
-    Manager->>Manager: updateState(ACTIVE)
-    Manager-->>Test: ResumeSuccess=true
+    Test->>TM: shouldResumeTransaction()
+    TM-->>Test: success
 ```
 
 ### 7. shouldRegisterActiveTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: register(Tx)
-    Manager->>Manager: addToActiveMap(Tx)
-    Manager-->>Test: success
+    Test->>TM: shouldRegisterActiveTransaction()
+    TM-->>Test: success
 ```
 
 ### 8. shouldRemoveCommittedTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: removeCommitted(txId)
-    Manager->>Manager: removeFromMap(txId)
-    Manager-->>Test: success
+    Test->>TM: shouldRemoveCommittedTransaction()
+    TM-->>Test: success
 ```
 
 ### 9. shouldRemoveRolledBackTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: removeRolledBack(txId)
-    Manager->>Manager: removeFromMap(txId)
-    Manager-->>Test: success
+    Test->>TM: shouldRemoveRolledBackTransaction()
+    TM-->>Test: success
 ```
 
 ### 10. shouldAssignTransactionId()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: beginTransaction()
-    Manager->>Manager: getNextTxId()
-    Manager-->>Test: txId
+    Test->>TM: shouldAssignTransactionId()
+    TM-->>Test: success
 ```
 
 ### 11. shouldTrackTransactionState()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: getTxState(txId)
-    Manager-->>Test: state
+    Test->>TM: shouldTrackTransactionState()
+    TM-->>Test: success
 ```
 
 ### 12. shouldRejectDuplicateTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionManagerTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee TransactionManager Component
+    participant TM as TransactionManager
     end
 
-    Test->>Manager: register(duplicateTx)
-    Manager-->>Test: error: DuplicateTransaction
+    Test->>TM: shouldRejectDuplicateTransaction()
+    TM-->>Test: success
 ```
 
 ## TransactionTest
@@ -220,199 +188,180 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: begin()
-    Tx->>Tx: setStatus(ACTIVE)
-    Tx-->>Test: success
+    Test->>T: shouldBegin()
+    T-->>Test: success
 ```
 
 ### 2. shouldCommit()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: commit()
-    Tx->>Tx: setStatus(COMMITTED)
-    Tx-->>Test: success
+    Test->>T: shouldCommit()
+    T-->>Test: success
 ```
 
 ### 3. shouldRollback()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: rollback()
-    Tx->>Tx: setStatus(ROLLED_BACK)
-    Tx-->>Test: success
+    Test->>T: shouldRollback()
+    T-->>Test: success
 ```
 
 ### 4. shouldCreateSavepoint()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: createSavepoint("s1")
-    Tx->>Tx: addSavepoint("s1")
-    Tx-->>Test: success
+    Test->>T: shouldCreateSavepoint()
+    T-->>Test: success
 ```
 
 ### 5. shouldRollbackToSavepoint()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: rollbackTo("s1")
-    Tx->>Tx: restoreSavepoint("s1")
-    Tx-->>Test: success
+    Test->>T: shouldRollbackToSavepoint()
+    T-->>Test: success
 ```
 
 ### 6. shouldReleaseSavepoint()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: releaseSavepoint("s1")
-    Tx->>Tx: removeSavepoint("s1")
-    Tx-->>Test: success
+    Test->>T: shouldReleaseSavepoint()
+    T-->>Test: success
 ```
 
 ### 7. shouldHandleStateTransition()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: transitionTo(COMMITTED)
-    Tx-->>Test: transitionSuccess
+    Test->>T: shouldHandleStateTransition()
+    T-->>Test: success
 ```
 
 ### 8. shouldEnforceIsolationLevel()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: getIsolationLevel()
-    Tx-->>Test: isolationLevel
+    Test->>T: shouldEnforceIsolationLevel()
+    T-->>Test: success
 ```
 
 ### 9. shouldRecordStartTime()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: getStartTime()
-    Tx-->>Test: startTime
+    Test->>T: shouldRecordStartTime()
+    T-->>Test: success
 ```
 
 ### 10. shouldRecordCommitTime()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: commit()
-    Tx->>Tx: recordCommitTime()
-    Tx-->>Test: commitTime
+    Test->>T: shouldRecordCommitTime()
+    T-->>Test: success
 ```
 
 ### 11. shouldRejectCommitAfterRollback()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: commit()
-    Tx-->>Test: error: InvalidStateTransition
+    Test->>T: shouldRejectCommitAfterRollback()
+    T-->>Test: success
 ```
 
 ### 12. shouldRejectRollbackAfterCommit()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as TransactionTest
     end
-    box #ffebee Transaction Components
-    participant Tx as Transaction
+    box #ffebee Transaction Component
+    participant T as Transaction
     end
 
-    Test->>Tx: rollback()
-    Tx-->>Test: error: InvalidStateTransition
+    Test->>T: shouldRejectRollbackAfterCommit()
+    T-->>Test: success
 ```
 
 ## LockManagerTest
@@ -421,202 +370,180 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: acquireShared(txId, resourceId)
-    LockMgr->>LockMgr: checkCompatibility()
-    LockMgr-->>Test: LockAcquired=true
+    Test->>LM: shouldAcquireSharedLock()
+    LM-->>Test: success
 ```
 
 ### 2. shouldAcquireExclusiveLock()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: acquireExclusive(txId, resourceId)
-    LockMgr->>LockMgr: checkCompatibility()
-    LockMgr-->>Test: LockAcquired=true
+    Test->>LM: shouldAcquireExclusiveLock()
+    LM-->>Test: success
 ```
 
 ### 3. shouldReleaseLock()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: release(txId, resourceId)
-    LockMgr->>LockMgr: updateQueue()
-    LockMgr-->>Test: LockReleased=true
+    Test->>LM: shouldReleaseLock()
+    LM-->>Test: success
 ```
 
 ### 4. shouldUpgradeLock()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: upgrade(txId, resourceId)
-    LockMgr->>LockMgr: changeSharedToExclusive()
-    LockMgr-->>Test: UpgradeSuccess=true
+    Test->>LM: shouldUpgradeLock()
+    LM-->>Test: success
 ```
 
 ### 5. shouldDowngradeLock()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: downgrade(txId, resourceId)
-    LockMgr->>LockMgr: changeExclusiveToShared()
-    LockMgr-->>Test: DowngradeSuccess=true
+    Test->>LM: shouldDowngradeLock()
+    LM-->>Test: success
 ```
 
 ### 6. shouldCheckCompatibility()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: checkCompat(SHARED, EXCLUSIVE)
-    LockMgr-->>Test: compatible=false
+    Test->>LM: shouldCheckCompatibility()
+    LM-->>Test: success
 ```
 
 ### 7. shouldRejectConflictingLock()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: acquireExclusive(txId2, res)
-    LockMgr-->>Test: LockBlocked
+    Test->>LM: shouldRejectConflictingLock()
+    LM-->>Test: success
 ```
 
 ### 8. shouldQueueWaitingTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: acquireExclusive(txId2, res)
-    LockMgr->>LockMgr: addToWaitQueue()
-    LockMgr-->>Test: queued=true
+    Test->>LM: shouldQueueWaitingTransaction()
+    LM-->>Test: success
 ```
 
 ### 9. shouldWakeWaitingTransaction()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: release(tx1, res)
-    LockMgr->>LockMgr: wakeNextInQueue()
-    LockMgr-->>Test: tx2Acquired
+    Test->>LM: shouldWakeWaitingTransaction()
+    LM-->>Test: success
 ```
 
 ### 10. shouldDetectDeadlock()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: detectDeadlock()
-    LockMgr->>LockMgr: buildWaitGraph()
-    LockMgr-->>Test: cycleDetected=true
+    Test->>LM: shouldDetectDeadlock()
+    LM-->>Test: success
 ```
 
 ### 11. shouldResolveDeadlock()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: resolveDeadlock()
-    LockMgr->>LockMgr: abortTransaction()
-    LockMgr-->>Test: resolved=true
+    Test->>LM: shouldResolveDeadlock()
+    LM-->>Test: success
 ```
 
 ### 12. shouldReleaseAllLocksOnCommit()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as LockManagerTest
     end
-    box #ffebee Transaction Components
-    participant LockMgr as LockManager
+    box #ffebee LockManager Component
+    participant LM as LockManager
     end
 
-    Test->>LockMgr: releaseAll(txId)
-    LockMgr->>LockMgr: clearLocksForTx()
-    LockMgr-->>Test: success
+    Test->>LM: shouldReleaseAllLocksOnCommit()
+    LM-->>Test: success
 ```
 
 ## MVCCManagerTest
@@ -625,314 +552,270 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: createVersion(rowId, data, txId)
-    MVCC-->>Test: newVersion
+    Test->>MVCCM: shouldCreateVersion()
+    MVCCM-->>Test: success
 ```
 
 ### 2. shouldReadVisibleVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: read(rowId, txId)
-    MVCC->>MVCC: applyVisibilityRules()
-    MVCC-->>Test: visibleVersion
+    Test->>MVCCM: shouldReadVisibleVersion()
+    MVCCM-->>Test: success
 ```
 
 ### 3. shouldHideUncommittedVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: read(rowId, activeTxId)
-    MVCC->>MVCC: checkCommitted()
-    MVCC-->>Test: olderVisibleVersion
+    Test->>MVCCM: shouldHideUncommittedVersion()
+    MVCCM-->>Test: success
 ```
 
 ### 4. shouldEnforceVisibilityRule()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: checkVisibility(version, txId)
-    MVCC-->>Test: visible=true
+    Test->>MVCCM: shouldEnforceVisibilityRule()
+    MVCCM-->>Test: success
 ```
 
 ### 5. shouldCreateSnapshot()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: createSnapshot(txId)
-    MVCC-->>Test: snapshot
+    Test->>MVCCM: shouldCreateSnapshot()
+    MVCCM-->>Test: success
 ```
 
 ### 6. shouldReturnSnapshotVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: readWithSnapshot(rowId, snapshot)
-    MVCC-->>Test: version
+    Test->>MVCCM: shouldReturnSnapshotVersion()
+    MVCCM-->>Test: success
 ```
 
 ### 7. shouldDeleteObsoleteVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: deleteObsolete(rowId, activeTxList)
-    MVCC-->>Test: deletedCount
+    Test->>MVCCM: shouldDeleteObsoleteVersion()
+    MVCCM-->>Test: success
 ```
 
 ### 8. shouldGarbageCollect()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: collectGarbage()
-    MVCC->>MVCC: cleanExpiredVersions()
-    MVCC-->>Test: GcSuccess=true
+    Test->>MVCCM: shouldGarbageCollect()
+    MVCCM-->>Test: success
 ```
 
 ### 9. shouldRemoveExpiredVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: removeExpired(version)
-    MVCC-->>Test: success
+    Test->>MVCCM: shouldRemoveExpiredVersion()
+    MVCCM-->>Test: success
 ```
 
 ### 10. shouldRejectInvisibleVersion()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
     participant Test as MVCCManagerTest
     end
-    box #ffebee Transaction Components
-    participant MVCC as MVCCManager
+    box #ffebee MVCCManager Component
+    participant MVCCM as MVCCManager
     end
 
-    Test->>MVCC: read(rowId, txId)
-    MVCC-->>Test: null
+    Test->>MVCCM: shouldRejectInvisibleVersion()
+    MVCCM-->>Test: success
 ```
 
-# Transaction & Lock Integration Test
+# Transaction & Lock Unit Test
 
 ### 1. shouldCommitTransactionSuccessfully()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant Tx as Transaction
-    participant LockMgr as LockManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: commit(tx)
-    Manager->>Tx: commit()
-    Manager->>LockMgr: releaseAll()
-    Manager-->>Test: CommitCompleted=true
+    Test->>System: shouldCommitTransactionSuccessfully()
+    System-->>Test: success
 ```
 
 ### 2. shouldRollbackTransactionSuccessfully()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant Tx as Transaction
-    participant LockMgr as LockManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: rollback(tx)
-    Manager->>Tx: rollback()
-    Manager->>LockMgr: releaseAll()
-    Manager-->>Test: RollbackCompleted=true
+    Test->>System: shouldRollbackTransactionSuccessfully()
+    System-->>Test: success
 ```
 
 ### 3. shouldRecoverAfterCrash()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant WAL as WALManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: recover()
-    Manager->>WAL: scan()
-    WAL-->>Manager: logs
-    Manager->>Manager: undoRedo()
-    Manager-->>Test: RecoverySuccess=true
+    Test->>System: shouldRecoverAfterCrash()
+    System-->>Test: success
 ```
 
 ### 4. shouldCommitTransactionAndFlushWAL()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant WAL as WALManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: commit(tx)
-    Manager->>WAL: writeCommit()
-    WAL->>WAL: flush()
-    Manager-->>Test: Success
+    Test->>System: shouldCommitTransactionAndFlushWAL()
+    System-->>Test: success
 ```
 
 ### 5. shouldRollbackTransactionAndReleaseLocks()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant LockMgr as LockManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: rollback(tx)
-    Manager->>LockMgr: releaseAll(tx)
-    Manager-->>Test: Success
+    Test->>System: shouldRollbackTransactionAndReleaseLocks()
+    System-->>Test: success
 ```
 
 ### 6. shouldRecoverDatabaseUsingWAL()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
-    participant WAL as WALManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: recover()
-    Manager->>WAL: scan()
-    WAL-->>Manager: logs
-    Manager-->>Test: recovered
+    Test->>System: shouldRecoverDatabaseUsingWAL()
+    System-->>Test: success
 ```
 
 ### 7. shouldRecoverMultipleTransactions()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: recover()
-    Manager->>Manager: recoverTxList()
-    Manager-->>Test: recovered
+    Test->>System: shouldRecoverMultipleTransactions()
+    System-->>Test: success
 ```
 
 ### 8. shouldRecoverAfterPowerFailure()
 ```mermaid
 sequenceDiagram
     autonumber
-
     box #e1f5fe Test Suite
-    participant Test as TransactionIntegrationTest
+    participant Test as Transaction&LockModuleIntegrationTest
     end
-    box #ffebee Transaction Components
-    participant Manager as TransactionManager
+    box #ffebee Transaction & Lock Module Components
+    participant System as System
     end
 
-    Test->>Manager: recover()
-    Manager->>Manager: verifyDiskState()
-    Manager-->>Test: recovered
+    Test->>System: shouldRecoverAfterPowerFailure()
+    System-->>Test: success
 ```
-

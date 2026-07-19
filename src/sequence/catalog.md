@@ -1,6 +1,6 @@
-# Metadata Unit Test
+Catalog Module Unit Test
 
-## Catalog Manager
+## CatalogManagerTest
 
 ### 1. shouldRegisterDatabase()
 ```mermaid
@@ -9,15 +9,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: registerDatabase(db)
-
-    Catalog->>Catalog: updateMetadataCache(db)
-
-    Catalog-->>Test: RegisterSuccess=true
+    Test->>CM: shouldRegisterDatabase()
+    CM-->>Test: success
 ```
 
 ### 2. shouldRegisterSchema()
@@ -27,22 +24,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: registerSchema(schema)
-
-    Catalog->>DB: findDatabase()
-
-    DB-->>Catalog: database found
-
-    Catalog->>DB: addSchema(schema)
-
-    DB-->>Catalog: schema added
-
-    Catalog-->>Test: RegisterSuccess=true
+    Test->>CM: shouldRegisterSchema()
+    CM-->>Test: success
 ```
 
 ### 3. shouldRegisterTable()
@@ -52,27 +39,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
-    participant Tbl as Table
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: registerTable(table)
-
-    Catalog->>DB: findDatabase()
-
-    DB-->>Catalog: database found
-
-    Catalog->>Tbl: validateMetadata()
-
-    Tbl-->>Catalog: metadata valid
-
-    Catalog->>DB: addTable(table)
-
-    DB-->>Catalog: registration completed
-
-    Catalog-->>Test: RegisterSuccess=true
+    Test->>CM: shouldRegisterTable()
+    CM-->>Test: success
 ```
 
 ### 4. shouldRegisterIndex()
@@ -82,22 +54,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant Tbl as Table
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: registerIndex(index)
-
-    Catalog->>Tbl: validateIndexMetadata(index)
-
-    Tbl-->>Catalog: metadata valid
-
-    Catalog->>Tbl: addIndex(index)
-
-    Tbl-->>Catalog: index registered
-
-    Catalog-->>Test: RegisterSuccess=true
+    Test->>CM: shouldRegisterIndex()
+    CM-->>Test: success
 ```
 
 ### 5. shouldFindDatabase()
@@ -107,15 +69,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: getDatabase("StudentDB")
-
-    Catalog->>Catalog: lookupCache("StudentDB")
-
-    Catalog-->>Test: Database reference
+    Test->>CM: shouldFindDatabase()
+    CM-->>Test: success
 ```
 
 ### 6. shouldFindSchema()
@@ -125,23 +84,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
-    participant Schema as Schema
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: getSchema("public")
-
-    Catalog->>DB: lookupSchema()
-
-    DB-->>Catalog: Schema
-
-    Catalog->>Schema: loadMetadata()
-
-    Schema-->>Catalog: schema metadata
-
-    Catalog-->>Test: Schema returned
+    Test->>CM: shouldFindSchema()
+    CM-->>Test: success
 ```
 
 ### 7. shouldFindTable()
@@ -151,23 +99,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
-    participant Tbl as Table
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: getTable("Student")
-
-    Catalog->>DB: lookupTable("Student")
-
-    DB-->>Catalog: Table reference
-
-    Catalog->>Tbl: loadMetadata()
-
-    Tbl-->>Catalog: metadata
-
-    Catalog-->>Test: Table returned
+    Test->>CM: shouldFindTable()
+    CM-->>Test: success
 ```
 
 ### 8. shouldFindIndex()
@@ -177,18 +114,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant Tbl as Table
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: getIndex("idx_student_id")
-
-    Catalog->>Tbl: lookupIndex("idx_student_id")
-
-    Tbl-->>Catalog: Index reference
-
-    Catalog-->>Test: Index reference
+    Test->>CM: shouldFindIndex()
+    CM-->>Test: success
 ```
 
 ### 9. shouldRefreshMetadata()
@@ -198,20 +129,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: refreshMetadata()
-
-    Catalog->>DB: reloadMetadata()
-
-    DB-->>Catalog: latest metadata
-
-    Catalog->>Catalog: updateMetadataCache()
-
-    Catalog-->>Test: RefreshCompleted=true
+    Test->>CM: shouldRefreshMetadata()
+    CM-->>Test: success
 ```
 
 ### 10. shouldInvalidateMetadataCache()
@@ -221,15 +144,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: invalidateCache("Student")
-
-    Catalog->>Catalog: removeCacheEntry("Student")
-
-    Catalog-->>Test: InvalidateSuccess=true
+    Test->>CM: shouldInvalidateMetadataCache()
+    CM-->>Test: success
 ```
 
 ### 11. shouldLoadMetadataFromDisk()
@@ -239,20 +159,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: loadFromDisk()
-
-    Catalog->>DB: readMetadataFile()
-
-    DB-->>Catalog: raw metadata
-
-    Catalog->>Catalog: deserializeMetadata()
-
-    Catalog-->>Test: LoadSuccess=true
+    Test->>CM: shouldLoadMetadataFromDisk()
+    CM-->>Test: success
 ```
 
 ### 12. shouldCacheFrequentlyUsedMetadata()
@@ -262,20 +174,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: getTable("Student")
-
-    Catalog->>DB: lookupTable("Student")
-
-    DB-->>Catalog: Table
-
-    Catalog->>Catalog: putCache("Student", Table)
-
-    Catalog-->>Test: Table
+    Test->>CM: shouldCacheFrequentlyUsedMetadata()
+    CM-->>Test: success
 ```
 
 ### 13. shouldUpdateTableMetadata()
@@ -285,20 +189,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant Tbl as Table
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: updateTableMetadata(table)
-
-    Catalog->>Tbl: updateAttributes(table)
-
-    Tbl-->>Catalog: updated
-
-    Catalog->>Catalog: updateCache("Student", table)
-
-    Catalog-->>Test: UpdateSuccess=true
+    Test->>CM: shouldUpdateTableMetadata()
+    CM-->>Test: success
 ```
 
 ### 14. shouldUpdateIndexMetadata()
@@ -308,18 +204,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant Tbl as Table
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: updateIndexMetadata(index)
-
-    Catalog->>Tbl: updateIndexAttributes(index)
-
-    Tbl-->>Catalog: updated
-
-    Catalog-->>Test: UpdateSuccess=true
+    Test->>CM: shouldUpdateIndexMetadata()
+    CM-->>Test: success
 ```
 
 ### 15. shouldRemoveTableMetadata()
@@ -329,20 +219,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: removeTableMetadata("Student")
-
-    Catalog->>DB: removeTable("Student")
-
-    DB-->>Catalog: removed
-
-    Catalog->>Catalog: invalidateCache("Student")
-
-    Catalog-->>Test: RemoveSuccess=true
+    Test->>CM: shouldRemoveTableMetadata()
+    CM-->>Test: success
 ```
 
 ### 16. shouldRemoveSchemaMetadata()
@@ -352,18 +234,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: removeSchemaMetadata("public")
-
-    Catalog->>DB: removeSchema("public")
-
-    DB-->>Catalog: removed
-
-    Catalog-->>Test: RemoveSuccess=true
+    Test->>CM: shouldRemoveSchemaMetadata()
+    CM-->>Test: success
 ```
 
 ### 17. shouldRemoveDatabaseMetadata()
@@ -373,15 +249,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: removeDatabaseMetadata("StudentDB")
-
-    Catalog->>Catalog: clearDatabaseCache("StudentDB")
-
-    Catalog-->>Test: RemoveSuccess=true
+    Test->>CM: shouldRemoveDatabaseMetadata()
+    CM-->>Test: success
 ```
 
 ### 18. shouldDetectDuplicateTableRegistration()
@@ -391,18 +264,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: registerTable(table)
-
-    Catalog->>DB: containsTable(table.name)
-
-    DB-->>Catalog: true
-
-    Catalog-->>Test: RegistrationRejected(Duplicate)
+    Test->>CM: shouldDetectDuplicateTableRegistration()
+    CM-->>Test: success
 ```
 
 ### 19. shouldRejectUnknownDatabase()
@@ -412,18 +279,12 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: registerTable(table)
-
-    Catalog->>DB: findDatabase()
-
-    DB-->>Catalog: not found
-
-    Catalog-->>Test: RegistrationRejected(Unknown DB)
+    Test->>CM: shouldRejectUnknownDatabase()
+    CM-->>Test: success
 ```
 
 ### 20. shouldReturnCachedMetadata()
@@ -433,233 +294,132 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as CatalogManagerTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
+    box #e8f5e9 CatalogManager Component
+    participant CM as CatalogManager
     end
 
-    Test->>Catalog: getTable("Student")
-
-    Catalog->>Catalog: checkCache("Student")
-
-    Catalog-->>Test: cached Table metadata
+    Test->>CM: shouldReturnCachedMetadata()
+    CM-->>Test: success
 ```
 
-# Metadata Integration Test
+# Metadata Unit Test
 
-### 21. shouldRegisterDatabaseMetadata()
+### 1. shouldRegisterDatabaseMetadata()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Catalog: registerDatabase(database)
-
-    Catalog->>DB: createMetadata()
-
-    DB-->>Catalog: metadata created
-
-    Catalog->>Catalog: updateMetadataCache()
-
-    Catalog-->>Test: DatabaseRegistered=true
+    Test->>System: shouldRegisterDatabaseMetadata()
+    System-->>Test: success
 ```
 
-### 22. shouldRegisterSchemaMetadata()
+### 2. shouldRegisterSchemaMetadata()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
-    participant Schema as Schema
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Catalog: registerSchema(schema)
-
-    Catalog->>DB: findDatabase()
-
-    DB-->>Catalog: db found
-
-    Catalog->>Schema: createMetadata()
-
-    Schema-->>Catalog: schema metadata created
-
-    Catalog->>DB: addSchema(schema)
-
-    DB-->>Catalog: schema stored
-
-    Catalog-->>Test: SchemaRegistered=true
+    Test->>System: shouldRegisterSchemaMetadata()
+    System-->>Test: success
 ```
 
-### 23. shouldRegisterTableMetadata()
+### 3. shouldRegisterTableMetadata()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant Schema as Schema
-    participant Tbl as Table
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Catalog: registerTable(table)
-
-    Catalog->>Schema: findSchema()
-
-    Schema-->>Catalog: schema found
-
-    Catalog->>Tbl: createMetadata()
-
-    Tbl-->>Catalog: metadata ready
-
-    Catalog->>Schema: addTable()
-
-    Schema-->>Catalog: table added
-
-    Catalog-->>Test: TableRegistered=true
+    Test->>System: shouldRegisterTableMetadata()
+    System-->>Test: success
 ```
 
-### 24. shouldRegisterIndexMetadata()
+### 4. shouldRegisterIndexMetadata()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant Schema as Schema
-    participant Tbl as Table
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Catalog: registerIndex(index)
-
-    Catalog->>Schema: findSchema()
-
-    Schema-->>Catalog: schema found
-
-    Catalog->>Tbl: findTable()
-
-    Tbl-->>Catalog: table found
-
-    Catalog->>Tbl: createIndexMetadata(index)
-
-    Tbl-->>Catalog: index registered
-
-    Catalog-->>Test: IndexRegistered=true
+    Test->>System: shouldRegisterIndexMetadata()
+    System-->>Test: success
 ```
 
-### 25. shouldUpdateCatalogAfterSchemaChange()
+### 5. shouldUpdateCatalogAfterSchemaChange()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Schema as Schema
-    participant Catalog as CatalogManager
-    participant Tbl as Table
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Schema: alterTable()
-
-    Schema->>Tbl: updateMetadata()
-
-    Tbl-->>Schema: updated
-
-    Schema->>Catalog: notifySchemaChanged()
-
-    Catalog->>Catalog: refreshMetadata()
-
-    Catalog-->>Test: CatalogUpdated=true
+    Test->>System: shouldUpdateCatalogAfterSchemaChange()
+    System-->>Test: success
 ```
 
-### 26. shouldRefreshMetadataAfterDDL()
+### 6. shouldRefreshMetadataAfterDDL()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
-    participant Schema as Schema
-    participant Tbl as Table
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Catalog: executeDDL()
-
-    Catalog->>DB: updateDatabaseMetadata()
-
-    DB-->>Catalog: updated
-
-    Catalog->>Schema: updateSchema()
-
-    Schema-->>Catalog: updated
-
-    Catalog->>Tbl: registerTable()
-
-    Tbl-->>Catalog: metadata created
-
-    Catalog->>Catalog: refreshMetadata()
-
-    Catalog-->>Test: MetadataRefreshed=true
+    Test->>System: shouldRefreshMetadataAfterDDL()
+    System-->>Test: success
 ```
 
-### 27. shouldSynchronizeMetadataCache()
+### 7. shouldSynchronizeMetadataCache()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Catalog: updateMetadata(table)
-
-    Catalog->>Catalog: updateMetadataCache(table)
-
-    Catalog->>DB: persistMetadata(table)
-
-    DB-->>Catalog: persisted
-
-    Catalog-->>Test: CacheSynchronized=true
+    Test->>System: shouldSynchronizeMetadataCache()
+    System-->>Test: success
 ```
 
-### 28. shouldReloadMetadataAfterRestart()
+### 8. shouldReloadMetadataAfterRestart()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as MetadataIntegrationTest
+    participant Test as CatalogModuleIntegrationTest
     end
-    box #e8f5e9 Catalog Objects
-    participant Catalog as CatalogManager
-    participant DB as Database
+    box #e8f5e9 Catalog Module Components
+    participant System as System
     end
 
-    Test->>Catalog: initialize()
-
-    Catalog->>DB: loadDatabaseMetadata()
-
-    DB-->>Catalog: all tables/schemas metadata
-
-    Catalog->>Catalog: warmupCache()
-
-    Catalog-->>Test: InitializationCompleted=true
+    Test->>System: shouldReloadMetadataAfterRestart()
+    System-->>Test: success
 ```

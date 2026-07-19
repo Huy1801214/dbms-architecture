@@ -3,10 +3,10 @@ package dbms.server;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MonitoringManagerTest {
+public class SecurityValidatorTest {
 
     @Test
-    public void shouldCollectServerMetrics() {
+    public void shouldRejectInvalidPassword() {
         // Arrange
         
         // Act
@@ -15,7 +15,7 @@ public class MonitoringManagerTest {
     }
 
     @Test
-    public void shouldCollectMemoryUsage() {
+    public void shouldRejectLockedUser() {
         // Arrange
         
         // Act
@@ -24,7 +24,7 @@ public class MonitoringManagerTest {
     }
 
     @Test
-    public void shouldCollectCPUUsage() {
+    public void shouldRejectDisabledUser() {
         // Arrange
         
         // Act
@@ -33,7 +33,7 @@ public class MonitoringManagerTest {
     }
 
     @Test
-    public void shouldCollectDiskUsage() {
+    public void shouldCheckRolePermission() {
         // Arrange
         
         // Act
@@ -42,7 +42,7 @@ public class MonitoringManagerTest {
     }
 
     @Test
-    public void shouldCollectConnectionStatistics() {
+    public void shouldGrantRolePermission() {
         // Arrange
         
         // Act
@@ -51,25 +51,7 @@ public class MonitoringManagerTest {
     }
 
     @Test
-    public void shouldReportServerStatus() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldReportDatabaseStatistics() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldResetStatistics() {
+    public void shouldVerifyPermissionInheritance() {
         // Arrange
         
         // Act
