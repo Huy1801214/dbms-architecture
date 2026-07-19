@@ -1,12 +1,12 @@
-package dbms.security;
+package dbms.server;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PermissionTest {
+public class SecurityManagerTest {
 
     @Test
-    public void shouldCreatePermission() {
+    public void shouldInitializeSecurityManager() {
         // Arrange
         
         // Act
@@ -15,7 +15,7 @@ public class PermissionTest {
     }
 
     @Test
-    public void shouldComparePermissions() {
+    public void shouldLoadSecurityConfiguration() {
         // Arrange
         
         // Act
@@ -24,7 +24,7 @@ public class PermissionTest {
     }
 
     @Test
-    public void shouldValidatePermission() {
+    public void shouldEnableAuthentication() {
         // Arrange
         
         // Act
@@ -33,7 +33,7 @@ public class PermissionTest {
     }
 
     @Test
-    public void shouldStoreAction() {
+    public void shouldDisableAuthentication() {
         // Arrange
         
         // Act
@@ -42,7 +42,16 @@ public class PermissionTest {
     }
 
     @Test
-    public void shouldStoreResource() {
+    public void shouldEnableAuthorization() {
+        // Arrange
+        
+        // Act
+        
+        // Assert
+    }
+
+    @Test
+    public void shouldDisableAuthorization() {
         // Arrange
         
         // Act
