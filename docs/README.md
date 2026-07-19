@@ -753,6 +753,14 @@ class DataType{
     <<enumeration>>
 }
 
+class DatabaseStatus{
+    <<enumeration>>
+    ONLINE
+    OFFLINE
+    OPENING
+    CLOSING
+}
+
 class Constraint{
     <<abstract>>
     +validate()
@@ -782,6 +790,7 @@ class Trigger
 class Sequence
 
 Database --> Schema
+Database --> DatabaseStatus
 
 Schema --> Table
 Schema --> View
@@ -817,6 +826,7 @@ style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Row fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DataType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style DatabaseStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132

@@ -6,15 +6,33 @@ Database Objects Module Unit Test
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldOpenDatabase()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: status = OFFLINE
+
+    Note over Test,D: Act
+    Test->>D: open()
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: status = OPENING
+    D->>D: initialize()
+    D->>D: status = ONLINE
+
+    D-->>Test: status == ONLINE
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
 
 ### 2. shouldCloseDatabase()
