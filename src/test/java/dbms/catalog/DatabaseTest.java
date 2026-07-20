@@ -203,4 +203,65 @@ public class DatabaseTest {
         assertEquals(DatabaseStatus.ONLINE, database.getStatus());
     }
 
+    @Test
+    public void shouldInitializeOfflineDatabase() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        // Act
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.OFFLINE, createdAt);
+        // Assert
+        assertEquals(DatabaseStatus.OFFLINE, database.getStatus());
+    }
+
+    @Test
+    public void shouldMaintainStatusTransition() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.OFFLINE, createdAt);
+        // Act
+        database.open();
+        // Assert
+        assertEquals(DatabaseStatus.ONLINE, database.getStatus());
+        // Act
+        database.close();
+        // Assert
+        assertEquals(DatabaseStatus.OFFLINE, database.getStatus());
+    }
+
+    @Test
+    public void shouldKeepCreatedTimeUnchanged() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, originalCreatedAt);
+        // Act
+        database.rename("NewName");
+        database.setOwner("newOwner");
+        database.close();
+        // Assert
+        assertEquals(originalCreatedAt, database.getCreatedAt());
+    }
+
+    @Test
+    public void shouldRejectNullDatabaseStatus() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> new Database("db-001", "HuyDB", "admin", null, originalCreatedAt));
+    }
+
+    @Test
+    public void shouldRejectInvalidStatusTransition() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.OPENING, originalCreatedAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.open());
+        assertEquals(DatabaseStatus.ONLINE, database.getStatus());
+    }
+
 }

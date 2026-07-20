@@ -42,6 +42,10 @@
 - shouldCloseDatabase()
 - shouldDropDatabase()
 - shouldRejectDuplicateDatabaseName()
+- shouldRejectUnknownDatabase()
+- shouldIncreaseDatabaseCountAfterCreation()
+- shouldDecreaseDatabaseCountAfterDrop()
+- shouldAssignUniqueDatabaseId()
 
 ### Critical Integration Tests
 
