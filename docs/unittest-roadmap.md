@@ -1,275 +1,157 @@
-# 1-Week DBMS Unit Test & Implementation Plan
+# 2-Day DBMS Core Testing Roadmap
 
 ## Goal
-- Complete all Unit Tests for the core DBMS modules.
-- Implement the production methods required to make every test pass.
-- Keep implementation incremental by following the TDD workflow:
-  - Write Test
-  - Run Test (Fail)
-  - Implement Method
-  - Run Test (Pass)
-  - Refactor
+
+- Complete the unit test specification for all modules.
+- Implement only the core unit and integration tests that demonstrate the fundamental capabilities of the DBMS.
 
 ---
 
-# Day 1 — Database Object (Database)
+# Day 1 — Database Management & Database Objects
 
-### Unit Tests
+## Database Server Module
+
+### Critical Unit Tests
+
+#### DatabaseTest
 - shouldOpenDatabase()
 - shouldCloseDatabase()
-- shouldRenameDatabase()
-- shouldSetDatabaseOwner()
-- shouldRejectOperationWhenClosed()
+- shouldMaintainStatusTransition()
 - shouldRejectOpenWhenAlreadyOnline()
 - shouldRejectCloseWhenAlreadyOffline()
-- shouldRejectRenameWhenDatabaseIsOpening()
-- shouldRejectRenameWhenDatabaseIsClosing()
-- shouldRejectEmptyDatabaseName()
-- shouldRejectNullOwner()
+- shouldRejectInvalidStatusTransition()
+- shouldRenameDatabase()
+- shouldSetDatabaseOwner()
 - shouldRejectNullDatabaseName()
+- shouldRejectEmptyDatabaseName()
 - shouldRejectBlankDatabaseName()
 - shouldRejectDatabaseNameWithSpecialCharacters()
 - shouldRejectDatabaseNameExceedingMaxLength()
 - shouldRejectReservedDatabaseName()
-- shouldInitializeOfflineDatabase()
-- shouldMaintainStatusTransition()
-- shouldKeepCreatedTimeUnchanged()
-- shouldRejectNullDatabaseStatus()
-- shouldRejectInvalidStatusTransition()
-- shouldCloseAndReopenDatabase()
+- shouldRejectNullOwner()
+- shouldRejectOperationWhenClosed()
+- shouldRejectRenameWhenDatabaseIsOpening()
+- shouldRejectRenameWhenDatabaseIsClosing()
 
-### Implement
-- Database
-- DatabaseStatus
-- DatabaseClosedException
-- Basic validation methods
+#### DatabaseManagerTest
+- shouldCreateDatabase()
+- shouldOpenDatabase()
+- shouldCloseDatabase()
+- shouldDropDatabase()
+- shouldRejectDuplicateDatabaseName()
 
-### Deliverables
-- Database entity completed
-- All DatabaseTest cases passing
+### Critical Integration Tests
+
+- shouldCreateDatabaseThroughServer()
+- shouldOpenExistingDatabase()
 
 ---
 
-# Day 2 — Database Object (Schema)
+## Database Objects Module
 
-### Unit Tests
+### Critical Unit Tests
+
+#### SchemaTest
 - shouldCreateTable()
 - shouldDropTable()
-- shouldRenameTable()
-- shouldCreateView()
-- shouldDropView()
-- shouldCreateStoredProcedure()
-- shouldDropStoredProcedure()
-- shouldCreateSequence()
-- shouldDropSequence()
-- shouldReturnExistingTable()
 
-### Implement
-- Schema
-- Table registration
-- View registration
-- Procedure registration
-- Sequence registration
-
-### Deliverables
-- Schema completed
-- All SchemaTest cases passing
-
----
-
-# Day 3 — Database Object (Table)
-
-### Unit Tests
+#### TableTest
 - shouldInsertRow()
 - shouldUpdateRow()
 - shouldDeleteRow()
-- shouldTruncateTable()
-- shouldAnalyzeTable()
-- shouldIncreaseRowCount()
-- shouldDecreaseRowCount()
-- shouldReturnInsertedRow()
-- shouldReturnUpdatedRow()
-
-### Implement
-- Table
-- Row collection
-- CRUD operations
-- Row count management
-
-### Deliverables
-- Table entity completed
-- All TableTest cases passing
-
----
-
-# Day 4 — Database Object (Column + Row)
-
-### ColumnTest
-- shouldCreateColumn()
-- shouldValidateColumnDefinition()
-- shouldRejectInvalidDataType()
-- shouldRejectInvalidLength()
-- shouldAcceptNullableColumn()
-- shouldRejectNullForNotNullColumn()
-- shouldUpdateColumnMetadata()
-- shouldChangeDefaultValue()
-
-### RowTest
-- shouldCreateRow()
-- shouldUpdateRow()
-- shouldDeleteRow()
-- shouldReadRow()
-- shouldCloneRowVersion()
-- shouldUpdateRowVersion()
-- shouldStoreTransactionId()
-- shouldReturnColumnValue()
-- shouldReplaceColumnValue()
-- shouldMarkRowDeleted()
-
-### Implement
-- Column
-- Row
-- Metadata validation
-
-### Deliverables
-- Column completed
-- Row completed
-- All tests passing
-
----
-
-# Day 5 — Constraint + Index
-
-### ConstraintTest
-- shouldValidatePrimaryKey()
 - shouldRejectDuplicatePrimaryKey()
-- shouldValidateForeignKey()
-- shouldRejectBrokenForeignKey()
-- shouldValidateUniqueConstraint()
-- shouldRejectDuplicateUniqueValue()
-- shouldValidateCheckConstraint()
-- shouldRejectInvalidCheckConstraint()
+- shouldValidateConstraintsBeforeInsert()
 
-### IndexTest
+#### ConstraintTest
+- shouldValidatePrimaryKey()
+- shouldValidateForeignKey()
+
+#### IndexTest
 - shouldInsertKey()
 - shouldSearchKey()
-- shouldDeleteKey()
-- shouldUpdateKey()
-- shouldHandleDuplicateKey()
-- shouldRebuildIndex()
-- shouldReturnOrderedKeys()
 
-### Implement
-- PrimaryKey
-- ForeignKey
-- UniqueConstraint
-- CheckConstraint
-- BTreeIndex
-- HashIndex
+### Critical Integration Tests
 
-### Deliverables
-- Constraint framework completed
-- Basic Index implementation completed
+- shouldCreateDatabaseWithSchemaAndTable()
+- shouldInsertRowWithConstraints()
+- shouldUseIndexForQueryExecution()
+- shouldValidateForeignKeyAcrossTables()
 
 ---
 
-# Day 6 — Remaining Database Objects
+# Day 2 — Storage Engine & Query Processing
 
-### Unit Tests
-#### PartitionTest
-- shouldPartitionTable()
-- shouldDropPartition()
-- shouldLocatePartition()
-- shouldSplitPartition()
-- shouldMergePartition()
-- shouldMoveRowBetweenPartitions()
+## Storage Engine Module
 
-#### ViewTest
-- shouldCreateView()
-- shouldReadUnderlyingTable()
-- shouldValidateViewDefinition()
-- shouldExecuteViewQuery()
-- shouldRefreshViewDefinition()
+### Critical Unit Tests
 
-#### StoredProcedureTest
-- shouldCreateProcedure()
-- shouldExecuteProcedure()
-- shouldPassProcedureParameters()
-- shouldReturnProcedureResult()
+#### BufferPoolTest
+- shouldFetchExistingPage()
+- shouldAllocateNewPage()
+- shouldFlushDirtyPage()
+- shouldEvictPage()
 
-#### TriggerTest
-- shouldCreateTrigger()
-- shouldFireTrigger()
-- shouldExecuteBeforeInsertTrigger()
-- shouldExecuteAfterInsertTrigger()
-- shouldExecuteBeforeUpdateTrigger()
-- shouldExecuteAfterUpdateTrigger()
+#### PageManagerTest
+- shouldAllocatePage()
+- shouldReadPage()
+- shouldWritePage()
 
-#### SequenceTest
-- shouldCreateSequence()
-- shouldGenerateNextValue()
-- shouldIncrementSequence()
-- shouldResetSequence()
-- shouldRespectStartValue()
-- shouldReturnCurrentValue()
+#### FileManagerTest
+- shouldCreateDataFile()
+- shouldReadDataFile()
+- shouldWriteDataFile()
 
-### Implement
-- Partition
-- View
-- StoredProcedure
-- Trigger
-- Sequence
+### Critical Integration Tests
 
-### Deliverables
-- All Database Objects completed
-- Every Database Objects unit test passing
+- shouldAllocateAndWritePage()
+- shouldReadPageFromDisk()
+- shouldFlushDirtyPageToDisk()
+- shouldPersistPageAcrossRestart()
 
 ---
 
-# Day 7 — Storage Engine
+## Query Processing Module
 
-### BufferPoolTest
-- All unit tests
+### Critical Unit Tests
 
-### PageManagerTest
-- All unit tests
+#### SQLParserTest
+- shouldParseValidSQL()
+- shouldRejectInvalidSQLSyntax()
 
-### FileManagerTest
-- All unit tests
+#### QueryOptimizerTest
+- shouldOptimizeLogicalPlan()
+- shouldGeneratePhysicalPlan()
 
-### PageTest
-- All unit tests
+#### QueryExecutorTest
+- shouldExecutePhysicalPlan()
+- shouldFetchResultRows()
 
-### Implement
-- BufferPool
-- PageManager
-- Page
-- FileManager
+### Critical Integration Tests
 
-### Deliverables
-- Storage Engine core completed
-- All Storage Engine unit tests passing
+- shouldParseOptimizeAndExecuteQuery()
+- shouldGenerateLogicalAndPhysicalPlan()
+- shouldExecuteOptimizedQueryPlan()
 
 ---
 
-# Development Workflow
+# Remaining Modules
 
-For every test case:
+The following modules will have complete test specifications but will be implemented in later phases:
 
-1. Write the Unit Test
-2. Execute the test (expected to fail)
-3. Implement the minimum production code
-4. Execute the test again
-5. Make the test pass
-6. Refactor the implementation
-7. Commit the changes
+- Metadata
+- Transaction Management
+- Recovery
+- Replication
+- Security
+- Monitoring
+- Administration
 
 ---
 
-# Expected Outcome After One Week
+# Deliverables
 
-- ✅ Database Object module fully completed
-- ✅ Storage Engine core completed
-- ✅ More than 100 unit tests passing
-- ✅ Core DBMS domain model established
-- ✅ Solid foundation for Query Processing, Transaction Management, Recovery, and Security modules
+- Complete unit test specification for every module.
+- Implement all critical unit tests.
+- Implement all critical integration tests.
+- Complete sequence diagrams for implemented tests.
+- Supporting production code for implemented tests.

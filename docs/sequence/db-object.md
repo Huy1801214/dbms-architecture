@@ -365,167 +365,175 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldRejectNullDatabaseName()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: name = "HuyDB"
+
+    Note over Test,D: Act
+    Test->>D: rename(null)
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateDatabaseName(null)
+
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+    Test->>Test: assertEquals("HuyDB", database.getName())
+    Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
 
 ### 13. shouldRejectBlankDatabaseName()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldRejectBlankDatabaseName()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: name = "HuyDB"
+
+    Note over Test,D: Act
+    Test->>D: rename("     ")
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateDatabaseName("     ")
+    D->>D: newName.isBlank()
+
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+    Test->>Test: assertEquals("HuyDB", database.getName())
+    Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
 
 ### 14. shouldRejectDatabaseNameWithSpecialCharacters()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldRejectDatabaseNameWithSpecialCharacters()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: name = "StudentDB"
+
+    Note over Test,D: Act
+    Test->>D: rename("Student@DB")
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateDatabaseName("Student@DB")
+    D->>D: containsInvalidCharacters()
+
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+    Test->>Test: assertEquals("StudentDB", database.getName())
+    Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
 
 ### 15. shouldRejectDatabaseNameExceedingMaxLength()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldRejectDatabaseNameExceedingMaxLength()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: name = "HuyDB"
+
+    Note over Test,D: Act
+    Test->>D: rename(databaseNameExceedingMaxLength)
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateDatabaseName(databaseNameExceedingMaxLength)
+    D->>D: validateMaximumLength()
+
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+    Test->>Test: assertEquals("HuyDB", database.getName())
+    Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
 
 ### 16. shouldRejectReservedDatabaseName()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseTest
     end
+
     box #e8f5e9 Database Component
     participant D as Database
     end
 
-    Test->>D: shouldRejectReservedDatabaseName()
-    D-->>Test: success
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: name = "StudentDB"
+
+    Note over Test,D: Act
+    Test->>D: rename("system")
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateDatabaseName("system")
+    D->>D: isReservedDatabaseName()
+
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+    Test->>Test: assertEquals("StudentDB", database.getName())
+    Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
-
-### 17. shouldInitializeOfflineDatabase()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
-
-    Test->>D: shouldInitializeOfflineDatabase()
-    D-->>Test: success
-```
-
-### 18. shouldMaintainStatusTransition()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
-
-    Test->>D: shouldMaintainStatusTransition()
-    D-->>Test: success
-```
-
-### 19. shouldKeepCreatedTimeUnchanged()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
-
-    Test->>D: shouldKeepCreatedTimeUnchanged()
-    D-->>Test: success
-```
-
-### 20. shouldRejectNullDatabaseStatus()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
-
-    Test->>D: shouldRejectNullDatabaseStatus()
-    D-->>Test: success
-```
-
-### 21. shouldRejectInvalidStatusTransition()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
-
-    Test->>D: shouldRejectInvalidStatusTransition()
-    D-->>Test: success
-```
-
-### 22. shouldCloseAndReopenDatabase()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
-    end
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
-
-    Test->>D: shouldCloseAndReopenDatabase()
-    D-->>Test: success
-```
-
 ## SchemaTest
 
 ### 1. shouldCreateTable()
