@@ -534,6 +534,97 @@ sequenceDiagram
     Test->>Test: assertEquals("StudentDB", database.getName())
     Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
+
+### 17. shouldInitializeOfflineDatabase()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldInitializeOfflineDatabase()
+    D-->>Test: success
+```
+
+### 18. shouldMaintainStatusTransition()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldMaintainStatusTransition()
+    D-->>Test: success
+```
+
+### 19. shouldKeepCreatedTimeUnchanged()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldKeepCreatedTimeUnchanged()
+    D-->>Test: success
+```
+
+### 20. shouldRejectNullDatabaseStatus()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectNullDatabaseStatus()
+    D-->>Test: success
+```
+
+### 21. shouldRejectInvalidStatusTransition()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectInvalidStatusTransition()
+    D-->>Test: success
+```
+
+### 22. shouldCloseAndReopenDatabase()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldCloseAndReopenDatabase()
+    D-->>Test: success
+```
+
 ## SchemaTest
 
 ### 1. shouldCreateTable()

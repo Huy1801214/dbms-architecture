@@ -32,6 +32,9 @@
 - shouldRejectOperationWhenClosed()
 - shouldRejectRenameWhenDatabaseIsOpening()
 - shouldRejectRenameWhenDatabaseIsClosing()
+- shouldIncreaseDatabaseCountAfterCreation()
+- shouldDecreaseDatabaseCountAfterDrop()
+- shouldAssignUniqueDatabaseId()
 
 #### DatabaseManagerTest
 - shouldCreateDatabase()

@@ -128,105 +128,375 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
+
     box #e3f2fd DatabaseManager Component
     participant DM as DatabaseManager
     end
 
-    Test->>DM: shouldCreateDatabase()
-    DM-->>Test: success
+    box #e8f5e9 Domain Object
+    participant DB as Database
+    end
+
+    Note over Test,DM: Arrange
+    Test->>DM: empty DatabaseManager
+
+    Note over Test,DM: Act
+    Test->>DM: createDatabase("StudentDB", "admin")
+
+    activate DM
+
+    DM->>DM: validateDatabaseName()
+    DM->>DM: checkDuplicateDatabase()
+    DM->>DM: generateDatabaseId()
+
+    DM->>DB: new Database(...)
+    activate DB
+    DB-->>DM: Database
+    deactivate DB
+
+    DM->>DM: registerDatabase(Database)
+
+    DM-->>Test: Database
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertNotNull(database)
+    Test->>Test: assertEquals("StudentDB", database.getName())
+    Test->>Test: assertEquals(1, manager.listAllDatabases().size())
 ```
 
 ### 2. shouldDropDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
+
     box #e3f2fd DatabaseManager Component
     participant DM as DatabaseManager
     end
 
-    Test->>DM: shouldDropDatabase()
+    box #e8f5e9 Domain Object
+    participant DB as Database
+    end
+
+    Note over Test,DM: Arrange
+    Test->>DM: createDatabase("StudentDB", "admin")
+    Test->>DM: databaseId = "db-001"
+
+    Note over Test,DM: Act
+    Test->>DM: dropDatabase("db-001")
+
+    activate DM
+
+    DM->>DM: getDatabaseById("db-001")
+    DM->>DB: validateDropOperation()
+
+    DB-->>DM: OK
+
+    DM->>DM: unregisterDatabase("db-001")
+
     DM-->>Test: success
+
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertNull(manager.getDatabaseById("db-001"))
+    Test->>Test: assertEquals(0, manager.listAllDatabases().size())
 ```
 
 ### 3. shouldRenameDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
+
     box #e3f2fd DatabaseManager Component
     participant DM as DatabaseManager
     end
 
-    Test->>DM: shouldRenameDatabase()
+    box #e8f5e9 Domain Object
+    participant DB as Database
+    end
+
+    Note over Test,DM: Arrange
+    Test->>DM: createDatabase("StudentDB", "admin")
+    Test->>DM: databaseId = "db-001"
+
+    Note over Test,DM: Act
+    Test->>DM: renameDatabase("db-001", "SchoolDB")
+
+    activate DM
+
+    DM->>DM: findDatabaseById("db-001")
+    DM->>DM: validateDatabaseName("SchoolDB")
+    DM->>DM: checkDuplicateDatabase("SchoolDB")
+
+    DM->>DB: rename("SchoolDB")
+
+    DB-->>DM: success
+
     DM-->>Test: success
+
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertEquals("SchoolDB", database.getName())
 ```
 
 ### 4. shouldGetDatabaseByName()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
+
     box #e3f2fd DatabaseManager Component
     participant DM as DatabaseManager
     end
 
-    Test->>DM: shouldGetDatabaseByName()
-    DM-->>Test: success
+    Note over Test,DM: Arrange
+    Test->>DM: createDatabase("StudentDB", "admin")
+
+    Note over Test,DM: Act
+    Test->>DM: getDatabaseByName("StudentDB")
+
+    activate DM
+
+    DM->>DM: findDatabaseByName("StudentDB")
+
+    DM-->>Test: Database
+
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertNotNull(database)
+    Test->>Test: assertEquals("StudentDB", database.getName())
 ```
 
 ### 5. shouldListAllDatabases()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
+
     box #e3f2fd DatabaseManager Component
     participant DM as DatabaseManager
     end
 
-    Test->>DM: shouldListAllDatabases()
-    DM-->>Test: success
+    Note over Test,DM: Arrange
+    Test->>DM: createDatabase("StudentDB", "admin")
+    Test->>DM: createDatabase("SchoolDB", "admin")
+
+    Note over Test,DM: Act
+    Test->>DM: listAllDatabases()
+
+    activate DM
+
+    DM->>DM: retrieveRegisteredDatabases()
+
+    DM-->>Test: List<Database>
+
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertEquals(2, databases.size())
+    Test->>Test: assertTrue(databases contains "StudentDB")
+    Test->>Test: assertTrue(databases contains "SchoolDB")
 ```
 
 ### 6. shouldRejectDuplicateDatabaseName()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
+
     box #e3f2fd DatabaseManager Component
     participant DM as DatabaseManager
     end
 
-    Test->>DM: shouldRejectDuplicateDatabaseName()
-    DM-->>Test: success
+    Note over Test,DM: Arrange
+    Test->>DM: createDatabase("StudentDB", "admin")
+
+    Note over Test,DM: Act
+    Test->>DM: createDatabase("StudentDB", "user")
+
+    activate DM
+
+    DM->>DM: validateDatabaseName("StudentDB")
+    DM->>DM: checkDuplicateDatabase("StudentDB")
+
+    DM-->>Test: DatabaseAlreadyExistsException
+
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertThrows(DatabaseAlreadyExistsException.class)
+    Test->>Test: assertEquals(1, manager.listAllDatabases().size())
 ```
 
 ### 7. shouldRejectUnknownDatabase()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as DatabaseManagerTest
     end
+
     box #e3f2fd DatabaseManager Component
     participant DM as DatabaseManager
     end
 
-    Test->>DM: shouldRejectUnknownDatabase()
+    Note over Test,DM: Arrange
+    Test->>DM: empty DatabaseManager
+    Test->>DM: unknownId = "unknown-db-id"
+
+    Note over Test,DM: Act
+    Test->>DM: dropDatabase("unknown-db-id")
+
+    activate DM
+
+    DM->>DM: findDatabaseById("unknown-db-id")
+    Note over DM: Database not found
+
+    DM-->>Test: DatabaseNotFoundException
+
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertThrows(DatabaseNotFoundException.class)
+```
+
+### 8. shouldIncreaseDatabaseCountAfterCreation()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseManagerTest
+    end
+
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
+    end
+
+    Note over Test,DM: Arrange
+    Test->>DM: listAllDatabases()
+    activate DM
+    DM-->>Test: initialList (size = 0)
+    deactivate DM
+
+    Note over Test,DM: Act
+    Test->>DM: createDatabase("StudentDB", "admin")
+    activate DM
+    DM->>DM: registerDatabase(Database)
+    DM-->>Test: Database
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>DM: listAllDatabases()
+    activate DM
+    DM-->>Test: finalList (size = 1)
+    deactivate DM
+    Test->>Test: assertEquals(1, finalList.size())
+```
+
+### 9. shouldDecreaseDatabaseCountAfterDrop()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseManagerTest
+    end
+
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
+    end
+
+    box #e8f5e9 Domain Object
+    participant DB as Database
+    end
+
+    Note over Test,DM: Arrange
+    Test->>DM: createDatabase("StudentDB", "admin")
+    activate DM
+    DM-->>Test: Database (id = "db-001")
+    deactivate DM
+    Test->>DM: listAllDatabases()
+    activate DM
+    DM-->>Test: initialList (size = 1)
+    deactivate DM
+
+    Note over Test,DM: Act
+    Test->>DM: dropDatabase("db-001")
+    activate DM
+    DM->>DM: findDatabaseById("db-001")
+    DM->>DB: validateDropOperation()
+    activate DB
+    DB-->>DM: OK
+    deactivate DB
+    DM->>DM: unregisterDatabase("db-001")
     DM-->>Test: success
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>DM: listAllDatabases()
+    activate DM
+    DM-->>Test: finalList (size = 0)
+    deactivate DM
+    Test->>Test: assertEquals(0, finalList.size())
+```
+
+### 10. shouldAssignUniqueDatabaseId()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseManagerTest
+    end
+
+    box #e3f2fd DatabaseManager Component
+    participant DM as DatabaseManager
+    end
+
+    Note over Test,DM: Arrange
+    Test->>DM: empty DatabaseManager
+
+    Note over Test,DM: Act
+    Test->>DM: createDatabase("StudentDB", "admin")
+    activate DM
+    DM->>DM: generateDatabaseId()
+    DM-->>Test: Database1 (id = "db-001")
+    deactivate DM
+
+    Test->>DM: createDatabase("SchoolDB", "admin")
+    activate DM
+    DM->>DM: generateDatabaseId()
+    DM-->>Test: Database2 (id = "db-002")
+    deactivate DM
+
+    Note over Test,DM: Assert
+    Test->>Test: assertNotEquals(db1.getDatabaseId(), db2.getDatabaseId())
 ```
 
 ## ConfigurationRepositoryTest
