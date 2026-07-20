@@ -76,7 +76,19 @@
     * `shouldKeepCreatedTimeUnchanged()`
     * `shouldRejectNullDatabaseStatus()`
     * `shouldRejectInvalidStatusTransition()`
-    * `shouldCloseAndReopenDatabase()`
+    * `shouldCreateSchema()`
+    * `shouldDropSchema()`
+    * `shouldGetSchemaByName()`
+    * `shouldListAllSchemas()`
+    * `shouldRejectDuplicateSchemaName()`
+    * `shouldRejectUnknownSchema()`
+    * `shouldRejectSchemaOperationWhenClosed()`
+    * `shouldRejectNullSchemaName()`
+    * `shouldRejectBlankSchemaName()`
+    * `shouldRejectSchemaNameWithSpecialCharacters()`
+    * `shouldRejectSchemaNameExceedingMaxLength()`
+    * `shouldRejectReservedSchemaName()`
+    * `shouldRejectNullSchemaOwner()`
   * **SchemaTest**
     * `shouldCreateTable()`
     * `shouldDropTable()`
