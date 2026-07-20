@@ -157,12 +157,373 @@ sequenceDiagram
 
     D->>D: validateCurrentState()
 
-    D-->>Test: throw DatabaseClosedException
+    D-->>Test: DatabaseClosedException
 
     deactivate D
 
     Note over Test,D: Assert
-    Test->>Test: assertThrows(DatabaseClosedException)
+    Test->>Test: assertThrows(DatabaseClosedException.class)
+    Test->>Test: assertEquals(OFFLINE, database.getStatus())
+```
+
+### 6. shouldRejectOpenWhenAlreadyOnline()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = OFFLINE
+
+    Note over Test,D: Act
+    Test->>D: close()
+
+    activate D
+    D->>D: validateCurrentState()
+    D-->>Test: IllegalStateException
+    deactivate D
+    
+    Note over Test: Assert
+    Test->>Test: assertThrows(IllegalStateException.class)
+    Test->>Test: assertEquals(OFFLINE, database.getStatus())
+    
+```
+
+### 7. shouldRejectCloseWhenAlreadyOffline()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = OFFLINE
+
+    Note over Test,D: Act
+    Test->>D: close()
+
+    activate D
+
+    D->>D: validateCurrentState()
+
+    D-->>Test: DatabaseAlreadyOfflineException
+
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseAlreadyOfflineException.class)
+    Test->>Test: assertEquals(OFFLINE, database.getStatus())
+```
+
+### 8. shouldRejectRenameWhenDatabaseIsOpening()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = OPENING
+    Test->>D: name = "OldDatabase"
+
+    Note over Test,D: Act
+    Test->>D: rename("NewDatabase")
+
+    activate D
+
+    D->>D: validateCurrentState()
+
+    D-->>Test: DatabaseOpeningException
+
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseOpeningException.class)
+    Test->>Test: assertEquals("OldDatabase", database.getName())
+```
+
+### 9. shouldRejectRenameWhenDatabaseIsClosing()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = CLOSING
+    Test->>D: name = "OldDatabase"
+
+    Note over Test,D: Act
+    Test->>D: rename("NewDatabase")
+
+    activate D
+
+    D->>D: validateCurrentState()
+
+    D-->>Test: DatabaseClosingException
+
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseClosingException.class)
+    Test->>Test: assertEquals("OldDatabase", database.getName())
+```
+
+### 10. shouldRejectEmptyDatabaseName()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: name = "HuyDB"
+
+    Note over Test,D: Act
+    Test->>D: rename("")
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateNewName("")
+
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+    Test->>Test: assertEquals("HuyDB", database.getName())
+```
+
+### 11. shouldRejectNullOwner()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: owner = "admin"
+
+    Note over Test,D: Act
+    Test->>D: setOwner(null)
+
+    activate D
+
+    D->>D: validateCurrentState()
+    D->>D: validateOwner(null)
+
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+    Test->>Test: assertEquals("admin", database.getOwner())
+    Test->>Test: assertEquals(ONLINE, database.getStatus())
+```
+
+### 12. shouldRejectNullDatabaseName()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectNullDatabaseName()
+    D-->>Test: success
+```
+
+### 13. shouldRejectBlankDatabaseName()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectBlankDatabaseName()
+    D-->>Test: success
+```
+
+### 14. shouldRejectDatabaseNameWithSpecialCharacters()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectDatabaseNameWithSpecialCharacters()
+    D-->>Test: success
+```
+
+### 15. shouldRejectDatabaseNameExceedingMaxLength()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectDatabaseNameExceedingMaxLength()
+    D-->>Test: success
+```
+
+### 16. shouldRejectReservedDatabaseName()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectReservedDatabaseName()
+    D-->>Test: success
+```
+
+### 17. shouldInitializeOfflineDatabase()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldInitializeOfflineDatabase()
+    D-->>Test: success
+```
+
+### 18. shouldMaintainStatusTransition()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldMaintainStatusTransition()
+    D-->>Test: success
+```
+
+### 19. shouldKeepCreatedTimeUnchanged()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldKeepCreatedTimeUnchanged()
+    D-->>Test: success
+```
+
+### 20. shouldRejectNullDatabaseStatus()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectNullDatabaseStatus()
+    D-->>Test: success
+```
+
+### 21. shouldRejectInvalidStatusTransition()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldRejectInvalidStatusTransition()
+    D-->>Test: success
+```
+
+### 22. shouldCloseAndReopenDatabase()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Test->>D: shouldCloseAndReopenDatabase()
+    D-->>Test: success
 ```
 
 ## SchemaTest

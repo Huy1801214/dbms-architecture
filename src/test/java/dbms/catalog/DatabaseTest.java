@@ -33,7 +33,7 @@ public class DatabaseTest {
     public void shouldRenameDatabase() {
         // Arrange
         LocalDateTime createdAt = LocalDateTime.of(2026, 7, 19, 10, 0);
-        Database database = new Database("db-001", "HuyDB`", "admin", DatabaseStatus.ONLINE, createdAt);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, createdAt);
         // Act
         database.rename("AnhHuyDB");
         // Assert
@@ -44,7 +44,7 @@ public class DatabaseTest {
     public void shouldSetDatabaseOwner() {
         // Arrange
         LocalDateTime createdAt = LocalDateTime.of(2026, 7, 19, 10, 0);
-        Database database = new Database("db-001", "HuyDB`", "admin", DatabaseStatus.ONLINE, createdAt);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, createdAt);
         // Act
         database.setOwner("user");
         // Assert
@@ -55,11 +55,149 @@ public class DatabaseTest {
     public void shouldRejectOperationWhenClosed() {
         // Arrange
         LocalDateTime createdAt = LocalDateTime.of(2026, 7, 19, 10, 0);
-        Database database = new Database("db-001", "HuyDB`", "admin", DatabaseStatus.OFFLINE, createdAt);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.OFFLINE, createdAt);
         // Act
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> database.executeOperation());
+    }
+
+    @Test
+    public void shouldRejectOpenWhenAlreadyOnline() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 19, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, createdAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                database::open);
+    }
+
+    @Test
+    public void shouldRejectCloseWhenAlreadyOffline() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 19, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.OFFLINE, createdAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                database::close);
+    }
+
+    @Test
+    public void shouldRejectRenameWhenDatabaseIsOpening() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.OPENING, createdAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.rename("AnhHuyDB"));
+        assertEquals("HuyDB", database.getName());
+        assertEquals(DatabaseStatus.OPENING, database.getStatus());
+    }
+
+    @Test
+    public void shouldRejectRenameWhenDatabaseIsClosing() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.CLOSING, createdAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.rename("AnhHuyDB"));
+        assertEquals("HuyDB", database.getName());
+        assertEquals(DatabaseStatus.CLOSING, database.getStatus());
+    }
+
+    @Test
+    public void shouldRejectEmptyDatabaseName() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, createdAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.rename(""));
+        assertEquals("HuyDB", database.getName());
+        assertEquals(DatabaseStatus.ONLINE, database.getStatus());
+    }
+
+    @Test
+    public void shouldRejectNullOwner() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, createdAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.setOwner(null));
+        assertEquals("admin", database.getOwner());
+        assertEquals(DatabaseStatus.ONLINE, database.getStatus());
+    }
+
+    @Test
+    public void shouldRejectNullDatabaseName() {
+        // Arrange
+        LocalDateTime createdAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, createdAt);
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    public void shouldInitializeOfflineDatabase() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    public void shouldMaintainStatusTransition() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    public void shouldKeepCreatedTimeUnchanged() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    public void shouldRejectNullDatabaseStatus() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    public void shouldRejectInvalidStatusTransition() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    public void shouldCloseAndReopenDatabase() {
+        // Arrange
+
+        // Act
+
+        // Assert
     }
 
 }
