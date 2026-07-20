@@ -26,9 +26,9 @@ flowchart LR
     LogRecord["Log Record"]:::leafStyle
 
     %% Right-side Branches
-    Database["Database"]:::branchCatalog
-    Storage["Storage Engine"]:::branchStorage
-    Query["Query Processing"]:::branchQuery
+    Database["**Database**"]:::highlightCatalog
+    Storage["**Storage Engine**"]:::highlightStorage
+    Query["**Query Processing**"]:::highlightQuery
     Transaction["Transaction"]:::branchTx
     Metadata["Metadata"]:::branchCatalog
     
@@ -133,6 +133,9 @@ flowchart LR
     classDef branchStorage fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
     classDef branchTx fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029,font-weight:bold;
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
+    classDef highlightCatalog fill:#c3e6cb,stroke:#1e7e34,stroke-width:5px,color:#155724,font-weight:bold,font-size:15px;
+    classDef highlightStorage fill:#b2dfdb,stroke:#00796b,stroke-width:5px,color:#004d40,font-weight:bold,font-size:15px;
+    classDef highlightQuery fill:#ffe0b2,stroke:#f57c00,stroke-width:5px,color:#e65100,font-weight:bold,font-size:15px;
 ```
 
 ---
@@ -925,6 +928,40 @@ flowchart LR
     DATABASETEST --> databasetest_4
     databasetest_5["shouldRejectOperationWhenClosed()"]:::leafStyle
     DATABASETEST --> databasetest_5
+    databasetest_6["shouldRejectOpenWhenAlreadyOnline()"]:::leafStyle
+    DATABASETEST --> databasetest_6
+    databasetest_7["shouldRejectCloseWhenAlreadyOffline()"]:::leafStyle
+    DATABASETEST --> databasetest_7
+    databasetest_8["shouldRejectRenameWhenDatabaseIsOpening()"]:::leafStyle
+    DATABASETEST --> databasetest_8
+    databasetest_9["shouldRejectRenameWhenDatabaseIsClosing()"]:::leafStyle
+    DATABASETEST --> databasetest_9
+    databasetest_10["shouldRejectEmptyDatabaseName()"]:::leafStyle
+    DATABASETEST --> databasetest_10
+    databasetest_11["shouldRejectNullOwner()"]:::leafStyle
+    DATABASETEST --> databasetest_11
+    databasetest_12["shouldRejectNullDatabaseName()"]:::leafStyle
+    DATABASETEST --> databasetest_12
+    databasetest_13["shouldRejectBlankDatabaseName()"]:::leafStyle
+    DATABASETEST --> databasetest_13
+    databasetest_14["shouldRejectDatabaseNameWithSpecialCharacters()"]:::leafStyle
+    DATABASETEST --> databasetest_14
+    databasetest_15["shouldRejectDatabaseNameExceedingMaxLength()"]:::leafStyle
+    DATABASETEST --> databasetest_15
+    databasetest_16["shouldRejectReservedDatabaseName()"]:::leafStyle
+    DATABASETEST --> databasetest_16
+    databasetest_17["shouldInitializeOfflineDatabase()"]:::leafStyle
+    DATABASETEST --> databasetest_17
+    databasetest_18["shouldMaintainStatusTransition()"]:::leafStyle
+    DATABASETEST --> databasetest_18
+    databasetest_19["shouldKeepCreatedTimeUnchanged()"]:::leafStyle
+    DATABASETEST --> databasetest_19
+    databasetest_20["shouldRejectNullDatabaseStatus()"]:::leafStyle
+    DATABASETEST --> databasetest_20
+    databasetest_21["shouldRejectInvalidStatusTransition()"]:::leafStyle
+    DATABASETEST --> databasetest_21
+    databasetest_22["shouldCloseAndReopenDatabase()"]:::leafStyle
+    DATABASETEST --> databasetest_22
 
     %% SchemaTest methods
     schematest_1["shouldCreateTable()"]:::leafStyle

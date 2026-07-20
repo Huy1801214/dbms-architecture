@@ -60,6 +60,23 @@
     * `shouldRenameDatabase()`
     * `shouldSetDatabaseOwner()`
     * `shouldRejectOperationWhenClosed()`
+    * `shouldRejectOpenWhenAlreadyOnline()`
+    * `shouldRejectCloseWhenAlreadyOffline()`
+    * `shouldRejectRenameWhenDatabaseIsOpening()`
+    * `shouldRejectRenameWhenDatabaseIsClosing()`
+    * `shouldRejectEmptyDatabaseName()`
+    * `shouldRejectNullOwner()`
+    * `shouldRejectNullDatabaseName()`
+    * `shouldRejectBlankDatabaseName()`
+    * `shouldRejectDatabaseNameWithSpecialCharacters()`
+    * `shouldRejectDatabaseNameExceedingMaxLength()`
+    * `shouldRejectReservedDatabaseName()`
+    * `shouldInitializeOfflineDatabase()`
+    * `shouldMaintainStatusTransition()`
+    * `shouldKeepCreatedTimeUnchanged()`
+    * `shouldRejectNullDatabaseStatus()`
+    * `shouldRejectInvalidStatusTransition()`
+    * `shouldCloseAndReopenDatabase()`
   * **SchemaTest**
     * `shouldCreateTable()`
     * `shouldDropTable()`
