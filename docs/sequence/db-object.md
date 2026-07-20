@@ -534,6 +534,149 @@ sequenceDiagram
     Test->>Test: assertEquals("StudentDB", database.getName())
     Test->>Test: assertEquals(ONLINE, database.getStatus())
 ```
+
+### 17. shouldInitializeOfflineDatabase()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Act
+    Test->>D: new Database("db-001", "HuyDB", "admin", OFFLINE, createdAt)
+    activate D
+    D-->>Test: Database
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals(DatabaseStatus.OFFLINE, database.getStatus())
+```
+
+### 18. shouldMaintainStatusTransition()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = OFFLINE
+
+    Note over Test,D: Act
+    Test->>D: open()
+    activate D
+    D->>D: status = OPENING
+    D->>D: initialize()
+    D->>D: status = ONLINE
+    D-->>Test: success
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals(DatabaseStatus.ONLINE, database.getStatus())
+
+    Note over Test,D: Act
+    Test->>D: close()
+    activate D
+    D->>D: status = CLOSING
+    D->>D: flushDirtyPages()
+    D->>D: releaseResources()
+    D->>D: status = OFFLINE
+    D-->>Test: success
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals(DatabaseStatus.OFFLINE, database.getStatus())
+```
+
+### 19. shouldKeepCreatedTimeUnchanged()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: createdAt = originalCreatedAt
+
+    Note over Test,D: Act
+    Test->>D: rename("NewName")
+    Test->>D: setOwner("newOwner")
+    Test->>D: close()
+
+    Note over Test,D: Assert
+    Test->>Test: assertEquals(originalCreatedAt, database.getCreatedAt())
+```
+
+### 20. shouldRejectNullDatabaseStatus()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Act
+    Test->>D: new Database("db-001", "HuyDB", "admin", null, createdAt)
+    activate D
+    D->>D: validateStatus(null)
+    D-->>Test: DatabaseValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(DatabaseValidationException)
+```
+
+### 21. shouldRejectInvalidStatusTransition()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = OPENING (in-progress transition)
+
+    Note over Test,D: Act
+    Test->>D: open()
+    activate D
+    D->>D: validateCurrentState()
+    D-->>Test: IllegalStateException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(IllegalStateException.class)
+```
+
 ## SchemaTest
 
 ### 1. shouldCreateTable()

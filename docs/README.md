@@ -649,6 +649,12 @@ flowchart LR
     DATABASEMANAGERTEST --> databasemanagertest_6
     databasemanagertest_7["shouldRejectUnknownDatabase()"]:::leafStyle
     DATABASEMANAGERTEST --> databasemanagertest_7
+    databasemanagertest_8["shouldIncreaseDatabaseCountAfterCreation()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_8
+    databasemanagertest_9["shouldDecreaseDatabaseCountAfterDrop()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_9
+    databasemanagertest_10["shouldAssignUniqueDatabaseId()"]:::leafStyle
+    DATABASEMANAGERTEST --> databasemanagertest_10
 
     %% SecurityManagerTest methods
     securitymanagertest_1["shouldInitializeSecurityManager()"]:::leafStyle

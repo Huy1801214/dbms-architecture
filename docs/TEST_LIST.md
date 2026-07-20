@@ -216,6 +216,9 @@
     * `shouldListAllDatabases()`
     * `shouldRejectDuplicateDatabaseName()`
     * `shouldRejectUnknownDatabase()`
+    * `shouldIncreaseDatabaseCountAfterCreation()`
+    * `shouldDecreaseDatabaseCountAfterDrop()`
+    * `shouldAssignUniqueDatabaseId()`
   * **ConfigurationRepositoryTest**
     * `shouldSaveConfigurationToDisk()`
   * **SecurityManagerTest**

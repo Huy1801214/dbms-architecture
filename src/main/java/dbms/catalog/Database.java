@@ -67,6 +67,10 @@ public class Database {
         this.owner = owner;
     }
 
+    public void validateDropOperation() {
+
+    }
+
     private void validateOwner(String owner) {
 
     }
