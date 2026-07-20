@@ -1,6 +1,9 @@
 package dbms.catalog;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Database {
     private String databaseId;
@@ -8,6 +11,7 @@ public class Database {
     private String owner;
     private DatabaseStatus status;
     private LocalDateTime createdAt;
+    private Map<String, Schema> schemas;
 
     public Database(String databaseId, String name, String owner, DatabaseStatus status, LocalDateTime createdAt) {
         this.databaseId = databaseId;
@@ -15,6 +19,7 @@ public class Database {
         this.owner = owner;
         this.status = status;
         this.createdAt = createdAt;
+        this.schemas = new HashMap<>();
     }
 
     public void open() {
@@ -97,5 +102,20 @@ public class Database {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Schema createSchema(String name, String owner) {
+        return null;
+    }
+
+    public void dropSchema(String name) {
+    }
+
+    public Schema getSchema(String name) {
+        return null;
+    }
+
+    public List<Schema> listSchemas() {
+        return null;
     }
 }

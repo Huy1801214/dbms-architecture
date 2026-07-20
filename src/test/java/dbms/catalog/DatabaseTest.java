@@ -261,7 +261,66 @@ public class DatabaseTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> database.open());
-        assertEquals(DatabaseStatus.ONLINE, database.getStatus());
+        assertEquals(DatabaseStatus.OPENING, database.getStatus());
+    }
+
+    @Test
+    public void shouldCreateSchema() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, originalCreatedAt);
+        // Act
+        Schema schema = database.createSchema("StudentSchema", "admin");
+        // Assert
+        assertNotNull(schema);
+        assertEquals("StudentSchema", schema.getName());
+        assertEquals("admin", schema.getOwner());
+    }
+
+    @Test
+    public void shouldDropSchema() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, originalCreatedAt);
+        Schema schema = database.createSchema("StudentSchema", "admin");
+        // Act
+        database.dropSchema(schema.getSchemaId());
+        // Assert
+        assertNull(database.getSchema(schema.getSchemaId()));
+    }
+
+    @Test
+    public void shouldRejectDuplicateSchemaName() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, originalCreatedAt);
+        database.createSchema("StudentSchema", "admin");
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.createSchema("StudentSchema", "admin"));
+    }
+
+    @Test
+    public void shouldRejectSchemaOperationWhenClosed() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.OFFLINE, originalCreatedAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.createSchema("StudentSchema", "admin"));
+    }
+
+    @Test
+    public void shouldRejectSchemaNameWithSpecialCharacters() {
+        // Arrange
+        LocalDateTime originalCreatedAt = LocalDateTime.of(2026, 7, 20, 10, 0);
+        Database database = new Database("db-001", "HuyDB", "admin", DatabaseStatus.ONLINE, originalCreatedAt);
+        // Act + Assert
+        assertThrows(
+                IllegalStateException.class,
+                () -> database.createSchema("Student#S%c@shema", "admin"));
     }
 
 }

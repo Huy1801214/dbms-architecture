@@ -966,8 +966,33 @@ flowchart LR
     DATABASETEST --> databasetest_20
     databasetest_21["shouldRejectInvalidStatusTransition()"]:::leafStyle
     DATABASETEST --> databasetest_21
-    databasetest_22["shouldCloseAndReopenDatabase()"]:::leafStyle
+    databasetest_22["shouldCreateSchema()"]:::leafStyle
     DATABASETEST --> databasetest_22
+    databasetest_23["shouldDropSchema()"]:::leafStyle
+    DATABASETEST --> databasetest_23
+    databasetest_24["shouldGetSchemaByName()"]:::leafStyle
+    DATABASETEST --> databasetest_24
+    databasetest_25["shouldListAllSchemas()"]:::leafStyle
+    DATABASETEST --> databasetest_25
+    databasetest_26["shouldRejectDuplicateSchemaName()"]:::leafStyle
+    DATABASETEST --> databasetest_26
+    databasetest_27["shouldRejectUnknownSchema()"]:::leafStyle
+    DATABASETEST --> databasetest_27
+    databasetest_28["shouldRejectSchemaOperationWhenClosed()"]:::leafStyle
+    DATABASETEST --> databasetest_28
+    databasetest_29["shouldRejectNullSchemaName()"]:::leafStyle
+    DATABASETEST --> databasetest_29
+    databasetest_30["shouldRejectBlankSchemaName()"]:::leafStyle
+    DATABASETEST --> databasetest_30
+    databasetest_31["shouldRejectSchemaNameWithSpecialCharacters()"]:::leafStyle
+    DATABASETEST --> databasetest_31
+    databasetest_32["shouldRejectSchemaNameExceedingMaxLength()"]:::leafStyle
+    DATABASETEST --> databasetest_32
+    databasetest_33["shouldRejectReservedSchemaName()"]:::leafStyle
+    DATABASETEST --> databasetest_33
+    databasetest_34["shouldRejectNullSchemaOwner()"]:::leafStyle
+    DATABASETEST --> databasetest_34
+
 
     %% SchemaTest methods
     schematest_1["shouldCreateTable()"]:::leafStyle

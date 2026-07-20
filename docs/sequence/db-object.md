@@ -677,6 +677,161 @@ sequenceDiagram
     Test->>Test: assertThrows(IllegalStateException.class)
 ```
 
+### 22. shouldCreateSchema()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    box #fff3e0 Schema Component
+    participant S as Schema
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+
+    Note over Test,D: Act
+    Test->>D: createSchema("StudentSchema", "admin")
+    activate D
+    D->>D: validateCurrentState()
+    D->>D: validateSchemaName("StudentSchema")
+    
+    D->>S: new Schema("schema-001", "StudentSchema", "admin")
+    S-->>D: Schema
+    
+    D->>D: schemas.put("StudentSchema", Schema)
+    D-->>Test: Schema
+    deactivate D
+
+    Note over Test,S: Assert
+    Test->>Test: assertNotNull(schema)
+    Test->>Test: assertEquals("StudentSchema", schema.getName())
+    Test->>Test: assertEquals("admin", schema.getOwner())
+```
+
+### 23. shouldDropSchema()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: createSchema("StudentSchema", "admin")
+
+    Note over Test,D: Act
+    Test->>D: dropSchema("StudentSchema")
+    activate D
+    D->>D: validateCurrentState()
+    D->>D: schemas.remove("StudentSchema")
+    D-->>Test: void
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>D: getSchema("StudentSchema")
+    D-->>Test: null
+    Test->>Test: assertNull(schema)
+```
+
+### 24. shouldRejectDuplicateSchemaName()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+    Test->>D: createSchema("StudentSchema", "admin")
+
+    Note over Test,D: Act
+    Test->>D: createSchema("StudentSchema", "admin")
+    activate D
+    D->>D: validateCurrentState()
+    D->>D: validateSchemaName("StudentSchema")
+    D->>D: schemas.containsKey("StudentSchema")
+    D-->>Test: SchemaValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(SchemaValidationException.class)
+```
+
+### 25. shouldRejectSchemaOperationWhenClosed()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = OFFLINE
+
+    Note over Test,D: Act
+    Test->>D: createSchema("StudentSchema", "admin")
+    activate D
+    D->>D: validateCurrentState()
+    D-->>Test: IllegalStateException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(IllegalStateException.class)
+```
+
+### 26. shouldRejectSchemaNameWithSpecialCharacters()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+    participant Test as DatabaseTest
+    end
+
+    box #e8f5e9 Database Component
+    participant D as Database
+    end
+
+    Note over Test,D: Arrange
+    Test->>D: status = ONLINE
+
+    Note over Test,D: Act
+    Test->>D: createSchema("Student@Schema", "admin")
+    activate D
+    D->>D: validateCurrentState()
+    D->>D: validateSchemaName("Student@Schema")
+    D-->>Test: SchemaValidationException
+    deactivate D
+
+    Note over Test,D: Assert
+    Test->>Test: assertThrows(SchemaValidationException.class)
+```
+
 ## SchemaTest
 
 ### 1. shouldCreateTable()
