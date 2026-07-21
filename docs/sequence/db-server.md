@@ -133,40 +133,47 @@ sequenceDiagram
     participant Test as DatabaseManagerTest
     end
 
-    box #e3f2fd DatabaseManager Component
+    box #e3f2fd Database Manager
     participant DM as DatabaseManager
     end
 
-    box #e8f5e9 Domain Object
+    box #fff3e0 Factory
+    participant DF as DefaultDatabaseFactory
+    end
+
+    box #e8f5e9 Domain
     participant DB as Database
     end
 
-    Note over Test,DM: Arrange
-    Test->>DM: empty DatabaseManager
+    Note over Test,DB: Arrange
+    Test->>DM: inject(DefaultDatabaseFactory)
 
-    Note over Test,DM: Act
-    Test->>DM: createDatabase("StudentDB", "admin")
+    Note over Test,DB: Act
+    Test->>DM: createDatabase(request)
 
     activate DM
 
-    DM->>DM: validateDatabaseName()
-    DM->>DM: checkDuplicateDatabase()
-    DM->>DM: generateDatabaseId()
+    DM->>DF: createDatabase(request)
 
-    DM->>DB: new Database(...)
-    activate DB
-    DB-->>DM: Database
-    deactivate DB
+    activate DF
+
+    DF->>DB: new Database(request)
+
+    DB-->>DF: Database
+
+    deactivate DF
+
+    DF-->>DM: Database
 
     DM->>DM: registerDatabase(Database)
 
     DM-->>Test: Database
+
     deactivate DM
 
-    Note over Test,DM: Assert
+    Note over Test,DB: Assert
     Test->>Test: assertNotNull(database)
-    Test->>Test: assertEquals("StudentDB", database.getName())
-    Test->>Test: assertEquals(1, manager.listAllDatabases().size())
+    Test->>Test: assertEquals(request.name, database.getName())
 ```
 
 ### 2. shouldDropDatabase()

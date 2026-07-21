@@ -1,5 +1,10 @@
 package dbms.catalog;
 
+import java.util.List;
+
 public abstract class Constraint {
-    public abstract boolean validate(Row row);
+    protected String constraintName;
+    protected List<String> columns;
+
+    public abstract void validate(Row row, Table table);
 }

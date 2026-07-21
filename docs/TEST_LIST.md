@@ -93,23 +93,25 @@
     * `shouldCreateTable()`
     * `shouldDropTable()`
     * `shouldRenameTable()`
+    * `shouldFindTableByName()`
+    * `shouldListAllTables()`
+    * `shouldRejectDuplicateTableName()`
+    * `shouldRejectUnknownTable()`
     * `shouldCreateView()`
     * `shouldDropView()`
     * `shouldCreateStoredProcedure()`
     * `shouldDropStoredProcedure()`
     * `shouldCreateSequence()`
     * `shouldDropSequence()`
-    * `shouldReturnExistingTable()`
   * **TableTest**
     * `shouldInsertRow()`
     * `shouldUpdateRow()`
     * `shouldDeleteRow()`
     * `shouldTruncateTable()`
-    * `shouldAnalyzeTable()`
-    * `shouldIncreaseRowCount()`
-    * `shouldDecreaseRowCount()`
-    * `shouldReturnInsertedRow()`
-    * `shouldReturnUpdatedRow()`
+    * `shouldFindRowById()`
+    * `shouldListAllRows()`
+    * `shouldRejectDuplicateRow()`
+    * `shouldRejectUnknownRow()`
   * **ColumnTest**
     * `shouldCreateColumn()`
     * `shouldValidateColumnDefinition()`

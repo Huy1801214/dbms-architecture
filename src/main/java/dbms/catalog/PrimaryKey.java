@@ -1,11 +1,16 @@
 package dbms.catalog;
+
 import java.util.List;
 
 public class PrimaryKey extends Constraint {
-    public List<String> columns;
+
+    public PrimaryKey(String constraintName, List<String> columns) {
+        this.constraintName = constraintName;
+        this.columns = columns;
+    }
 
     @Override
-    public boolean validate(Row row) {
-        return false;
+    public void validate(Row row, Table table) {
+
     }
 }
