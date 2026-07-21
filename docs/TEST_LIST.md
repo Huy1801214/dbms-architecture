@@ -108,11 +108,10 @@
     * `shouldUpdateRow()`
     * `shouldDeleteRow()`
     * `shouldTruncateTable()`
-    * `shouldAnalyzeTable()`
-    * `shouldIncreaseRowCount()`
-    * `shouldDecreaseRowCount()`
-    * `shouldReturnInsertedRow()`
-    * `shouldReturnUpdatedRow()`
+    * `shouldFindRowById()`
+    * `shouldListAllRows()`
+    * `shouldRejectDuplicateRow()`
+    * `shouldRejectUnknownRow()`
   * **ColumnTest**
     * `shouldCreateColumn()`
     * `shouldValidateColumnDefinition()`

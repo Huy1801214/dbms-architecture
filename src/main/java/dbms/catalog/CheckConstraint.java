@@ -2,7 +2,6 @@ package dbms.catalog;
 
 public class CheckConstraint extends Constraint {
     @Override
-    public boolean validate(Row row) {
-        return false;
+    public void validate(Row row, Table table) {
     }
 }

@@ -14,12 +14,12 @@ public class DatabaseManagerTest {
     public void shouldCreateDatabase() {
         // Arrange
         DatabaseManager manager = new DatabaseManager();
+        DatabaseCreateRequest request = new DatabaseCreateRequest("StudentDB", "admin");
         // Act
-        Database database = manager.createDatabase("StudentDB", "admin");
+        Database database = manager.createDatabase(request);
         // Assert
         assertNotNull(database);
-        assertEquals("StudentDB", database.getName());
-        assertEquals(1, manager.listAllDatabases().size());
+        assertEquals(dbms.catalog.DatabaseStatus.ONLINE, database.getStatus());
     }
 
     @Test

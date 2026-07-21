@@ -1,5 +1,7 @@
 package dbms.catalog;
 
+import java.util.List;
+
 public class Table {
     public String tableId;
     public String name;
@@ -48,5 +50,33 @@ public class Table {
     }
 
     public void analyze() {
+    }
+
+    public Row findRowById(String rowId) {
+        return null;
+    }
+
+    public java.util.List<Row> listAllRows() {
+        return null;
+    }
+
+    public boolean existsPrimaryKey(Object value) {
+        return false;
+    }
+
+    public boolean existsUniqueValue(String column, Object value) {
+        return false;
+    }
+
+    public Row findRowByPrimaryKey(Object value) {
+        return null;
+    }
+
+    public List<Row> getRows() {
+        return null;
+    }
+
+    public boolean existsReferencedRow(String column, Object value) {
+        return false;
     }
 }

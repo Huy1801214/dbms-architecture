@@ -203,20 +203,48 @@ class DataType{
 
 class Constraint{
     <<abstract>>
-    +validate()
+    #constraintName: String
+    #columns: List~String~
+    +validate(row: Row, table: Table)* void
 }
 
 class PrimaryKey{
-    +columns
+    +PrimaryKey(constraintName, columns)
+    +validate(row: Row, table: Table) void
 }
 
 class ForeignKey{
-    +referenceTable
+    +referenceTable: String
+    +referenceColumns: String
+    +ForeignKey(constraintName, columns, referenceTable, referenceColumns)
+    +validate(row: Row, table: Table) void
 }
 
-class UniqueConstraint
+class UniqueConstraint{
+    +columns: List~String~
+    +validate(row: Row, table: Table) void
+}
 
-class CheckConstraint
+class CheckConstraint{
+    +expression: String
+    +validate(row: Row, table: Table) void
+}
+
+class CompositeConstraint{
+    -constraints: List~Constraint~
+    +addConstraint(c: Constraint) void
+    +removeConstraint(c: Constraint) void
+    +validate(row: Row, table: Table) void
+}
+
+class ConstraintFactory{
+    <<abstract>>
+    +createConstraint(name: String, type: String, columns: List~String~)* Constraint
+}
+
+class DefaultConstraintFactory{
+    +createConstraint(name: String, type: String, columns: List~String~) Constraint
+}
 
 class Index{
     <<abstract>>
@@ -374,6 +402,11 @@ Constraint <|-- PrimaryKey
 Constraint <|-- ForeignKey
 Constraint <|-- UniqueConstraint
 Constraint <|-- CheckConstraint
+Constraint <|-- CompositeConstraint
+CompositeConstraint --> Constraint
+
+ConstraintFactory <|-- DefaultConstraintFactory
+DefaultConstraintFactory ..> Constraint
 
 Index <|-- BTreeIndex
 Index <|-- HashIndex
@@ -435,6 +468,9 @@ style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style CompositeConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style BTreeIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style HashIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -491,10 +527,32 @@ class DatabaseServer{
 }
 
 class DatabaseManager{
-    +createDatabase()
-    +dropDatabase()
-    +getDatabase()
+    -databaseFactory : DatabaseFactory
+
+    +createDatabase(request)
+    +dropDatabase(databaseId)
+    +getDatabase(databaseId)
     +listDatabases()
+}
+
+class DatabaseFactory{
+    <<interface>>
+    +createDatabase(request) Database
+}
+
+class DefaultDatabaseFactory{
+    +createDatabase(request) Database
+}
+
+class Database{
+    +databaseId
+    +name
+    +owner
+    +status
+    +createdAt
+
+    +open()
+    +close()
 }
 
 class ConfigurationManager
@@ -508,32 +566,30 @@ class SecurityManager{
 
 class MonitoringManager
 
-class Database{
-    +databaseId
-    +name
-    +owner
-    +status
-    +createdAt
-
-    +open()
-    +close()
-}
-
 DatabaseServer --> DatabaseManager
 DatabaseServer --> ConfigurationManager
 DatabaseServer --> SecurityManager
 DatabaseServer --> MonitoringManager
 
-DatabaseManager --> Database
+DatabaseManager --> DatabaseFactory : uses
+
+DatabaseFactory <|.. DefaultDatabaseFactory
+
+DefaultDatabaseFactory --> Database : creates
 
 %% =====================================================
 %% STYLING DEFINITIONS
 %% =====================================================
 style DatabaseServer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style DatabaseManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style ConfigurationRepository fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style DatabaseFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultDatabaseFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style ConfigurationManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style SecurityManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style MonitoringManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
 style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 ```
 --- 
@@ -770,13 +826,48 @@ class DatabaseStatus{
 
 class Constraint{
     <<abstract>>
-    +validate()
+    #constraintName: String
+    #columns: List~String~
+    +validate(row: Row, table: Table)* void
 }
 
-class PrimaryKey
-class ForeignKey
-class UniqueConstraint
-class CheckConstraint
+class PrimaryKey{
+    +PrimaryKey(constraintName, columns)
+    +validate(row: Row, table: Table) void
+}
+
+class ForeignKey{
+    +referenceTable: String
+    +referenceColumns: String
+    +ForeignKey(constraintName, columns, referenceTable, referenceColumns)
+    +validate(row: Row, table: Table) void
+}
+
+class UniqueConstraint{
+    +columns: List~String~
+    +validate(row: Row, table: Table) void
+}
+
+class CheckConstraint{
+    +expression: String
+    +validate(row: Row, table: Table) void
+}
+
+class CompositeConstraint{
+    -constraints: List~Constraint~
+    +addConstraint(c: Constraint) void
+    +removeConstraint(c: Constraint) void
+    +validate(row: Row, table: Table) void
+}
+
+class ConstraintFactory{
+    <<abstract>>
+    +createConstraint(name: String, type: String, columns: List~String~)* Constraint
+}
+
+class DefaultConstraintFactory{
+    +createConstraint(name: String, type: String, columns: List~String~) Constraint
+}
 
 class Index{
     <<abstract>>
@@ -817,6 +908,11 @@ Constraint <|-- PrimaryKey
 Constraint <|-- ForeignKey
 Constraint <|-- UniqueConstraint
 Constraint <|-- CheckConstraint
+Constraint <|-- CompositeConstraint
+CompositeConstraint --> Constraint
+
+ConstraintFactory <|-- DefaultConstraintFactory
+DefaultConstraintFactory ..> Constraint
 
 Index <|-- BTreeIndex
 Index <|-- HashIndex
@@ -839,6 +935,9 @@ style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style CompositeConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style BTreeIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style HashIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -1032,16 +1131,14 @@ flowchart LR
     TABLETEST --> tabletest_3
     tabletest_4["shouldTruncateTable()"]:::leafStyle
     TABLETEST --> tabletest_4
-    tabletest_5["shouldAnalyzeTable()"]:::leafStyle
+    tabletest_5["shouldFindRowById()"]:::leafStyle
     TABLETEST --> tabletest_5
-    tabletest_6["shouldIncreaseRowCount()"]:::leafStyle
+    tabletest_6["shouldListAllRows()"]:::leafStyle
     TABLETEST --> tabletest_6
-    tabletest_7["shouldDecreaseRowCount()"]:::leafStyle
+    tabletest_7["shouldRejectDuplicateRow()"]:::leafStyle
     TABLETEST --> tabletest_7
-    tabletest_8["shouldReturnInsertedRow()"]:::leafStyle
+    tabletest_8["shouldRejectUnknownRow()"]:::leafStyle
     TABLETEST --> tabletest_8
-    tabletest_9["shouldReturnUpdatedRow()"]:::leafStyle
-    TABLETEST --> tabletest_9
 
     %% ColumnTest methods
     columntest_1["shouldCreateColumn()"]:::leafStyle

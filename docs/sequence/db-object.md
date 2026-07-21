@@ -1220,9 +1220,28 @@ sequenceDiagram
     box #e8f5e9 Table Component
     participant T as Table
     end
+    box #fff3e0 Row Component
+    participant R as Row
+    end
 
-    Test->>T: shouldInsertRow()
-    T-->>Test: success
+    Note over Test,T: Arrange
+    Test->>R: new Row("row-001", ["John", 30])
+    R-->>Test: Row
+
+    Note over Test,T: Act
+    Test->>T: insert(Row)
+    activate T
+    T->>T: validateConstraints(Row)
+    T->>T: rows.put("row-001", Row)
+    T->>T: rowCount = 1
+    T-->>Test: void
+    deactivate T
+
+    Note over Test,T: Assert
+    Test->>T: getRowCount()
+    activate T
+    T-->>Test: 1
+    deactivate T
 ```
 
 ### 2. shouldUpdateRow()
@@ -1235,9 +1254,28 @@ sequenceDiagram
     box #e8f5e9 Table Component
     participant T as Table
     end
+    box #fff3e0 Row Component
+    participant R as Row
+    end
 
-    Test->>T: shouldUpdateRow()
-    T-->>Test: success
+    Note over Test,T: Arrange
+    Test->>T: insert(OriginalRow)
+    Test->>R: new Row("row-001", ["John", 31])
+    R-->>Test: NewRow
+
+    Note over Test,T: Act
+    Test->>T: update("row-001", NewRow)
+    activate T
+    T->>T: validateConstraints(NewRow)
+    T->>T: rows.put("row-001", NewRow)
+    T-->>Test: void
+    deactivate T
+
+    Note over Test,T: Assert
+    Test->>T: findRowById("row-001")
+    activate T
+    T-->>Test: NewRow
+    deactivate T
 ```
 
 ### 3. shouldDeleteRow()
@@ -1251,8 +1289,22 @@ sequenceDiagram
     participant T as Table
     end
 
-    Test->>T: shouldDeleteRow()
-    T-->>Test: success
+    Note over Test,T: Arrange
+    Test->>T: insert(Row)
+
+    Note over Test,T: Act
+    Test->>T: delete("row-001")
+    activate T
+    T->>T: rows.remove("row-001")
+    T->>T: rowCount = 0
+    T-->>Test: void
+    deactivate T
+
+    Note over Test,T: Assert
+    Test->>T: findRowById("row-001")
+    activate T
+    T-->>Test: null
+    deactivate T
 ```
 
 ### 4. shouldTruncateTable()
@@ -1266,11 +1318,26 @@ sequenceDiagram
     participant T as Table
     end
 
-    Test->>T: shouldTruncateTable()
-    T-->>Test: success
+    Note over Test,T: Arrange
+    Test->>T: insert(Row1)
+    Test->>T: insert(Row2)
+
+    Note over Test,T: Act
+    Test->>T: truncate()
+    activate T
+    T->>T: rows.clear()
+    T->>T: rowCount = 0
+    T-->>Test: void
+    deactivate T
+
+    Note over Test,T: Assert
+    Test->>T: getRowCount()
+    activate T
+    T-->>Test: 0
+    deactivate T
 ```
 
-### 5. shouldAnalyzeTable()
+### 5. shouldFindRowById()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -1281,11 +1348,21 @@ sequenceDiagram
     participant T as Table
     end
 
-    Test->>T: shouldAnalyzeTable()
-    T-->>Test: success
+    Note over Test,T: Arrange
+    Test->>T: insert(Row)
+
+    Note over Test,T: Act
+    Test->>T: findRowById("row-001")
+    activate T
+    T->>T: rows.get("row-001")
+    T-->>Test: Row
+    deactivate T
+
+    Note over Test,T: Assert
+    Test->>Test: assertNotNull(row)
 ```
 
-### 6. shouldIncreaseRowCount()
+### 6. shouldListAllRows()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -1296,11 +1373,22 @@ sequenceDiagram
     participant T as Table
     end
 
-    Test->>T: shouldIncreaseRowCount()
-    T-->>Test: success
+    Note over Test,T: Arrange
+    Test->>T: insert(Row1)
+    Test->>T: insert(Row2)
+
+    Note over Test,T: Act
+    Test->>T: listAllRows()
+    activate T
+    T->>T: rows.values()
+    T-->>Test: List<Row>
+    deactivate T
+
+    Note over Test,T: Assert
+    Test->>Test: assertEquals(2, rows.size())
 ```
 
-### 7. shouldDecreaseRowCount()
+### 7. shouldRejectDuplicateRow()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -1311,11 +1399,21 @@ sequenceDiagram
     participant T as Table
     end
 
-    Test->>T: shouldDecreaseRowCount()
-    T-->>Test: success
+    Note over Test,T: Arrange
+    Test->>T: insert(Row)
+
+    Note over Test,T: Act
+    Test->>T: insert(DuplicateRow)
+    activate T
+    T->>T: validateConstraints(DuplicateRow) -> duplicate primary key
+    T-->>Test: ConstraintViolationException
+    deactivate T
+
+    Note over Test,T: Assert
+    Test->>Test: assertThrows(ConstraintViolationException.class)
 ```
 
-### 8. shouldReturnInsertedRow()
+### 8. shouldRejectUnknownRow()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -1326,23 +1424,15 @@ sequenceDiagram
     participant T as Table
     end
 
-    Test->>T: shouldReturnInsertedRow()
-    T-->>Test: success
-```
+    Note over Test,T: Act
+    Test->>T: update("unknown-row-id", Row)
+    activate T
+    T->>T: rows.containsKey("unknown-row-id") -> false
+    T-->>Test: RowNotFoundException
+    deactivate T
 
-### 9. shouldReturnUpdatedRow()
-```mermaid
-sequenceDiagram
-    autonumber
-    box #e1f5fe Test Suite
-    participant Test as TableTest
-    end
-    box #e8f5e9 Table Component
-    participant T as Table
-    end
-
-    Test->>T: shouldReturnUpdatedRow()
-    T-->>Test: success
+    Note over Test,T: Assert
+    Test->>Test: assertThrows(RowNotFoundException.class)
 ```
 
 ## ColumnTest
@@ -1625,30 +1715,93 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
+
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as PrimaryKey
     end
 
-    Test->>C: shouldValidatePrimaryKey()
-    C-->>Test: success
+    box #fff3e0 Table Component
+    participant T as Table
+    end
+
+    box #fff8e1 Row Component
+    participant R as Row
+    end
+
+    Note over Test,C: Arrange
+    Test->>C: new PrimaryKey("pk_users", "id")
+    C-->>Test: PrimaryKey
+    Test->>R: new Row("row-001", ["John", 30])
+    R-->>Test: Row
+
+    Note over Test,C: Act
+    Test->>C: validate(Row, Table)
+
+    activate C
+
+    C->>R: getColumnValue("id")
+    R-->>C: "row-001"
+
+    C->>T: existsPrimaryKey("row-001")
+    T-->>C: false
+
+    C-->>Test: validation succeeds
+
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertDoesNotThrow()
 ```
 
 ### 2. shouldRejectDuplicatePrimaryKey()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
+
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as PrimaryKey
     end
 
-    Test->>C: shouldRejectDuplicatePrimaryKey()
-    C-->>Test: success
+    box #fff3e0 Table Component
+    participant T as Table
+    end
+
+    box #fff8e1 Row Component
+    participant R as Row
+    end
+
+    Note over Test,C: Arrange
+    Test->>C: new PrimaryKey("pk_users", "id")
+    C-->>Test: PrimaryKey
+
+    Test->>R: new Row("row-001", ["John", 30])
+    R-->>Test: Row
+
+    Note over Test,C: Act
+    Test->>C: validate(Row, Table)
+
+    activate C
+
+    C->>R: getColumnValue("id")
+    R-->>C: "row-001"
+
+    C->>T: existsPrimaryKey("row-001")
+    T-->>C: true
+
+    C--x Test: DuplicatePrimaryKeyException
+
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertThrows(DuplicatePrimaryKeyException)
 ```
 
 ### 3. shouldValidateForeignKey()
@@ -1659,11 +1812,33 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as ForeignKeyConstraint
+    end
+    box #fff3e0 Table Component
+    participant T as ParentTable
+    end
+    box #fff8e1 Row Component
+    participant R as ChildRow
     end
 
-    Test->>C: shouldValidateForeignKey()
-    C-->>Test: success
+    Note over Test,C: Arrange
+    Test->>C: new ForeignKeyConstraint("fk_orders_user", "user_id", ParentTable)
+    C-->>Test: ForeignKeyConstraint
+    Test->>R: new Row("order-001", ["parent-001", 100.0])
+    R-->>Test: ChildRow
+
+    Note over Test,C: Act
+    Test->>C: validate(ChildRow, ParentTable)
+    activate C
+    C->>R: getColumnValue("user_id")
+    R-->>C: "parent-001"
+    C->>T: findRowById("parent-001")
+    T-->>C: ParentRow
+    C-->>Test: void (success)
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertDoesNotThrow()
 ```
 
 ### 4. shouldRejectBrokenForeignKey()
@@ -1674,11 +1849,33 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as ForeignKeyConstraint
+    end
+    box #fff3e0 Table Component
+    participant T as ParentTable
+    end
+    box #fff8e1 Row Component
+    participant R as ChildRow
     end
 
-    Test->>C: shouldRejectBrokenForeignKey()
-    C-->>Test: success
+    Note over Test,C: Arrange
+    Test->>C: new ForeignKeyConstraint("fk_orders_user", "user_id", ParentTable)
+    C-->>Test: ForeignKeyConstraint
+    Test->>R: new Row("order-001", ["unknown-parent", 100.0])
+    R-->>Test: ChildRow
+
+    Note over Test,C: Act
+    Test->>C: validate(ChildRow, ParentTable)
+    activate C
+    C->>R: getColumnValue("user_id")
+    R-->>C: "unknown-parent"
+    C->>T: findRowById("unknown-parent")
+    T-->>C: null
+    C-->>Test: ConstraintViolationException
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertThrows(ConstraintViolationException.class)
 ```
 
 ### 5. shouldValidateUniqueConstraint()
@@ -1689,11 +1886,33 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as UniqueConstraint
+    end
+    box #fff3e0 Table Component
+    participant T as Table
+    end
+    box #fff8e1 Row Component
+    participant R as Row
     end
 
-    Test->>C: shouldValidateUniqueConstraint()
-    C-->>Test: success
+    Note over Test,C: Arrange
+    Test->>C: new UniqueConstraint("uq_users_email", "email")
+    C-->>Test: UniqueConstraint
+    Test->>R: new Row("row-001", ["test@dbms.com"])
+    R-->>Test: Row
+
+    Note over Test,C: Act
+    Test->>C: validate(Row, Table)
+    activate C
+    C->>R: getColumnValue("email")
+    R-->>C: "test@dbms.com"
+    C->>T: findRowByColumnValue("email", "test@dbms.com")
+    T-->>C: null
+    C-->>Test: void (success)
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertDoesNotThrow()
 ```
 
 ### 6. shouldRejectDuplicateUniqueValue()
@@ -1704,11 +1923,33 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as UniqueConstraint
+    end
+    box #fff3e0 Table Component
+    participant T as Table
+    end
+    box #fff8e1 Row Component
+    participant R as Row
     end
 
-    Test->>C: shouldRejectDuplicateUniqueValue()
-    C-->>Test: success
+    Note over Test,C: Arrange
+    Test->>C: new UniqueConstraint("uq_users_email", "email")
+    C-->>Test: UniqueConstraint
+    Test->>R: new Row("row-002", ["test@dbms.com"])
+    R-->>Test: Row
+
+    Note over Test,C: Act
+    Test->>C: validate(Row, Table)
+    activate C
+    C->>R: getColumnValue("email")
+    R-->>C: "test@dbms.com"
+    C->>T: findRowByColumnValue("email", "test@dbms.com")
+    T-->>C: ExistingRow
+    C-->>Test: ConstraintViolationException
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertThrows(ConstraintViolationException.class)
 ```
 
 ### 7. shouldValidateCheckConstraint()
@@ -1719,11 +1960,29 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as CheckConstraint
+    end
+    box #fff8e1 Row Component
+    participant R as Row
     end
 
-    Test->>C: shouldValidateCheckConstraint()
-    C-->>Test: success
+    Note over Test,C: Arrange
+    Test->>C: new CheckConstraint("chk_users_age", "age >= 18")
+    C-->>Test: CheckConstraint
+    Test->>R: new Row("row-001", [20])
+    R-->>Test: Row
+
+    Note over Test,C: Act
+    Test->>C: validate(Row)
+    activate C
+    C->>R: getColumnValue("age")
+    R-->>C: 20
+    C->>C: evaluateExpression("age >= 18", 20)
+    C-->>Test: void (success)
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertDoesNotThrow()
 ```
 
 ### 8. shouldRejectInvalidCheckConstraint()
@@ -1734,11 +1993,29 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
     box #e8f5e9 Constraint Component
-    participant C as Constraint
+    participant C as CheckConstraint
+    end
+    box #fff8e1 Row Component
+    participant R as Row
     end
 
-    Test->>C: shouldRejectInvalidCheckConstraint()
-    C-->>Test: success
+    Note over Test,C: Arrange
+    Test->>C: new CheckConstraint("chk_users_age", "age >= 18")
+    C-->>Test: CheckConstraint
+    Test->>R: new Row("row-001", [15])
+    R-->>Test: Row
+
+    Note over Test,C: Act
+    Test->>C: validate(Row)
+    activate C
+    C->>R: getColumnValue("age")
+    R-->>C: 15
+    C->>C: evaluateExpression("age >= 18", 15)
+    C-->>Test: ConstraintViolationException
+    deactivate C
+
+    Note over Test,C: Assert
+    Test->>Test: assertThrows(ConstraintViolationException.class)
 ```
 
 ## BTreeIndexTest
