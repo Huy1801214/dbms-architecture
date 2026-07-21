@@ -93,13 +93,16 @@
     * `shouldCreateTable()`
     * `shouldDropTable()`
     * `shouldRenameTable()`
+    * `shouldFindTableByName()`
+    * `shouldListAllTables()`
+    * `shouldRejectDuplicateTableName()`
+    * `shouldRejectUnknownTable()`
     * `shouldCreateView()`
     * `shouldDropView()`
     * `shouldCreateStoredProcedure()`
     * `shouldDropStoredProcedure()`
     * `shouldCreateSequence()`
     * `shouldDropSequence()`
-    * `shouldReturnExistingTable()`
   * **TableTest**
     * `shouldInsertRow()`
     * `shouldUpdateRow()`

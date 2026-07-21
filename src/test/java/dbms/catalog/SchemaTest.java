@@ -33,6 +33,42 @@ public class SchemaTest {
     }
 
     @Test
+    public void shouldFindTableByName() {
+        // Arrange
+        
+        // Act
+        
+        // Assert
+    }
+
+    @Test
+    public void shouldListAllTables() {
+        // Arrange
+        
+        // Act
+        
+        // Assert
+    }
+
+    @Test
+    public void shouldRejectDuplicateTableName() {
+        // Arrange
+        
+        // Act
+        
+        // Assert
+    }
+
+    @Test
+    public void shouldRejectUnknownTable() {
+        // Arrange
+        
+        // Act
+        
+        // Assert
+    }
+
+    @Test
     public void shouldCreateView() {
         // Arrange
         
@@ -85,14 +121,4 @@ public class SchemaTest {
         
         // Assert
     }
-
-    @Test
-    public void shouldReturnExistingTable() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
 }

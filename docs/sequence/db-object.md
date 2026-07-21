@@ -844,9 +844,27 @@ sequenceDiagram
     box #e8f5e9 Schema Component
     participant S as Schema
     end
+    box #fff3e0 Table Component
+    participant T as Table
+    end
 
-    Test->>S: shouldCreateTable()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>T: new Table("tbl-001", "users", "InnoDB")
+    T-->>Test: Table
+
+    Note over Test,S: Act
+    Test->>S: createTable(Table)
+    activate S
+    S->>S: validateTableName("users")
+    S->>S: tables.put("tbl-001", Table)
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getTable("users")
+    activate S
+    S-->>Test: Table
+    deactivate S
 ```
 
 ### 2. shouldDropTable()
@@ -860,8 +878,21 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldDropTable()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createTable(Table)
+
+    Note over Test,S: Act
+    Test->>S: dropTable("tbl-001")
+    activate S
+    S->>S: tables.remove("tbl-001")
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getTable("users")
+    activate S
+    S-->>Test: null
+    deactivate S
 ```
 
 ### 3. shouldRenameTable()
@@ -874,12 +905,30 @@ sequenceDiagram
     box #e8f5e9 Schema Component
     participant S as Schema
     end
+    box #fff3e0 Table Component
+    participant T as Table
+    end
 
-    Test->>S: shouldRenameTable()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createTable(Table)
+
+    Note over Test,S: Act
+    Test->>S: renameTable("users", "customers")
+    activate S
+    S->>S: validateTableName("customers")
+    S->>S: tables.get("users")
+    S->>T: setName("customers")
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getTable("customers")
+    activate S
+    S-->>Test: Table
+    deactivate S
 ```
 
-### 4. shouldCreateView()
+### 4. shouldFindTableByName()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -890,11 +939,21 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldCreateView()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createTable(Table)
+
+    Note over Test,S: Act
+    Test->>S: findTableByName("users")
+    activate S
+    S->>S: tables.values() (search by name)
+    S-->>Test: Table
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>Test: assertNotNull(table)
 ```
 
-### 5. shouldDropView()
+### 5. shouldListAllTables()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -905,11 +964,21 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldDropView()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createTable(Table1)
+    Test->>S: createTable(Table2)
+
+    Note over Test,S: Act
+    Test->>S: listAllTables()
+    activate S
+    S-->>Test: List<Table>
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>Test: assertEquals(2, tables.size())
 ```
 
-### 6. shouldCreateStoredProcedure()
+### 6. shouldRejectDuplicateTableName()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -920,11 +989,21 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldCreateStoredProcedure()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createTable(Table)
+
+    Note over Test,S: Act
+    Test->>S: createTable(TableDuplicate)
+    activate S
+    S->>S: validateTableName("users") -> duplicate
+    S-->>Test: SchemaValidationException
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>Test: assertThrows(SchemaValidationException.class)
 ```
 
-### 7. shouldDropStoredProcedure()
+### 7. shouldRejectUnknownTable()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -935,11 +1014,51 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldDropStoredProcedure()
-    S-->>Test: success
+    Note over Test,S: Act
+    Test->>S: dropTable("unknown-tbl-id")
+    activate S
+    S->>S: tables.containsKey("unknown-tbl-id") -> false
+    S-->>Test: SchemaValidationException
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>Test: assertThrows(SchemaValidationException.class)
 ```
 
-### 8. shouldCreateSequence()
+### 8. shouldCreateView()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SchemaTest
+    end
+    box #e8f5e9 Schema Component
+    participant S as Schema
+    end
+    box #e0f7fa View Component
+    participant V as View
+    end
+
+    Note over Test,S: Arrange
+    Test->>V: new View("SELECT * FROM users")
+    V-->>Test: View
+
+    Note over Test,S: Act
+    Test->>S: createView(View)
+    activate S
+    S->>S: validateViewName()
+    S->>S: views.put(viewId, View)
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getView("viewName")
+    activate S
+    S-->>Test: View
+    deactivate S
+```
+
+### 9. shouldDropView()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -950,11 +1069,57 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldCreateSequence()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createView(View)
+
+    Note over Test,S: Act
+    Test->>S: dropView("view-001")
+    activate S
+    S->>S: views.remove("view-001")
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getView("view-001")
+    activate S
+    S-->>Test: null
+    deactivate S
 ```
 
-### 9. shouldDropSequence()
+### 10. shouldCreateStoredProcedure()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SchemaTest
+    end
+    box #e8f5e9 Schema Component
+    participant S as Schema
+    end
+    box #f1f8e9 StoredProcedure Component
+    participant P as StoredProcedure
+    end
+
+    Note over Test,S: Arrange
+    Test->>P: new StoredProcedure()
+    P-->>Test: StoredProcedure
+
+    Note over Test,S: Act
+    Test->>S: createProcedure(StoredProcedure)
+    activate S
+    S->>S: validateProcedureName()
+    S->>S: procedures.put(procId, StoredProcedure)
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getProcedure("procName")
+    activate S
+    S-->>Test: StoredProcedure
+    deactivate S
+```
+
+### 11. shouldDropStoredProcedure()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -965,11 +1130,57 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldDropSequence()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createProcedure(StoredProcedure)
+
+    Note over Test,S: Act
+    Test->>S: dropProcedure("proc-001")
+    activate S
+    S->>S: procedures.remove("proc-001")
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getProcedure("proc-001")
+    activate S
+    S-->>Test: null
+    deactivate S
 ```
 
-### 10. shouldReturnExistingTable()
+### 12. shouldCreateSequence()
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Test Suite
+    participant Test as SchemaTest
+    end
+    box #e8f5e9 Schema Component
+    participant S as Schema
+    end
+    box #fff8e1 Sequence Component
+    participant Seq as Sequence
+    end
+
+    Note over Test,S: Arrange
+    Test->>Seq: new Sequence()
+    Seq-->>Test: Sequence
+
+    Note over Test,S: Act
+    Test->>S: createSequence(Sequence)
+    activate S
+    S->>S: validateSequenceName()
+    S->>S: sequences.put(seqId, Sequence)
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getSequence("seqName")
+    activate S
+    S-->>Test: Sequence
+    deactivate S
+```
+
+### 13. shouldDropSequence()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -980,8 +1191,21 @@ sequenceDiagram
     participant S as Schema
     end
 
-    Test->>S: shouldReturnExistingTable()
-    S-->>Test: success
+    Note over Test,S: Arrange
+    Test->>S: createSequence(Sequence)
+
+    Note over Test,S: Act
+    Test->>S: dropSequence("seq-001")
+    activate S
+    S->>S: sequences.remove("seq-001")
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: getSequence("seq-001")
+    activate S
+    S-->>Test: null
+    deactivate S
 ```
 
 ## TableTest

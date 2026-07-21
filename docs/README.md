@@ -1001,20 +1001,27 @@ flowchart LR
     SCHEMATEST --> schematest_2
     schematest_3["shouldRenameTable()"]:::leafStyle
     SCHEMATEST --> schematest_3
-    schematest_4["shouldCreateView()"]:::leafStyle
+    schematest_4["shouldFindTableByName()"]:::leafStyle
     SCHEMATEST --> schematest_4
-    schematest_5["shouldDropView()"]:::leafStyle
+    schematest_5["shouldListAllTables()"]:::leafStyle
     SCHEMATEST --> schematest_5
-    schematest_6["shouldCreateStoredProcedure()"]:::leafStyle
+    schematest_6["shouldRejectDuplicateTableName()"]:::leafStyle
     SCHEMATEST --> schematest_6
-    schematest_7["shouldDropStoredProcedure()"]:::leafStyle
+    schematest_7["shouldRejectUnknownTable()"]:::leafStyle
     SCHEMATEST --> schematest_7
-    schematest_8["shouldCreateSequence()"]:::leafStyle
+    schematest_8["shouldCreateView()"]:::leafStyle
     SCHEMATEST --> schematest_8
-    schematest_9["shouldDropSequence()"]:::leafStyle
+    schematest_9["shouldDropView()"]:::leafStyle
     SCHEMATEST --> schematest_9
-    schematest_10["shouldReturnExistingTable()"]:::leafStyle
+    schematest_10["shouldCreateStoredProcedure()"]:::leafStyle
     SCHEMATEST --> schematest_10
+    schematest_11["shouldDropStoredProcedure()"]:::leafStyle
+    SCHEMATEST --> schematest_11
+    schematest_12["shouldCreateSequence()"]:::leafStyle
+    SCHEMATEST --> schematest_12
+    schematest_13["shouldDropSequence()"]:::leafStyle
+    SCHEMATEST --> schematest_13
+
 
     %% TableTest methods
     tabletest_1["shouldInsertRow()"]:::leafStyle
