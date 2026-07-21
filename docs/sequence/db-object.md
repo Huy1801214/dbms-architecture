@@ -861,7 +861,7 @@ sequenceDiagram
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getTable("users")
+    Test->>S: getTable("tbl-001")
     activate S
     S-->>Test: Table
     deactivate S
@@ -889,7 +889,7 @@ sequenceDiagram
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getTable("users")
+    Test->>S: getTable("tbl-001")
     activate S
     S-->>Test: null
     deactivate S
@@ -922,7 +922,7 @@ sequenceDiagram
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getTable("customers")
+    Test->>S: getTable("tbl-001")
     activate S
     S-->>Test: Table
     deactivate S
@@ -1052,7 +1052,7 @@ sequenceDiagram
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getView("viewName")
+    Test->>S: getView("view-001")
     activate S
     S-->>Test: View
     deactivate S
@@ -1113,7 +1113,7 @@ sequenceDiagram
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getProcedure("procName")
+    Test->>S: getProcedure("proc-001")
     activate S
     S-->>Test: StoredProcedure
     deactivate S
@@ -1174,7 +1174,7 @@ sequenceDiagram
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getSequence("seqName")
+    Test->>S: getSequence("seq-001")
     activate S
     S-->>Test: Sequence
     deactivate S
