@@ -841,27 +841,35 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
-    box #fff3e0 Table Component
+    box #fff3e0 Factory
+    participant F as DefaultDatabaseObjectFactory
+    end
+    box #e8f5e9 Domain
     participant T as Table
     end
 
     Note over Test,S: Arrange
-    Test->>T: new Table("tbl-001", "users", "InnoDB")
-    T-->>Test: Table
-
-    Note over Test,S: Act
-    Test->>S: createTable(Table)
+    Test->>S: createTable(request)
     activate S
-    S->>S: validateTableName("users")
-    S->>S: tables.put("tbl-001", Table)
-    S-->>Test: void
+    S->>F: createTable(request)
+    activate F
+    F->>T: new Table(...)
+    T-->>F: Table
+    F-->>S: Table
+    deactivate F
+    S->>S: addObject(Table)
+    S->>T: create()
+    activate T
+    T-->>S: void
+    deactivate T
+    S-->>Test: Table
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getTable("tbl-001")
+    Test->>S: findObject("users")
     activate S
     S-->>Test: Table
     deactivate S
@@ -874,22 +882,27 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
+    end
+    box #e8f5e9 Domain
+    participant T as Table
     end
 
     Note over Test,S: Arrange
-    Test->>S: createTable(Table)
-
-    Note over Test,S: Act
-    Test->>S: dropTable("tbl-001")
+    Test->>S: dropObject("tbl-001")
     activate S
-    S->>S: tables.remove("tbl-001")
+    S->>S: findObjectById("tbl-001") -> Table
+    S->>T: drop()
+    activate T
+    T-->>S: void
+    deactivate T
+    S->>S: removeObject("tbl-001")
     S-->>Test: void
     deactivate S
 
     Note over Test,S: Assert
-    Test->>S: getTable("tbl-001")
+    Test->>S: findObject("users")
     activate S
     S-->>Test: null
     deactivate S
@@ -902,30 +915,22 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
-    participant S as Schema
-    end
-    box #fff3e0 Table Component
+    box #e8f5e9 Domain
     participant T as Table
     end
 
-    Note over Test,S: Arrange
-    Test->>S: createTable(Table)
+    Note over Test,T: Arrange
+    Test->>T: rename("customers")
+    activate T
+    T->>T: validateName("customers")
+    T-->>Test: void
+    deactivate T
 
-    Note over Test,S: Act
-    Test->>S: renameTable("users", "customers")
-    activate S
-    S->>S: validateTableName("customers")
-    S->>S: tables.get("users")
-    S->>T: setName("customers")
-    S-->>Test: void
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: getTable("tbl-001")
-    activate S
-    S-->>Test: Table
-    deactivate S
+    Note over Test,T: Assert
+    Test->>T: getName()
+    activate T
+    T-->>Test: "customers"
+    deactivate T
 ```
 
 ### 4. shouldFindTableByName()
@@ -935,17 +940,14 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
 
-    Note over Test,S: Arrange
-    Test->>S: createTable(Table)
-
     Note over Test,S: Act
-    Test->>S: findTableByName("users")
+    Test->>S: findObject("users")
     activate S
-    S->>S: tables.values() (search by name)
+    S->>S: search objects list by name
     S-->>Test: Table
     deactivate S
 
@@ -960,22 +962,18 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
 
-    Note over Test,S: Arrange
-    Test->>S: createTable(Table1)
-    Test->>S: createTable(Table2)
-
     Note over Test,S: Act
-    Test->>S: listAllTables()
+    Test->>S: listObjects()
     activate S
-    S-->>Test: List<Table>
+    S-->>Test: List<DatabaseObject>
     deactivate S
 
     Note over Test,S: Assert
-    Test->>Test: assertEquals(2, tables.size())
+    Test->>Test: assertEquals(2, objects.size())
 ```
 
 ### 6. shouldRejectDuplicateTableName()
@@ -985,22 +983,19 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
 
-    Note over Test,S: Arrange
-    Test->>S: createTable(Table)
-
     Note over Test,S: Act
-    Test->>S: createTable(TableDuplicate)
+    Test->>S: createTable(request)
     activate S
-    S->>S: validateTableName("users") -> duplicate
-    S-->>Test: SchemaValidationException
+    S->>S: findObject("users") -> Table (exists)
+    S-->>Test: DuplicateObjectException
     deactivate S
 
     Note over Test,S: Assert
-    Test->>Test: assertThrows(SchemaValidationException.class)
+    Test->>Test: assertThrows(DuplicateObjectException.class)
 ```
 
 ### 7. shouldRejectUnknownTable()
@@ -1010,19 +1005,19 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
 
     Note over Test,S: Act
-    Test->>S: dropTable("unknown-tbl-id")
+    Test->>S: dropObject("unknown-tbl-id")
     activate S
-    S->>S: tables.containsKey("unknown-tbl-id") -> false
-    S-->>Test: SchemaValidationException
+    S->>S: findObjectById("unknown-tbl-id") -> null
+    S-->>Test: ObjectNotFoundException
     deactivate S
 
     Note over Test,S: Assert
-    Test->>Test: assertThrows(SchemaValidationException.class)
+    Test->>Test: assertThrows(ObjectNotFoundException.class)
 ```
 
 ### 8. shouldCreateView()
@@ -1032,28 +1027,30 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
-    box #e0f7fa View Component
+    box #fff3e0 Factory
+    participant F as DefaultDatabaseObjectFactory
+    end
+    box #e8f5e9 Domain
     participant V as View
     end
 
     Note over Test,S: Arrange
-    Test->>V: new View("SELECT * FROM users")
-    V-->>Test: View
-
-    Note over Test,S: Act
-    Test->>S: createView(View)
+    Test->>S: createView(request)
     activate S
-    S->>S: validateViewName()
-    S->>S: views.put(viewId, View)
-    S-->>Test: void
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: getView("view-001")
-    activate S
+    S->>F: createView(request)
+    activate F
+    F->>V: new View(...)
+    V-->>F: View
+    F-->>S: View
+    deactivate F
+    S->>S: addObject(View)
+    S->>V: create()
+    activate V
+    V-->>S: void
+    deactivate V
     S-->>Test: View
     deactivate S
 ```
@@ -1065,24 +1062,23 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
+    end
+    box #e8f5e9 Domain
+    participant V as View
     end
 
     Note over Test,S: Arrange
-    Test->>S: createView(View)
-
-    Note over Test,S: Act
-    Test->>S: dropView("view-001")
+    Test->>S: dropObject("view-001")
     activate S
-    S->>S: views.remove("view-001")
+    S->>S: findObjectById("view-001") -> View
+    S->>V: drop()
+    activate V
+    V-->>S: void
+    deactivate V
+    S->>S: removeObject("view-001")
     S-->>Test: void
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: getView("view-001")
-    activate S
-    S-->>Test: null
     deactivate S
 ```
 
@@ -1093,28 +1089,30 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
-    box #f1f8e9 StoredProcedure Component
+    box #fff3e0 Factory
+    participant F as DefaultDatabaseObjectFactory
+    end
+    box #e8f5e9 Domain
     participant P as StoredProcedure
     end
 
     Note over Test,S: Arrange
-    Test->>P: new StoredProcedure()
-    P-->>Test: StoredProcedure
-
-    Note over Test,S: Act
-    Test->>S: createProcedure(StoredProcedure)
+    Test->>S: createProcedure(request)
     activate S
-    S->>S: validateProcedureName()
-    S->>S: procedures.put(procId, StoredProcedure)
-    S-->>Test: void
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: getProcedure("proc-001")
-    activate S
+    S->>F: createProcedure(request)
+    activate F
+    F->>P: new StoredProcedure(...)
+    P-->>F: StoredProcedure
+    F-->>S: StoredProcedure
+    deactivate F
+    S->>S: addObject(StoredProcedure)
+    S->>P: create()
+    activate P
+    P-->>S: void
+    deactivate P
     S-->>Test: StoredProcedure
     deactivate S
 ```
@@ -1126,24 +1124,23 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
+    end
+    box #e8f5e9 Domain
+    participant P as StoredProcedure
     end
 
     Note over Test,S: Arrange
-    Test->>S: createProcedure(StoredProcedure)
-
-    Note over Test,S: Act
-    Test->>S: dropProcedure("proc-001")
+    Test->>S: dropObject("proc-001")
     activate S
-    S->>S: procedures.remove("proc-001")
+    S->>S: findObjectById("proc-001") -> StoredProcedure
+    S->>P: drop()
+    activate P
+    P-->>S: void
+    deactivate P
+    S->>S: removeObject("proc-001")
     S-->>Test: void
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: getProcedure("proc-001")
-    activate S
-    S-->>Test: null
     deactivate S
 ```
 
@@ -1154,28 +1151,30 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
     end
-    box #fff8e1 Sequence Component
+    box #fff3e0 Factory
+    participant F as DefaultDatabaseObjectFactory
+    end
+    box #e8f5e9 Domain
     participant Seq as Sequence
     end
 
     Note over Test,S: Arrange
-    Test->>Seq: new Sequence()
-    Seq-->>Test: Sequence
-
-    Note over Test,S: Act
-    Test->>S: createSequence(Sequence)
+    Test->>S: createSequence(request)
     activate S
-    S->>S: validateSequenceName()
-    S->>S: sequences.put(seqId, Sequence)
-    S-->>Test: void
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: getSequence("seq-001")
-    activate S
+    S->>F: createSequence(request)
+    activate F
+    F->>Seq: new Sequence(...)
+    Seq-->>F: Sequence
+    F-->>S: Sequence
+    deactivate F
+    S->>S: addObject(Sequence)
+    S->>Seq: create()
+    activate Seq
+    Seq-->>S: void
+    deactivate Seq
     S-->>Test: Sequence
     deactivate S
 ```
@@ -1187,24 +1186,23 @@ sequenceDiagram
     box #e1f5fe Test Suite
     participant Test as SchemaTest
     end
-    box #e8f5e9 Schema Component
+    box #e3f2fd Schema
     participant S as Schema
+    end
+    box #e8f5e9 Domain
+    participant Seq as Sequence
     end
 
     Note over Test,S: Arrange
-    Test->>S: createSequence(Sequence)
-
-    Note over Test,S: Act
-    Test->>S: dropSequence("seq-001")
+    Test->>S: dropObject("seq-001")
     activate S
-    S->>S: sequences.remove("seq-001")
+    S->>S: findObjectById("seq-001") -> Sequence
+    S->>Seq: drop()
+    activate Seq
+    Seq-->>S: void
+    deactivate Seq
+    S->>S: removeObject("seq-001")
     S-->>Test: void
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: getSequence("seq-001")
-    activate S
-    S-->>Test: null
     deactivate S
 ```
 
@@ -1720,40 +1718,43 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
 
-    box #e8f5e9 Constraint Component
-    participant C as PrimaryKey
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
 
-    box #fff3e0 Table Component
+    box #e8f5e9 Strategy
+    participant PK as PrimaryKey
+    end
+
+    box #fff3e0 Table
     participant T as Table
     end
 
-    box #fff8e1 Row Component
+    box #fff8e1 Row
     participant R as Row
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new PrimaryKey("pk_users", "id")
-    C-->>Test: PrimaryKey
-    Test->>R: new Row("row-001", ["John", 30])
-    R-->>Test: Row
+    Note over Test,R: Arrange
+    Test->>F: createPrimaryKey(request)
+    activate F
+    F->>PK: new PrimaryKey(...)
+    PK-->>F: PrimaryKey
+    deactivate F
+    F-->>Test: PrimaryKey
 
-    Note over Test,C: Act
-    Test->>C: validate(Row, Table)
+    Test->>R: create Row
 
-    activate C
+    Note over Test,R: Act
+    Test->>PK: validate(row,table)
+    activate PK
+    PK->>R: getColumnValue("id")
+    R-->>PK: value
+    PK->>T: existsPrimaryKey(value)
+    T-->>PK: false
+    PK-->>Test: success
+    deactivate PK
 
-    C->>R: getColumnValue("id")
-    R-->>C: "row-001"
-
-    C->>T: existsPrimaryKey("row-001")
-    T-->>C: false
-
-    C-->>Test: validation succeeds
-
-    deactivate C
-
-    Note over Test,C: Assert
+    Note over Test,R: Assert
     Test->>Test: assertDoesNotThrow()
 ```
 
@@ -1766,78 +1767,92 @@ sequenceDiagram
     participant Test as ConstraintTest
     end
 
-    box #e8f5e9 Constraint Component
-    participant C as PrimaryKey
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
 
-    box #fff3e0 Table Component
+    box #e8f5e9 Strategy
+    participant PK as PrimaryKey
+    end
+
+    box #fff8e1 Table
     participant T as Table
     end
 
-    box #fff8e1 Row Component
+    box #f3e5f5 Row
     participant R as Row
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new PrimaryKey("pk_users", "id")
-    C-->>Test: PrimaryKey
+    Note over Test,R: Arrange
+    Test->>F: createPrimaryKey(request)
+    activate F
+    F->>PK: new PrimaryKey(...)
+    PK-->>F: PrimaryKey
+    deactivate F
+    F-->>Test: PrimaryKey
 
-    Test->>R: new Row("row-001", ["John", 30])
-    R-->>Test: Row
+    Test->>R: create Row(id="row-001")
 
-    Note over Test,C: Act
-    Test->>C: validate(Row, Table)
+    Note over Test,PK: Act
+    Test->>PK: validate(row, table)
+    activate PK
+    PK->>R: getColumnValue("id")
+    R-->>PK: "row-001"
+    PK->>T: existsPrimaryKey("row-001")
+    T-->>PK: true
+    PK--x Test: DuplicatePrimaryKeyException
+    deactivate PK
 
-    activate C
-
-    C->>R: getColumnValue("id")
-    R-->>C: "row-001"
-
-    C->>T: existsPrimaryKey("row-001")
-    T-->>C: true
-
-    C--x Test: DuplicatePrimaryKeyException
-
-    deactivate C
-
-    Note over Test,C: Assert
-    Test->>Test: assertThrows(DuplicatePrimaryKeyException)
+    Note over Test,R: Assert
+    Test->>Test: assertThrows(...)
 ```
 
 ### 3. shouldValidateForeignKey()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Constraint Component
-    participant C as ForeignKeyConstraint
+
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
-    box #fff3e0 Table Component
-    participant T as ParentTable
+
+    box #e8f5e9 Strategy
+    participant FK as ForeignKey
     end
-    box #fff8e1 Row Component
+
+    box #fff8e1 ParentTable
+    participant PT as ParentTable
+    end
+
+    box #f3e5f5 Row
     participant R as ChildRow
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new ForeignKeyConstraint("fk_orders_user", "user_id", ParentTable)
-    C-->>Test: ForeignKeyConstraint
-    Test->>R: new Row("order-001", ["parent-001", 100.0])
-    R-->>Test: ChildRow
+    Note over Test,R: Arrange
+    Test->>F: createForeignKey(request)
+    activate F
+    F->>FK: new ForeignKey(...)
+    FK-->>F: ForeignKey
+    deactivate F
+    F-->>Test: ForeignKey
 
-    Note over Test,C: Act
-    Test->>C: validate(ChildRow, ParentTable)
-    activate C
-    C->>R: getColumnValue("user_id")
-    R-->>C: "parent-001"
-    C->>T: findRowById("parent-001")
-    T-->>C: ParentRow
-    C-->>Test: void (success)
-    deactivate C
+    Test->>R: create ChildRow
 
-    Note over Test,C: Assert
+    Note over Test,FK: Act
+    Test->>FK: validate(row,parentTable)
+    activate FK
+    FK->>R: getColumnValue("user_id")
+    R-->>FK: "parent-001"
+    FK->>PT: existsRow("parent-001")
+    PT-->>FK: true
+    FK-->>Test: validation succeeds
+    deactivate FK
+
+    Note over Test,R: Assert
     Test->>Test: assertDoesNotThrow()
 ```
 
@@ -1845,73 +1860,97 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Constraint Component
-    participant C as ForeignKeyConstraint
+
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
-    box #fff3e0 Table Component
-    participant T as ParentTable
+
+    box #e8f5e9 Strategy
+    participant FK as ForeignKey
     end
-    box #fff8e1 Row Component
+
+    box #fff8e1 ParentTable
+    participant PT as ParentTable
+    end
+
+    box #f3e5f5 Row
     participant R as ChildRow
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new ForeignKeyConstraint("fk_orders_user", "user_id", ParentTable)
-    C-->>Test: ForeignKeyConstraint
-    Test->>R: new Row("order-001", ["unknown-parent", 100.0])
-    R-->>Test: ChildRow
+    Note over Test,R: Arrange
+    Test->>F: createForeignKey(request)
+    activate F
+    F->>FK: new ForeignKey(...)
+    FK-->>F: ForeignKey
+    deactivate F
+    F-->>Test: ForeignKey
 
-    Note over Test,C: Act
-    Test->>C: validate(ChildRow, ParentTable)
-    activate C
-    C->>R: getColumnValue("user_id")
-    R-->>C: "unknown-parent"
-    C->>T: findRowById("unknown-parent")
-    T-->>C: null
-    C-->>Test: ConstraintViolationException
-    deactivate C
+    Test->>R: create ChildRow
 
-    Note over Test,C: Assert
-    Test->>Test: assertThrows(ConstraintViolationException.class)
+    Note over Test,FK: Act
+    Test->>FK: validate(row,parentTable)
+    activate FK
+    FK->>R: getColumnValue("user_id")
+    R-->>FK: "unknown-parent"
+    FK->>PT: existsRow("unknown-parent")
+    PT-->>FK: false
+    FK--x Test: ForeignKeyViolationException
+    deactivate FK
+
+    Note over Test,R: Assert
+    Test->>Test: assertThrows(...)
 ```
 
 ### 5. shouldValidateUniqueConstraint()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Constraint Component
-    participant C as UniqueConstraint
+
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
-    box #fff3e0 Table Component
+
+    box #e8f5e9 Strategy
+    participant UQ as UniqueConstraint
+    end
+
+    box #fff8e1 Table
     participant T as Table
     end
-    box #fff8e1 Row Component
+
+    box #f3e5f5 Row
     participant R as Row
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new UniqueConstraint("uq_users_email", "email")
-    C-->>Test: UniqueConstraint
-    Test->>R: new Row("row-001", ["test@dbms.com"])
-    R-->>Test: Row
+    Note over Test,R: Arrange
+    Test->>F: createUnique(request)
+    activate F
+    F->>UQ: new UniqueConstraint(...)
+    UQ-->>F: UniqueConstraint
+    deactivate F
+    F-->>Test: UniqueConstraint
 
-    Note over Test,C: Act
-    Test->>C: validate(Row, Table)
-    activate C
-    C->>R: getColumnValue("email")
-    R-->>C: "test@dbms.com"
-    C->>T: findRowByColumnValue("email", "test@dbms.com")
-    T-->>C: null
-    C-->>Test: void (success)
-    deactivate C
+    Test->>R: create Row
 
-    Note over Test,C: Assert
+    Note over Test,UQ: Act
+    Test->>UQ: validate(row,table)
+    activate UQ
+    UQ->>R: getColumnValue("email")
+    R-->>UQ: "test@dbms.com"
+    UQ->>T: existsUniqueValue("email","test@dbms.com")
+    T-->>UQ: false
+    UQ-->>Test: validation succeeds
+    deactivate UQ
+
+    Note over Test,R: Assert
     Test->>Test: assertDoesNotThrow()
 ```
 
@@ -1919,69 +1958,92 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Constraint Component
-    participant C as UniqueConstraint
+
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
-    box #fff3e0 Table Component
+
+    box #e8f5e9 Strategy
+    participant UQ as UniqueConstraint
+    end
+
+    box #fff8e1 Table
     participant T as Table
     end
-    box #fff8e1 Row Component
+
+    box #f3e5f5 Row
     participant R as Row
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new UniqueConstraint("uq_users_email", "email")
-    C-->>Test: UniqueConstraint
-    Test->>R: new Row("row-002", ["test@dbms.com"])
-    R-->>Test: Row
+    Note over Test,R: Arrange
+    Test->>F: createUnique(request)
+    activate F
+    F->>UQ: new UniqueConstraint(...)
+    UQ-->>F: UniqueConstraint
+    deactivate F
+    F-->>Test: UniqueConstraint
 
-    Note over Test,C: Act
-    Test->>C: validate(Row, Table)
-    activate C
-    C->>R: getColumnValue("email")
-    R-->>C: "test@dbms.com"
-    C->>T: findRowByColumnValue("email", "test@dbms.com")
-    T-->>C: ExistingRow
-    C-->>Test: ConstraintViolationException
-    deactivate C
+    Test->>R: create Row
 
-    Note over Test,C: Assert
-    Test->>Test: assertThrows(ConstraintViolationException.class)
+    Note over Test,UQ: Act
+    Test->>UQ: validate(row,table)
+    activate UQ
+    UQ->>R: getColumnValue("email")
+    R-->>UQ: "test@dbms.com"
+    UQ->>T: existsUniqueValue("email","test@dbms.com")
+    T-->>UQ: true
+    UQ--x Test: DuplicateUniqueValueException
+    deactivate UQ
+
+    Note over Test,R: Assert
+    Test->>Test: assertThrows(...)
 ```
 
 ### 7. shouldValidateCheckConstraint()
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Constraint Component
-    participant C as CheckConstraint
+
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
-    box #fff8e1 Row Component
+
+    box #e8f5e9 Strategy
+    participant CK as CheckConstraint
+    end
+
+    box #f3e5f5 Row
     participant R as Row
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new CheckConstraint("chk_users_age", "age >= 18")
-    C-->>Test: CheckConstraint
-    Test->>R: new Row("row-001", [20])
-    R-->>Test: Row
+    Note over Test,R: Arrange
+    Test->>F: createCheck(request)
+    activate F
+    F->>CK: new CheckConstraint(...)
+    CK-->>F: CheckConstraint
+    deactivate F
+    F-->>Test: CheckConstraint
 
-    Note over Test,C: Act
-    Test->>C: validate(Row)
-    activate C
-    C->>R: getColumnValue("age")
-    R-->>C: 20
-    C->>C: evaluateExpression("age >= 18", 20)
-    C-->>Test: void (success)
-    deactivate C
+    Test->>R: create Row(age=20)
 
-    Note over Test,C: Assert
+    Note over Test,CK: Act
+    Test->>CK: validate(row,null)
+    activate CK
+    CK->>R: getColumnValue("age")
+    R-->>CK: 20
+    CK->>CK: evaluateExpression()
+    CK-->>Test: validation succeeds
+    deactivate CK
+
+    Note over Test,R: Assert
     Test->>Test: assertDoesNotThrow()
 ```
 
@@ -1989,33 +2051,44 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
     participant Test as ConstraintTest
     end
-    box #e8f5e9 Constraint Component
-    participant C as CheckConstraint
+
+    box #fff3e0 Factory
+    participant F as DefaultConstraintFactory
     end
-    box #fff8e1 Row Component
+
+    box #e8f5e9 Strategy
+    participant CK as CheckConstraint
+    end
+
+    box #f3e5f5 Row
     participant R as Row
     end
 
-    Note over Test,C: Arrange
-    Test->>C: new CheckConstraint("chk_users_age", "age >= 18")
-    C-->>Test: CheckConstraint
-    Test->>R: new Row("row-001", [15])
-    R-->>Test: Row
+    Note over Test,R: Arrange
+    Test->>F: createCheck(request)
+    activate F
+    F->>CK: new CheckConstraint(...)
+    CK-->>F: CheckConstraint
+    deactivate F
+    F-->>Test: CheckConstraint
 
-    Note over Test,C: Act
-    Test->>C: validate(Row)
-    activate C
-    C->>R: getColumnValue("age")
-    R-->>C: 15
-    C->>C: evaluateExpression("age >= 18", 15)
-    C-->>Test: ConstraintViolationException
-    deactivate C
+    Test->>R: create Row(age=15)
 
-    Note over Test,C: Assert
-    Test->>Test: assertThrows(ConstraintViolationException.class)
+    Note over Test,CK: Act
+    Test->>CK: validate(row,null)
+    activate CK
+    CK->>R: getColumnValue("age")
+    R-->>CK: 15
+    CK->>CK: evaluateExpression()
+    CK--x Test: CheckConstraintViolationException
+    deactivate CK
+
+    Note over Test,R: Assert
+    Test->>Test: assertThrows(...)
 ```
 
 ## BTreeIndexTest

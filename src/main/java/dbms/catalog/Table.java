@@ -2,9 +2,7 @@ package dbms.catalog;
 
 import java.util.List;
 
-public class Table {
-    public String tableId;
-    public String name;
+public class Table extends DatabaseObject {
     public String engine;
     public long rowCount;
 
@@ -12,7 +10,7 @@ public class Table {
     }
 
     public Table(String tableId, String name, String engine) {
-        this.tableId = tableId;
+        this.objectId = tableId;
         this.name = name;
         this.engine = engine;
         this.rowCount = 0;
@@ -78,5 +76,18 @@ public class Table {
 
     public boolean existsReferencedRow(String column, Object value) {
         return false;
+    }
+
+    @Override
+    public void create() {
+    }
+
+    @Override
+    public void drop() {
+    }
+
+    @Override
+    public void rename(String newName) {
+        this.name = newName;
     }
 }
