@@ -6,6 +6,12 @@ public class Table extends DatabaseObject {
     public String engine;
     public long rowCount;
 
+    private List<Column> columns = new java.util.ArrayList<>();
+    private List<Constraint> constraints = new java.util.ArrayList<>();
+    private List<Index> indexes = new java.util.ArrayList<>();
+    private List<Partition> partitions = new java.util.ArrayList<>();
+    private List<Trigger> triggers = new java.util.ArrayList<>();
+
     public Table() {
     }
 

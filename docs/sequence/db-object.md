@@ -847,6 +847,9 @@ sequenceDiagram
     box #fff3e0 Factory
     participant F as DefaultDatabaseObjectFactory
     end
+    box #fff8e1 Builder
+    participant B as DefaultTableBuilder
+    end
     box #e8f5e9 Domain
     participant T as Table
     end
@@ -856,8 +859,26 @@ sequenceDiagram
     activate S
     S->>F: createTable(request)
     activate F
-    F->>T: new Table(...)
-    T-->>F: Table
+    F->>B: new DefaultTableBuilder()
+    activate B
+    B-->>F: DefaultTableBuilder
+    deactivate B
+    F->>B: setName(name)
+    activate B
+    B-->>F: DefaultTableBuilder
+    deactivate B
+    F->>B: setEngine(engine)
+    activate B
+    B-->>F: DefaultTableBuilder
+    deactivate B
+    F->>B: build()
+    activate B
+    B->>T: new Table(...)
+    activate T
+    T-->>B: Table
+    deactivate T
+    B-->>F: Table
+    deactivate B
     F-->>S: Table
     deactivate F
     S->>S: addObject(Table)
@@ -865,12 +886,6 @@ sequenceDiagram
     activate T
     T-->>S: void
     deactivate T
-    S-->>Test: Table
-    deactivate S
-
-    Note over Test,S: Assert
-    Test->>S: findObject("users")
-    activate S
     S-->>Test: Table
     deactivate S
 ```

@@ -172,30 +172,47 @@ class Database{
 class Schema{
     +schemaId
     +name
-    +createTable()
-    +dropTable()
+    +owner
+    -objects : List~DatabaseObject~
+    -factory : DatabaseObjectFactory
+    +createTable(request)
+    +createView(request)
+    +createProcedure(request)
+    +createSequence(request)
+    +dropObject(objectId)
+    +findObject(name)
+    +listObjects()
+}
+
+class DatabaseObject{
+    <<abstract>>
+    #objectId
+    #name
+    #owner
+    +create()* void
+    +drop()* void
+    +rename(newName)* void
 }
 
 class Table{
-    +tableId
-    +name
+    +engine
+    +rowCount
+    -constraintFactory
+    -constraints
     +insert()
     +update()
     +delete()
+    +truncate()
+    +analyze()
 }
 
 class Column{
     +columnId
     +name
     +dataType
-    +nullable
 }
 
-class Row{
-    +rowId
-    +values
-    +version
-}
+class Row
 
 class DataType{
     <<enumeration>>
@@ -203,40 +220,61 @@ class DataType{
 
 class Constraint{
     <<abstract>>
-    #constraintName: String
-    #columns: List~String~
-    +validate(row: Row, table: Table)* void
+    +validate(row,table)*
 }
 
-class PrimaryKey{
-    +PrimaryKey(constraintName, columns)
-    +validate(row: Row, table: Table) void
-}
-
-class ForeignKey{
-    +referenceTable: String
-    +referenceColumns: String
-    +ForeignKey(constraintName, columns, referenceTable, referenceColumns)
-    +validate(row: Row, table: Table) void
-}
-
-class UniqueConstraint{
-    +columns: List~String~
-    +validate(row: Row, table: Table) void
-}
-
-class CheckConstraint{
-    +expression: String
-    +validate(row: Row, table: Table) void
-}
+class PrimaryKey
+class ForeignKey
+class UniqueConstraint
+class CheckConstraint
 
 class ConstraintFactory{
-    <<abstract>>
-    +createConstraint(name: String, type: String, columns: List~String~)* Constraint
+    <<interface>>
+    +createPrimaryKey(...)
+    +createForeignKey(...)
+    +createUnique(...)
+    +createCheck(...)
 }
 
-class DefaultConstraintFactory{
-    +createConstraint(name: String, type: String, columns: List~String~) Constraint
+class DefaultConstraintFactory
+
+class DatabaseObjectFactory{
+    <<interface>>
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
+}
+
+class DefaultDatabaseObjectFactory{
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
+}
+
+class TableBuilder{
+    <<interface>>
+    +setName(name)
+    +setEngine(engine)
+    +addColumn(column)
+    +addConstraint(constraint)
+    +addIndex(index)
+    +addPartition(partition)
+    +addTrigger(trigger)
+    +build() Table
+}
+
+class DefaultTableBuilder{
+    -table : Table
+    +setName(name)
+    +setEngine(engine)
+    +addColumn(column)
+    +addConstraint(constraint)
+    +addIndex(index)
+    +addPartition(partition)
+    +addTrigger(trigger)
+    +build() Table
 }
 
 class Index{
@@ -379,10 +417,22 @@ DatabaseServer --> SecurityManager
 
 DatabaseManager --> Database
 Database --> Schema
-Schema --> Table
-Schema --> View
-Schema --> StoredProcedure
-Schema --> Sequence
+Schema *--> DatabaseObject
+DatabaseObject <|-- Table
+DatabaseObject <|-- View
+DatabaseObject <|-- StoredProcedure
+DatabaseObject <|-- Sequence
+
+Schema --> DatabaseObjectFactory
+DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
+DefaultDatabaseObjectFactory ..> Table
+DefaultDatabaseObjectFactory ..> View
+DefaultDatabaseObjectFactory ..> StoredProcedure
+DefaultDatabaseObjectFactory ..> Sequence
+
+TableBuilder <|.. DefaultTableBuilder
+DefaultDatabaseObjectFactory --> TableBuilder
+DefaultTableBuilder --> Table
 
 Table --> Column
 Table --> Row
@@ -396,8 +446,12 @@ Constraint <|-- ForeignKey
 Constraint <|-- UniqueConstraint
 Constraint <|-- CheckConstraint
 
-ConstraintFactory <|-- DefaultConstraintFactory
-DefaultConstraintFactory ..> Constraint
+ConstraintFactory <|.. DefaultConstraintFactory
+Table --> ConstraintFactory
+DefaultConstraintFactory --> PrimaryKey
+DefaultConstraintFactory --> ForeignKey
+DefaultConstraintFactory --> UniqueConstraint
+DefaultConstraintFactory --> CheckConstraint
 
 Index <|-- BTreeIndex
 Index <|-- HashIndex
@@ -450,6 +504,7 @@ style Permission fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 %% Catalog & Database Objects (Green)
 style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Schema fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Row fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -459,8 +514,6 @@ style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style BTreeIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style HashIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -471,6 +524,14 @@ style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style CatalogManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
 
 %% Query Engine (Yellow/Orange)
 style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
@@ -813,33 +874,66 @@ class DatabaseObject{
 Schema *--> DatabaseObject
 
 %% =====================================================
-%% Factory Method (Database Object)
+%% Factory Method
 %% =====================================================
 
 class DatabaseObjectFactory{
     <<interface>>
 
-    +createTable(...) Table
-    +createView(...) View
-    +createProcedure(...) StoredProcedure
-    +createSequence(...) Sequence
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
 }
 
 class DefaultDatabaseObjectFactory{
-    +createTable(...) Table
-    +createView(...) View
-    +createProcedure(...) StoredProcedure
-    +createSequence(...) Sequence
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
 }
 
 Schema --> DatabaseObjectFactory
-
 DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
 
-DefaultDatabaseObjectFactory ..> Table
-DefaultDatabaseObjectFactory ..> View
-DefaultDatabaseObjectFactory ..> StoredProcedure
-DefaultDatabaseObjectFactory ..> Sequence
+%% =====================================================
+%% Builder Pattern
+%% =====================================================
+
+class TableBuilder{
+    <<interface>>
+
+    +setName(name)
+    +setEngine(engine)
+
+    +addColumn(column)
+    +addConstraint(constraint)
+    +addIndex(index)
+    +addPartition(partition)
+    +addTrigger(trigger)
+
+    +build() Table
+}
+
+class DefaultTableBuilder{
+    -table : Table
+
+    +setName(name)
+    +setEngine(engine)
+
+    +addColumn(column)
+    +addConstraint(constraint)
+    +addIndex(index)
+    +addPartition(partition)
+    +addTrigger(trigger)
+
+    +build() Table
+}
+
+TableBuilder <|.. DefaultTableBuilder
+
+DefaultDatabaseObjectFactory --> TableBuilder
+DefaultTableBuilder --> Table
 
 %% =====================================================
 %% Database Objects
@@ -849,8 +943,8 @@ class Table{
     +engine
     +rowCount
 
-    -constraintFactory : ConstraintFactory
-    -constraints : List~Constraint~
+    -constraintFactory
+    -constraints
 
     +insert()
     +update()
@@ -887,19 +981,9 @@ class Column{
     +columnId
     +name
     +dataType
-    +nullable
-    +defaultValue
-    +length
-    +precision
-    +scale
 }
 
-class Row{
-    +rowId
-    +values
-    +transactionId
-    +version
-}
+class Row
 
 class Trigger
 
@@ -922,33 +1006,13 @@ Column --> DataType
 
 class Constraint{
     <<abstract>>
-
-    #constraintName
-    #columns
-
-    +validate(row,table)* void
+    +validate(row,table)*
 }
 
-class PrimaryKey{
-    +validate(row,table)
-}
-
-class ForeignKey{
-    +referenceTable
-    +referenceColumns
-
-    +validate(row,table)
-}
-
-class UniqueConstraint{
-    +validate(row,table)
-}
-
-class CheckConstraint{
-    +expression
-
-    +validate(row,table)
-}
+class PrimaryKey
+class ForeignKey
+class UniqueConstraint
+class CheckConstraint
 
 Constraint <|-- PrimaryKey
 Constraint <|-- ForeignKey
@@ -957,10 +1021,8 @@ Constraint <|-- CheckConstraint
 
 Table --> Constraint
 
-ForeignKey --> Table
-
 %% =====================================================
-%% Factory Method (Constraint)
+%% Constraint Factory
 %% =====================================================
 
 class ConstraintFactory{
@@ -972,21 +1034,16 @@ class ConstraintFactory{
     +createCheck(...)
 }
 
-class DefaultConstraintFactory{
-    +createPrimaryKey(...)
-    +createForeignKey(...)
-    +createUnique(...)
-    +createCheck(...)
-}
-
-Table --> ConstraintFactory
+class DefaultConstraintFactory
 
 ConstraintFactory <|.. DefaultConstraintFactory
 
-DefaultConstraintFactory ..> PrimaryKey
-DefaultConstraintFactory ..> ForeignKey
-DefaultConstraintFactory ..> UniqueConstraint
-DefaultConstraintFactory ..> CheckConstraint
+Table --> ConstraintFactory
+
+DefaultConstraintFactory --> PrimaryKey
+DefaultConstraintFactory --> ForeignKey
+DefaultConstraintFactory --> UniqueConstraint
+DefaultConstraintFactory --> CheckConstraint
 
 %% =====================================================
 %% Index
@@ -1034,12 +1091,14 @@ style BitmapIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
 style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 ```
 ---
 
-## Schema Management Class Diagram
+## Schema Management Class Diagram using Composite pattern
 ```mermaid
 classDiagram
 direction TB
@@ -1139,7 +1198,7 @@ style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 ```
 
-## Constraint Management Class Diagram
+## Constraint Management Class Diagram using factory method and strategy pattern
 ```mermaid
 classDiagram
 direction TB
@@ -1251,6 +1310,103 @@ style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+```
+
+
+## Table Management Class Diagram using Builder Pattern
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Product
+%% =====================================================
+
+class Table{
+    -tableId
+    -name
+    -engine
+    -rowCount
+
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
+
+    +insert()
+    +update()
+    +delete()
+    +truncate()
+    +analyze()
+}
+
+%% =====================================================
+%% Builder Pattern
+%% =====================================================
+
+class TableBuilder{
+    <<interface>>
+
+    +setName(name)
+    +setEngine(engine)
+
+    +addColumn(column)
+    +addConstraint(constraint)
+    +addIndex(index)
+    +addPartition(partition)
+    +addTrigger(trigger)
+
+    +build() Table
+}
+
+class DefaultTableBuilder{
+    -table : Table
+
+    +setName(name)
+    +setEngine(engine)
+
+    +addColumn(column)
+    +addConstraint(constraint)
+    +addIndex(index)
+    +addPartition(partition)
+    +addTrigger(trigger)
+
+    +build() Table
+}
+
+TableBuilder <|.. DefaultTableBuilder
+DefaultTableBuilder --> Table
+
+%% =====================================================
+%% Components
+%% =====================================================
+
+class Column
+class Constraint
+class Index
+class Partition
+class Trigger
+
+Table --> Column
+Table --> Constraint
+Table --> Index
+Table --> Partition
+Table --> Trigger
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Partition fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 ```
 # Database Objects Test
 ```mermaid
