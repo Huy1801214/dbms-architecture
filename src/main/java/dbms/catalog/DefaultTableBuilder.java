@@ -1,0 +1,45 @@
+package dbms.catalog;
+
+public class DefaultTableBuilder implements TableBuilder {
+    private Table table;
+
+    @Override
+    public TableBuilder setName(String name) {
+        return null;
+    }
+
+    @Override
+    public TableBuilder setEngine(String engine) {
+        return null;
+    }
+
+    @Override
+    public TableBuilder addColumn(Column column) {
+        return null;
+    }
+
+    @Override
+    public TableBuilder addConstraint(Constraint constraint) {
+        return null;
+    }
+
+    @Override
+    public TableBuilder addIndex(Index index) {
+        return null;
+    }
+
+    @Override
+    public TableBuilder addPartition(Partition partition) {
+        return null;
+    }
+
+    @Override
+    public TableBuilder addTrigger(Trigger trigger) {
+        return null;
+    }
+
+    @Override
+    public Table build() {
+        return null;
+    }
+}
