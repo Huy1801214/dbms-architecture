@@ -1,5 +1,7 @@
 package dbms.catalog;
 
+import dbms.catalog.database.*;
+import dbms.catalog.schema.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

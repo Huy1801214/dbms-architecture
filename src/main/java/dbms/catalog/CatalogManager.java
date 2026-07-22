@@ -1,4 +1,7 @@
 package dbms.catalog;
+
+import dbms.catalog.schema.Schema;
+import dbms.catalog.table.Table;
 import java.util.Map;
 
 public class CatalogManager {

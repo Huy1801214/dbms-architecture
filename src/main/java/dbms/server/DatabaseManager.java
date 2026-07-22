@@ -1,10 +1,9 @@
 package dbms.server;
 
-import dbms.catalog.Database;
+import dbms.catalog.database.Database;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.ArrayList;
 
 public class DatabaseManager {
     private Map<String, Database> databases = new HashMap<>();
@@ -23,14 +22,15 @@ public class DatabaseManager {
     }
 
     public Database createDatabase(DatabaseCreateRequest request) {
-
         return null;
     }
 
     public void dropDatabase(String databaseId) {
         Database database = findDatabaseById(databaseId);
-        database.validateDropOperation();
-        unregisterDatabase(databaseId);
+        if (database != null) {
+            database.validateDropOperation();
+            unregisterDatabase(databaseId);
+        }
     }
 
     public Database findDatabaseById(String databaseId) {
@@ -46,10 +46,8 @@ public class DatabaseManager {
     }
 
     public void renameDatabase(String databaseId, String name) {
-
     }
 
     private void unregisterDatabase(String databaseId) {
     }
-
 }
