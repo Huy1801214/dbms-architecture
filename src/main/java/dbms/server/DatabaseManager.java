@@ -1,20 +1,17 @@
 package dbms.server;
 
 import dbms.catalog.database.Database;
+import dbms.catalog.database.DatabaseStatus;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.UUID;
 
 public class DatabaseManager {
     private Map<String, Database> databases = new HashMap<>();
-    private DatabaseFactory factory;
 
     public DatabaseManager() {
-        this.factory = new DefaultDatabaseFactory();
-    }
-
-    public DatabaseManager(DatabaseFactory factory) {
-        this.factory = factory;
     }
 
     public Database createDatabase(String name, String owner) {
@@ -22,7 +19,10 @@ public class DatabaseManager {
     }
 
     public Database createDatabase(DatabaseCreateRequest request) {
-        return null;
+        if (request == null || request.getName() == null) return null;
+        Database db = new Database(UUID.randomUUID().toString(), request.getName(), request.getOwner(), DatabaseStatus.OFFLINE, LocalDateTime.now());
+        databases.put(db.getDatabaseId(), db);
+        return db;
     }
 
     public void dropDatabase(String databaseId) {

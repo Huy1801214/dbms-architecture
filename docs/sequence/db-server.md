@@ -137,37 +137,26 @@ sequenceDiagram
     participant DM as DatabaseManager
     end
 
-    box #fff3e0 Factory
-    participant DF as DefaultDatabaseFactory
-    end
-
     box #e8f5e9 Domain
     participant DB as Database
     end
 
     Note over Test,DB: Arrange
-    Test->>DM: inject(DefaultDatabaseFactory)
+    Test->>Test: create DatabaseCreateRequest
 
     Note over Test,DB: Act
     Test->>DM: createDatabase(request)
 
     activate DM
 
-    DM->>DF: createDatabase(request)
+    DM->>DB: new Database(request)
+    activate DB
+    DB-->>DM: database
+    deactivate DB
 
-    activate DF
+    DM->>DM: registerDatabase(database)
 
-    DF->>DB: new Database(request)
-
-    DB-->>DF: Database
-
-    deactivate DF
-
-    DF-->>DM: Database
-
-    DM->>DM: registerDatabase(Database)
-
-    DM-->>Test: Database
+    DM-->>Test: database
 
     deactivate DM
 
