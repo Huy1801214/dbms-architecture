@@ -2,12 +2,66 @@ package dbms.catalog.table;
 
 import dbms.catalog.constraint.Constraint;
 import dbms.catalog.index.Index;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
-public interface TableBuilder {
-    TableBuilder setName(String name);
-    TableBuilder setEngine(String engine);
-    TableBuilder addColumn(Column column);
-    TableBuilder addConstraint(Constraint constraint);
-    TableBuilder addIndex(Index index);
-    Table build();
+public class TableBuilder {
+    private UUID tableId;
+    private String name;
+    private String engine;
+
+    private List<Column> columns = new ArrayList<>();
+    private List<Constraint> constraints = new ArrayList<>();
+    private List<Index> indexes = new ArrayList<>();
+
+    public TableBuilder setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public TableBuilder setEngine(String engine) {
+        this.engine = engine;
+        return this;
+    }
+
+    public TableBuilder addColumn(Column column) {
+        if (column != null) {
+            this.columns.add(column);
+        }
+        return this;
+    }
+
+    public TableBuilder addConstraint(Constraint constraint) {
+        if (constraint != null) {
+            this.constraints.add(constraint);
+        }
+        return this;
+    }
+
+    public TableBuilder addIndex(Index index) {
+        if (index != null) {
+            this.indexes.add(index);
+        }
+        return this;
+    }
+
+    private void validate() {
+    }
+
+    public Table build() {
+        validate();
+        Table table = new Table(tableId != null ? tableId.toString() : UUID.randomUUID().toString(), name, engine);
+        for (Column col : columns) {
+            table.addColumn(col);
+        }
+        for (Constraint c : constraints) {
+            table.addConstraint(c);
+        }
+        for (Index idx : indexes) {
+            table.addIndex(idx);
+        }
+        return table;
+    }
 }
+

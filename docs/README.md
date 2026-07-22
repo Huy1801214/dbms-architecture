@@ -289,27 +289,27 @@ class DefaultDatabaseObjectFactory{
 }
 
 class TableBuilder{
-    <<interface>>
-    +setName(name)
-    +setEngine(engine)
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
-    +build() Table
-}
+    -tableId : UUID
+    -name : String
+    -engine : String
 
-class DefaultTableBuilder{
-    -table : Table
-    +setName(name)
-    +setEngine(engine)
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
+
+    +setName(name : String) TableBuilder
+    +setEngine(engine : String) TableBuilder
+
+    +addColumn(column : Column) TableBuilder
+    +addConstraint(constraint : Constraint) TableBuilder
+    +addIndex(index : Index) TableBuilder
+    +addPartition(partition : Partition) TableBuilder
+    +addTrigger(trigger : Trigger) TableBuilder
+
     +build() Table
+    -validate() void
 }
 
 class Index{
@@ -477,9 +477,7 @@ DatabaseObjectVisitor ..> View : visits
 DatabaseObjectVisitor ..> StoredProcedure : visits
 DatabaseObjectVisitor ..> Sequence : visits
 
-TableBuilder <|.. DefaultTableBuilder
-DefaultDatabaseObjectFactory --> TableBuilder
-DefaultTableBuilder --> Table
+TableBuilder ..> Table : builds
 
 Table --> Column
 Table --> Row
@@ -579,7 +577,6 @@ style CatalogManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
@@ -1019,39 +1016,30 @@ DatabaseObjectVisitor ..> Sequence : visits
 %% =====================================================
 
 class TableBuilder{
-    <<interface>>
+    -tableId : UUID
+    -name : String
+    -engine : String
 
-    +setName(name)
-    +setEngine(engine)
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
 
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    +setName(name : String) TableBuilder
+    +setEngine(engine : String) TableBuilder
 
-    +build() Table
-}
-
-class DefaultTableBuilder{
-    -table : Table
-
-    +setName(name)
-    +setEngine(engine)
-
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    +addColumn(column : Column) TableBuilder
+    +addConstraint(constraint : Constraint) TableBuilder
+    +addIndex(index : Index) TableBuilder
+    +addPartition(partition : Partition) TableBuilder
+    +addTrigger(trigger : Trigger) TableBuilder
 
     +build() Table
+    -validate() void
 }
 
-TableBuilder <|.. DefaultTableBuilder
-
-DefaultDatabaseObjectFactory --> TableBuilder
-DefaultTableBuilder --> Table
+TableBuilder ..> Table : builds
 
 %% =====================================================
 %% Database Objects
@@ -1251,7 +1239,6 @@ style BitmapIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 ```
@@ -1612,6 +1599,8 @@ class Table{
     -columns : List~Column~
     -constraints : List~Constraint~
     -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
 
     +insert()
     +update()
@@ -1621,41 +1610,34 @@ class Table{
 }
 
 %% =====================================================
-%% Builder Pattern
+%% Builder Pattern - Simplified Builder
 %% =====================================================
 
 class TableBuilder{
-    <<interface>>
+    -tableId : UUID
+    -name : String
+    -engine : String
 
-    +setName(name)
-    +setEngine(engine)
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
 
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    +setName(name : String) TableBuilder
+    +setEngine(engine : String) TableBuilder
 
-    +build() Table
-}
-
-class DefaultTableBuilder{
-    -table : Table
-
-    +setName(name)
-    +setEngine(engine)
-
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    +addColumn(column : Column) TableBuilder
+    +addConstraint(constraint : Constraint) TableBuilder
+    +addIndex(index : Index) TableBuilder
+    +addPartition(partition : Partition) TableBuilder
+    +addTrigger(trigger : Trigger) TableBuilder
 
     +build() Table
+    -validate() void
 }
 
-TableBuilder <|.. DefaultTableBuilder
-DefaultTableBuilder --> Table
+TableBuilder ..> Table : builds
 
 %% =====================================================
 %% Components
@@ -1667,17 +1649,18 @@ class Index
 class Partition
 class Trigger
 
-Table --> Column
-Table --> Constraint
-Table --> Index
-Table --> Partition
-Table --> Trigger
+Table *--> "1..*" Column : contains
+Table *--> "0..*" Constraint : contains
+Table *--> "0..*" Index : contains
+Table *--> "0..*" Partition : contains
+Table *--> "0..*" Trigger : contains
 
 %% =====================================================
 %% Styling
 %% =====================================================
 
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
 style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -1685,7 +1668,6 @@ style Partition fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
 style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 ```
 # Database Objects Test
 ```mermaid

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import dbms.catalog.constraint.*;
 
 import dbms.catalog.table.Column;
+import dbms.catalog.table.Row;
+import dbms.catalog.table.Table;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,65 +40,131 @@ public class ConstraintTest {
 
     @Test
     public void shouldValidatePrimaryKey() {
-        PrimaryKey pk = new PrimaryKey("pk_id", List.of("id"));
-        assertEquals("pk_id", pk.getConstraintName());
-        assertEquals(ConstraintType.PRIMARY_KEY, pk.constraintType);
+        // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        PrimaryKeyRequest request = new PrimaryKeyRequest("pk_id", List.of("id"));
+        PrimaryKey primaryKey = factory.createPrimaryKey(request);
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        table.addConstraint(primaryKey);
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = List.of(1);
+
+        // Act + Assert
+        assertDoesNotThrow(() -> table.validate(row));
     }
 
     @Test
     public void shouldRejectDuplicatePrimaryKey() {
         // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        PrimaryKeyRequest request = new PrimaryKeyRequest("pk_id", List.of("id"));
+        PrimaryKey primaryKey = factory.createPrimaryKey(request);
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        table.addConstraint(primaryKey);
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = List.of(1);
 
-        // Act
-
-        // Assert
+        // Act + Assert
+        assertThrows(IllegalStateException.class, () -> table.validate(row));
     }
 
     @Test
     public void shouldValidateForeignKey() {
-        ForeignKey fk = new ForeignKey("fk_table", List.of("user_id"), "users", "id");
-        assertEquals(ConstraintType.FOREIGN_KEY, fk.constraintType);
-        assertEquals("users", fk.referenceTable);
+        // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        ForeignKeyRequest request = new ForeignKeyRequest("fk_user", List.of("user_id"), "users", "id");
+        ForeignKey foreignKey = factory.createForeignKey(request);
+        Table table = new Table("tbl-002", "orders", "InnoDB");
+        table.addConstraint(foreignKey);
+        Row childRow = new Row();
+        childRow.rowId = "row-002";
+        childRow.values = List.of("parent-001");
+
+        // Act + Assert
+        assertDoesNotThrow(() -> table.validate(childRow));
     }
 
     @Test
     public void shouldRejectBrokenForeignKey() {
         // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        ForeignKeyRequest request = new ForeignKeyRequest("fk_user", List.of("user_id"), "users", "id");
+        ForeignKey foreignKey = factory.createForeignKey(request);
+        Table table = new Table("tbl-002", "orders", "InnoDB");
+        table.addConstraint(foreignKey);
+        Row childRow = new Row();
+        childRow.rowId = "row-002";
+        childRow.values = List.of("unknown-parent");
 
-        // Act
-
-        // Assert
+        // Act + Assert
+        assertThrows(IllegalStateException.class, () -> table.validate(childRow));
     }
 
     @Test
     public void shouldValidateUniqueConstraint() {
-        UniqueConstraint unique = new UniqueConstraint("uq_email", List.of("email"));
-        assertEquals(ConstraintType.UNIQUE, unique.constraintType);
+        // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        UniqueConstraintRequest request = new UniqueConstraintRequest("uq_email", List.of("email"));
+        UniqueConstraint uniqueConstraint = factory.createUnique(request);
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        table.addConstraint(uniqueConstraint);
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = List.of("user@example.com");
+
+        // Act + Assert
+        assertDoesNotThrow(() -> table.validate(row));
     }
 
     @Test
     public void shouldRejectDuplicateUniqueValue() {
         // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        UniqueConstraintRequest request = new UniqueConstraintRequest("uq_email", List.of("email"));
+        UniqueConstraint uniqueConstraint = factory.createUnique(request);
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        table.addConstraint(uniqueConstraint);
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = List.of("user@example.com");
 
-        // Act
-
-        // Assert
+        // Act + Assert
+        assertThrows(IllegalStateException.class, () -> table.validate(row));
     }
 
     @Test
     public void shouldValidateCheckConstraint() {
-        CheckConstraint check = new CheckConstraint("chk_age", List.of("age"), "age >= 18");
-        assertEquals(ConstraintType.CHECK, check.constraintType);
-        assertEquals("age >= 18", check.expression);
+        // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        CheckConstraintRequest request = new CheckConstraintRequest("chk_age", List.of("age"), "age >= 18");
+        CheckConstraint checkConstraint = factory.createCheck(request);
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        table.addConstraint(checkConstraint);
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = List.of(20);
+
+        // Act + Assert
+        assertDoesNotThrow(() -> table.validate(row));
     }
 
     @Test
     public void shouldRejectInvalidCheckConstraint() {
         // Arrange
+        DefaultConstraintFactory factory = new DefaultConstraintFactory();
+        CheckConstraintRequest request = new CheckConstraintRequest("chk_age", List.of("age"), "age >= 18");
+        CheckConstraint checkConstraint = factory.createCheck(request);
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        table.addConstraint(checkConstraint);
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = List.of(15);
 
-        // Act
-
-        // Assert
+        // Act + Assert
+        assertThrows(IllegalStateException.class, () -> table.validate(row));
     }
 
 }
+
