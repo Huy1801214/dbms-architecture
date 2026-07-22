@@ -19,17 +19,18 @@ public class SchemaTest {
         schema.name = "StudentSchema";
         schema.owner = "admin";
 
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Column col1 = new Column("id", DataType.INT, false);
+        Column col2 = new Column("name", DataType.VARCHAR, true);
+        TableCreateRequest request = new TableCreateRequest("users", "InnoDB", java.util.List.of(col1, col2));
 
         // Act
-        schema.createTable(table);
+        Table table = schema.createTable(request);
 
         // Assert
-        Table retrieved = schema.getTable("tbl-001");
-        assertNotNull(retrieved);
-        assertEquals("users", retrieved.getName());
-        assertEquals("tbl-001", retrieved.getTableId());
-        assertEquals("InnoDB", retrieved.getEngine());
+        assertNotNull(table);
+        assertEquals("users", table.getName());
+        assertEquals(2, table.getColumns().size());
+        assertEquals("id", table.getColumns().get(0).name);
     }
 
     @Test

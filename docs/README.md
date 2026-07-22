@@ -289,27 +289,27 @@ class DefaultDatabaseObjectFactory{
 }
 
 class TableBuilder{
-    <<interface>>
-    +setName(name)
-    +setEngine(engine)
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
-    +build() Table
-}
+    -tableId : UUID
+    -name : String
+    -engine : String
 
-class DefaultTableBuilder{
-    -table : Table
-    +setName(name)
-    +setEngine(engine)
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
+
+    +setName(name : String) TableBuilder
+    +setEngine(engine : String) TableBuilder
+
+    +addColumn(column : Column) TableBuilder
+    +addConstraint(constraint : Constraint) TableBuilder
+    +addIndex(index : Index) TableBuilder
+    +addPartition(partition : Partition) TableBuilder
+    +addTrigger(trigger : Trigger) TableBuilder
+
     +build() Table
+    -validate() void
 }
 
 class Index{
@@ -477,9 +477,7 @@ DatabaseObjectVisitor ..> View : visits
 DatabaseObjectVisitor ..> StoredProcedure : visits
 DatabaseObjectVisitor ..> Sequence : visits
 
-TableBuilder <|.. DefaultTableBuilder
-DefaultDatabaseObjectFactory --> TableBuilder
-DefaultTableBuilder --> Table
+TableBuilder ..> Table : builds
 
 Table --> Column
 Table --> Row
@@ -579,7 +577,6 @@ style CatalogManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
@@ -635,21 +632,13 @@ class DatabaseServer{
 }
 
 class DatabaseManager{
-    -databaseFactory : DatabaseFactory
+    -databases : Map~String, Database~
 
-    +createDatabase(request)
+    +createDatabase(request) Database
     +dropDatabase(databaseId)
-    +getDatabase(databaseId)
-    +listDatabases()
-}
-
-class DatabaseFactory{
-    <<interface>>
-    +createDatabase(request) Database
-}
-
-class DefaultDatabaseFactory{
-    +createDatabase(request) Database
+    +findDatabaseById(databaseId) Database
+    +findDatabaseByName(name) Database
+    +listAllDatabases() List~Database~
 }
 
 class Database{
@@ -679,20 +668,13 @@ DatabaseServer --> ConfigurationManager
 DatabaseServer --> SecurityManager
 DatabaseServer --> MonitoringManager
 
-DatabaseManager --> DatabaseFactory : uses
-
-DatabaseFactory <|.. DefaultDatabaseFactory
-
-DefaultDatabaseFactory --> Database : creates
+DatabaseManager ..> Database : creates / manages
 
 %% =====================================================
 %% STYLING DEFINITIONS
 %% =====================================================
 style DatabaseServer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style DatabaseManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-
-style DatabaseFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultDatabaseFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
 style ConfigurationManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style SecurityManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
@@ -1019,39 +1001,30 @@ DatabaseObjectVisitor ..> Sequence : visits
 %% =====================================================
 
 class TableBuilder{
-    <<interface>>
+    -tableId : UUID
+    -name : String
+    -engine : String
 
-    +setName(name)
-    +setEngine(engine)
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
 
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    +setName(name : String) TableBuilder
+    +setEngine(engine : String) TableBuilder
 
-    +build() Table
-}
-
-class DefaultTableBuilder{
-    -table : Table
-
-    +setName(name)
-    +setEngine(engine)
-
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
+    +addColumn(column : Column) TableBuilder
+    +addConstraint(constraint : Constraint) TableBuilder
+    +addIndex(index : Index) TableBuilder
+    +addPartition(partition : Partition) TableBuilder
+    +addTrigger(trigger : Trigger) TableBuilder
 
     +build() Table
+    -validate() void
 }
 
-TableBuilder <|.. DefaultTableBuilder
-
-DefaultDatabaseObjectFactory --> TableBuilder
-DefaultTableBuilder --> Table
+TableBuilder ..> Table : builds
 
 %% =====================================================
 %% Database Objects
@@ -1251,7 +1224,6 @@ style BitmapIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 ```
@@ -1451,242 +1423,6 @@ style ExportDDLVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4
 ```
 ---
 
-## Constraint Management Class Diagram using factory method and strategy pattern
-```mermaid
-classDiagram
-direction TB
-
-%% =====================================================
-%% Client
-%% =====================================================
-
-class Table{
-    +tableId : UUID
-    +engine : String
-    +rowCount : Long
-
-    -constraints : List~Constraint~
-    -factory : ConstraintFactory
-
-    +addPrimaryKey(request)
-    +addForeignKey(request)
-    +addUniqueConstraint(request)
-    +addCheckConstraint(request)
-
-    +removeConstraint(name)
-    +validateConstraints(row)
-}
-
-%% =====================================================
-%% Strategy Pattern
-%% =====================================================
-
-class Constraint{
-    <<abstract>>
-
-    +constraintId : UUID
-    +constraintName : String
-    +constraintType : ConstraintType
-    +tableId : UUID
-    +columns : List~Column~
-    +status : ConstraintStatus
-    +enabled : Boolean
-    +validated : Boolean
-    +deferrable : Boolean
-    +initiallyDeferred : Boolean
-    +owner : String
-    +description : String
-    +createdAt : Timestamp
-    +modifiedAt : Timestamp
-
-    +validate(row, table)* void
-}
-
-class ConstraintType{
-    <<enumeration>>
-}
-
-class ConstraintStatus{
-    <<enumeration>>
-}
-
-class PrimaryKey{
-    +validate(row, table) void
-}
-
-class ForeignKey{
-    +referenceTable
-    +referenceColumns
-
-    +validate(row, table) void
-}
-
-class UniqueConstraint{
-    +validate(row, table) void
-}
-
-class CheckConstraint{
-    +expression
-
-    +validate(row, table) void
-}
-
-Constraint <|-- PrimaryKey
-Constraint <|-- ForeignKey
-Constraint <|-- UniqueConstraint
-Constraint <|-- CheckConstraint
-Constraint --> ConstraintType
-Constraint --> ConstraintStatus
-
-%% =====================================================
-%% Factory Method
-%% =====================================================
-
-class ConstraintFactory{
-    <<interface>>
-
-    +createPrimaryKey(request) PrimaryKey
-    +createForeignKey(request) ForeignKey
-    +createUnique(request) UniqueConstraint
-    +createCheck(request) CheckConstraint
-}
-
-class DefaultConstraintFactory{
-    +createPrimaryKey(request) PrimaryKey
-    +createForeignKey(request) ForeignKey
-    +createUnique(request) UniqueConstraint
-    +createCheck(request) CheckConstraint
-}
-
-ConstraintFactory <|.. DefaultConstraintFactory
-
-Table --> ConstraintFactory
-
-DefaultConstraintFactory ..> PrimaryKey
-DefaultConstraintFactory ..> ForeignKey
-DefaultConstraintFactory ..> UniqueConstraint
-DefaultConstraintFactory ..> CheckConstraint
-
-%% =====================================================
-%% Association
-%% =====================================================
-
-Table --> Constraint
-
-ForeignKey --> Table
-
-%% =====================================================
-%% Styling
-%% =====================================================
-
-style Table fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-
-style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style ConstraintType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style ConstraintStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-
-style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-```
-
-
-## Table Management Class Diagram using Builder Pattern
-```mermaid
-classDiagram
-direction TB
-
-%% =====================================================
-%% Product
-%% =====================================================
-
-class Table{
-    -tableId : UUID
-    -name : String
-    -engine : String
-    -rowCount : Long
-
-    -columns : List~Column~
-    -constraints : List~Constraint~
-    -indexes : List~Index~
-
-    +insert()
-    +update()
-    +delete()
-    +truncate()
-    +analyze()
-}
-
-%% =====================================================
-%% Builder Pattern
-%% =====================================================
-
-class TableBuilder{
-    <<interface>>
-
-    +setName(name)
-    +setEngine(engine)
-
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
-
-    +build() Table
-}
-
-class DefaultTableBuilder{
-    -table : Table
-
-    +setName(name)
-    +setEngine(engine)
-
-    +addColumn(column)
-    +addConstraint(constraint)
-    +addIndex(index)
-    +addPartition(partition)
-    +addTrigger(trigger)
-
-    +build() Table
-}
-
-TableBuilder <|.. DefaultTableBuilder
-DefaultTableBuilder --> Table
-
-%% =====================================================
-%% Components
-%% =====================================================
-
-class Column
-class Constraint
-class Index
-class Partition
-class Trigger
-
-Table --> Column
-Table --> Constraint
-Table --> Index
-Table --> Partition
-Table --> Trigger
-
-%% =====================================================
-%% Styling
-%% =====================================================
-
-style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Partition fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-
-style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-```
 # Database Objects Test
 ```mermaid
 flowchart LR

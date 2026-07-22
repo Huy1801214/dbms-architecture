@@ -838,56 +838,116 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+
     box #e1f5fe Test Suite
-    participant Test as SchemaTest
+        participant Test as SchemaTest
     end
+
     box #e3f2fd Schema
-    participant S as Schema
+        participant S as Schema
     end
+
     box #fff3e0 Factory
-    participant F as DefaultDatabaseObjectFactory
+        participant F as DefaultDatabaseObjectFactory
     end
+
     box #fff8e1 Builder
-    participant B as DefaultTableBuilder
+        participant B as TableBuilder
     end
+
     box #e8f5e9 Domain
-    participant T as Table
+        participant T as Table
     end
 
     Note over Test,S: Arrange
+    Test->>Test: create CreateTableRequest
+
+    Note over Test,S: Act
     Test->>S: createTable(request)
     activate S
+
+    S->>S: ensureObjectNameIsUnique(request.name)
+
     S->>F: createTable(request)
     activate F
-    F->>B: new DefaultTableBuilder()
+
+    F->>B: new TableBuilder()
     activate B
-    B-->>F: DefaultTableBuilder
+    B-->>F: builder
     deactivate B
-    F->>B: setName(name)
+
+    F->>B: setName(request.name)
     activate B
-    B-->>F: DefaultTableBuilder
+    B-->>F: this
     deactivate B
-    F->>B: setEngine(engine)
+
+    F->>B: setEngine(request.engine)
     activate B
-    B-->>F: DefaultTableBuilder
+    B-->>F: this
     deactivate B
+
+    loop For each column
+        F->>B: addColumn(column)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each constraint
+        F->>B: addConstraint(constraint)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each index
+        F->>B: addIndex(index)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each partition
+        F->>B: addPartition(partition)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each trigger
+        F->>B: addTrigger(trigger)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
     F->>B: build()
     activate B
-    B->>T: new Table(...)
+
+    B->>B: validate()
+
+    B->>T: new Table(builder)
     activate T
-    T-->>B: Table
+    T-->>B: table
     deactivate T
-    B-->>F: Table
+
+    B-->>F: table
     deactivate B
-    F-->>S: Table
+
+    F-->>S: table
     deactivate F
-    S->>S: addObject(Table)
-    S->>T: create()
-    activate T
-    T-->>S: void
-    deactivate T
-    S-->>Test: Table
+
+    S->>S: addObject(table)
+
+    S-->>Test: table
     deactivate S
+
+    Note over Test,T: Assert
+    Test->>T: getName()
+    T-->>Test: expected name
+
+    Test->>T: getColumns()
+    T-->>Test: expected columns
 ```
 
 ### 2. shouldDropTable()

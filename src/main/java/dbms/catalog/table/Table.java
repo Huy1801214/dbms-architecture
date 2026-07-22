@@ -32,6 +32,10 @@ public class Table extends DatabaseObject {
         }
     }
 
+    public void validate(Row row) {
+        validateConstraints(row);
+    }
+
     public String getTableId() {
         return tableId != null ? tableId.toString() : objectId;
     }
@@ -73,10 +77,6 @@ public class Table extends DatabaseObject {
     }
 
     public void validateConstraints(Row row) {
-    }
-
-    public void validate(Row row) {
-        validateConstraints(row);
     }
 
     public void addIndex(Index index) {

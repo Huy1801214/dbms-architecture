@@ -1,0 +1,1006 @@
+## Danh sách ưu tiên tổng quát
+
+| Priority | Core Feature | Mức độ ưu tiên | Design Pattern phù hợp |
+|---:|---|---|---|
+| 1 | Schema and Database Object Lifecycle Management | Bắt buộc | Composite |
+| 2 | Table Definition and Construction | Bắt buộc | Builder |
+| 3 | Column Definition and Data Type Management | Bắt buộc | Factory Method |
+| 4 | Constraint Definition and Validation | Bắt buộc | Strategy, Factory Method |
+| 5 | Database Object Creation | Bắt buộc | Factory Method |
+| 6 | Object Lookup, Naming and Uniqueness Validation | Bắt buộc | Specification, Repository |
+| 7 | Index Definition and Index Type Selection | Quan trọng | Strategy, Factory Method |
+| 8 | Table Data Operations | Quan trọng | Command, Template Method |
+| 9 | View Management | Quan trọng | Composite, Specification |
+| 10 | Sequence Management | Cần thiết | State, Strategy |
+| 11 | Schema Object Traversal and Metadata Export | Hỗ trợ | Iterator, Visitor |
+| 12 | Partition and Trigger Management | Nâng cao | Strategy, Observer, Command |
+
+# 1. Schema and Database Object Lifecycle Management
+## Using Composite Pattern
+
+## 1.1 Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Composite Containers
+%% =====================================================
+
+class Database {
+    +databaseId
+    +name
+    +owner
+    -schemas : List~Schema~
+    +open()
+    +close()
+    +createSchema(name, owner) Schema
+    +dropSchema(schemaId)
+}
+
+class Schema {
+    +schemaId
+    +name
+    +owner
+    -objects : List~DatabaseObject~
+    +addObject(object)
+    +dropObject(objectId)
+    +findObject(name) DatabaseObject
+    +listObjects() List~DatabaseObject~
+}
+
+%% Component Interface / Base Class
+class DatabaseObject {
+    <<abstract>>
+    #objectId
+    #name
+    #owner
+    +create()* void
+    +drop()* void
+    +rename(newName)* void
+}
+
+%% Leaf Components
+class Table {
+    +tableId : UUID
+    +engine : String
+    +rowCount : Long
+    +create() void
+    +drop() void
+    +rename(newName) void
+}
+
+class View {
+    +queryDefinition : String
+    +create() void
+    +drop() void
+    +rename(newName) void
+}
+
+class StoredProcedure {
+    +code : String
+    +create() void
+    +drop() void
+    +rename(newName) void
+}
+
+class Sequence {
+    +currentValue : Long
+    +create() void
+    +drop() void
+    +rename(newName) void
+}
+
+%% Relationships (Composite Pattern)
+Database *--> Schema : contains
+Schema *--> "0..*" DatabaseObject : contains (Composite)
+
+DatabaseObject <|-- Table : extends (Leaf)
+DatabaseObject <|-- View : extends (Leaf)
+DatabaseObject <|-- StoredProcedure : extends (Leaf)
+DatabaseObject <|-- Sequence : extends (Leaf)
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style Database fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style DatabaseObject fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+```
+
+## 1.2 Sequence Diagram
+```mermaid
+sequenceDiagram
+    autonumber
+    box #e1f5fe Client / Test Suite
+    participant Test as SchemaTest
+    end
+
+    box #e3f2fd Composite Container
+    participant S as Schema
+    end
+
+    box #fff3e0 Component Abstraction
+    participant O as obj : DatabaseObject
+    end
+
+    box #e8f5e9 Concrete Leaf
+    participant T as Table
+    end
+
+    Note over Test,T: Act
+
+    Test->>S: dropObject("tbl-001")
+    activate S
+
+    S->>S: findObjectById("tbl-001")
+    note right of S: Returns object as abstract type DatabaseObject
+
+    S->>O: drop()
+    activate O
+    note over O,T: Polymorphic call to concrete target object
+    O->>T: drop()
+    activate T
+    T-->>O: void
+    deactivate T
+    O-->>S: void
+    deactivate O
+
+    S->>S: removeObject("tbl-001")
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,S: Assert
+    Test->>S: findObject("users")
+    activate S
+    S-->>Test: null
+    deactivate S
+
+```
+
+# 2. Table Definition and Construction
+## Using Builder Pattern 
+
+## 2.1 Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Product
+%% =====================================================
+
+class Table{
+    -tableId : UUID
+    -name : String
+    -engine : String
+    -rowCount : Long
+
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
+
+    +insert()
+    +update()
+    +delete()
+    +truncate()
+    +analyze()
+}
+
+%% =====================================================
+%% Builder Pattern - Simplified Builder
+%% =====================================================
+
+class TableBuilder{
+    -tableId : UUID
+    -name : String
+    -engine : String
+
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
+
+    +setName(name : String) TableBuilder
+    +setEngine(engine : String) TableBuilder
+
+    +addColumn(column : Column) TableBuilder
+    +addConstraint(constraint : Constraint) TableBuilder
+    +addIndex(index : Index) TableBuilder
+    +addPartition(partition : Partition) TableBuilder
+    +addTrigger(trigger : Trigger) TableBuilder
+
+    +build() Table
+    -validate() void
+}
+
+TableBuilder ..> Table : builds
+
+%% =====================================================
+%% Components
+%% =====================================================
+
+class Column
+class Constraint
+class Index
+class Partition
+class Trigger
+
+Table *--> "1..*" Column : contains
+Table *--> "0..*" Constraint : contains
+Table *--> "0..*" Index : contains
+Table *--> "0..*" Partition : contains
+Table *--> "0..*" Trigger : contains
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Partition fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+```
+## 2.2 Sequence Diagram
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+        participant Test as SchemaTest
+    end
+
+    box #e3f2fd Schema
+        participant S as Schema
+    end
+
+    box #fff3e0 Factory
+        participant F as DefaultDatabaseObjectFactory
+    end
+
+    box #fff8e1 Builder
+        participant B as TableBuilder
+    end
+
+    box #e8f5e9 Domain
+        participant T as Table
+    end
+
+    Note over Test,S: Arrange
+    Test->>Test: create CreateTableRequest
+
+    Note over Test,S: Act
+    Test->>S: createTable(request)
+    activate S
+
+    S->>S: ensureObjectNameIsUnique(request.name)
+
+    S->>F: createTable(request)
+    activate F
+
+    F->>B: new TableBuilder()
+    activate B
+    B-->>F: builder
+    deactivate B
+
+    F->>B: setName(request.name)
+    activate B
+    B-->>F: this
+    deactivate B
+
+    F->>B: setEngine(request.engine)
+    activate B
+    B-->>F: this
+    deactivate B
+
+    loop For each column
+        F->>B: addColumn(column)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each constraint
+        F->>B: addConstraint(constraint)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each index
+        F->>B: addIndex(index)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each partition
+        F->>B: addPartition(partition)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each trigger
+        F->>B: addTrigger(trigger)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    F->>B: build()
+    activate B
+
+    B->>B: validate()
+
+    B->>T: new Table(builder)
+    activate T
+    T-->>B: table
+    deactivate T
+
+    B-->>F: table
+    deactivate B
+
+    F-->>S: table
+    deactivate F
+
+    S->>S: addObject(table)
+
+    S-->>Test: table
+    deactivate S
+
+    Note over Test,T: Assert
+    Test->>T: getName()
+    T-->>Test: expected name
+
+    Test->>T: getColumns()
+    T-->>Test: expected columns
+```
+
+# 4. Constraint Definition and Validation
+## Using Strategy, Factory Method
+
+## 4.1 Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Client
+%% =====================================================
+
+class Table{
+    +tableId : UUID
+    +engine : String
+    +rowCount : Long
+
+    -constraints : List~Constraint~
+    -factory : ConstraintFactory
+
+    +addPrimaryKey(request)
+    +addForeignKey(request)
+    +addUniqueConstraint(request)
+    +addCheckConstraint(request)
+
+    +removeConstraint(name)
+    +validateConstraints(row)
+}
+
+%% =====================================================
+%% Strategy Pattern
+%% =====================================================
+
+class Constraint{
+    <<abstract>>
+
+    +constraintId : UUID
+    +constraintName : String
+    +constraintType : ConstraintType
+    +tableId : UUID
+    +columns : List~Column~
+    +status : ConstraintStatus
+    +enabled : Boolean
+    +validated : Boolean
+    +deferrable : Boolean
+    +initiallyDeferred : Boolean
+    +owner : String
+    +description : String
+    +createdAt : Timestamp
+    +modifiedAt : Timestamp
+
+    +validate(row, table)* void
+}
+
+class ConstraintType{
+    <<enumeration>>
+}
+
+class ConstraintStatus{
+    <<enumeration>>
+}
+
+class PrimaryKey{
+    +validate(row, table) void
+}
+
+class ForeignKey{
+    +referenceTable
+    +referenceColumns
+
+    +validate(row, table) void
+}
+
+class UniqueConstraint{
+    +validate(row, table) void
+}
+
+class CheckConstraint{
+    +expression
+
+    +validate(row, table) void
+}
+
+Constraint <|-- PrimaryKey
+Constraint <|-- ForeignKey
+Constraint <|-- UniqueConstraint
+Constraint <|-- CheckConstraint
+Constraint --> ConstraintType
+Constraint --> ConstraintStatus
+
+%% =====================================================
+%% Factory Method
+%% =====================================================
+
+class ConstraintFactory{
+    <<interface>>
+
+    +createPrimaryKey(request) PrimaryKey
+    +createForeignKey(request) ForeignKey
+    +createUnique(request) UniqueConstraint
+    +createCheck(request) CheckConstraint
+}
+
+class DefaultConstraintFactory{
+    +createPrimaryKey(request) PrimaryKey
+    +createForeignKey(request) ForeignKey
+    +createUnique(request) UniqueConstraint
+    +createCheck(request) CheckConstraint
+}
+
+ConstraintFactory <|.. DefaultConstraintFactory
+
+Table --> ConstraintFactory
+
+DefaultConstraintFactory ..> PrimaryKey
+DefaultConstraintFactory ..> ForeignKey
+DefaultConstraintFactory ..> UniqueConstraint
+DefaultConstraintFactory ..> CheckConstraint
+
+%% =====================================================
+%% Association
+%% =====================================================
+
+Table --> Constraint
+
+ForeignKey --> Table
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style Table fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+```
+## 4.2 Sequence Diagram
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Test as PrimaryKeyValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant PK as PrimaryKey (Concrete Strategy)
+    participant Row
+
+    Note over Test,Row: Arrange
+
+    Test->>Factory: createPrimaryKey(request)
+    Factory->>PK: new PrimaryKey(...)
+    PK-->>Factory: primaryKey
+    Factory-->>Test: primaryKey
+
+    Test->>Table: addConstraint(primaryKey)
+    Test->>Row: new Row()
+    Test->>Row: setValue("id", 1)
+
+    Note over Test,Row: Act and Assert
+
+    Test->>Table: assertDoesNotThrow(() -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>PK: validate(row, table)
+        PK->>Row: getValue("id")
+        Row-->>PK: 1
+        PK->>Table: existsPrimaryKey(1)
+        Table-->>PK: false
+        PK-->>Table: validation completed
+    end
+
+    Table-->>Test: completed without exception
+```
+
+--- 
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Test as ForeignKeyValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant FK as ForeignKey (Concrete Strategy)
+    participant ParentTable as ParentTable (Referenced Context)
+    participant ChildRow
+
+    Note over Test,ChildRow: Arrange
+
+    Test->>Factory: createForeignKey(request)
+    Factory->>FK: new ForeignKey(...)
+    FK-->>Factory: foreignKey
+    Factory-->>Test: foreignKey
+
+    Test->>Table: addConstraint(foreignKey)
+    Test->>ChildRow: new Row()
+    Test->>ChildRow: setValue("user_id", "parent-001")
+
+    Note over Test,ChildRow: Act and Assert
+
+    Test->>Table: assertDoesNotThrow(() -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>FK: validate(row, parentTable)
+        FK->>ChildRow: getValue("user_id")
+        ChildRow-->>FK: "parent-001"
+        FK->>ParentTable: existsRow("parent-001")
+        ParentTable-->>FK: true
+        FK-->>Table: validation completed
+    end
+
+    Table-->>Test: completed without exception
+```
+
+# 5. Database Object Creation
+## Using Factory Method
+
+## 5.1 Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Client
+%% =====================================================
+
+class Schema {
+    +schemaId
+    +name
+    +owner
+    -objects : List~DatabaseObject~
+    -factory : DatabaseObjectFactory
+    +createTable(request)
+    +createView(request)
+    +createProcedure(request)
+    +createSequence(request)
+    +dropObject(objectId)
+    +findObject(name)
+    +listObjects()
+    +iterator() DatabaseObjectIterator
+    +accept(visitor : DatabaseObjectVisitor) void
+}
+
+%% =====================================================
+%% Factory Method Pattern
+%% =====================================================
+
+class DatabaseObjectFactory {
+    <<interface>>
+
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
+}
+
+class DefaultDatabaseObjectFactory {
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
+}
+
+DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
+
+Schema --> DatabaseObjectFactory : uses
+
+%% =====================================================
+%% Products (Database Objects)
+%% =====================================================
+
+class Table
+class View
+class StoredProcedure
+class Sequence
+
+DefaultDatabaseObjectFactory ..> Table : creates
+DefaultDatabaseObjectFactory ..> View : creates
+DefaultDatabaseObjectFactory ..> StoredProcedure : creates
+DefaultDatabaseObjectFactory ..> Sequence : creates
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+```
+
+## 5.2 Sequence Diagram
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Test Suite
+        participant Test as SchemaTest
+    end
+
+    box #e3f2fd Schema
+        participant S as Schema
+    end
+
+    box #fff3e0 Factory
+        participant F as DefaultDatabaseObjectFactory
+    end
+
+    box #fff8e1 Builder
+        participant B as TableBuilder
+    end
+
+    box #e8f5e9 Domain
+        participant T as Table
+    end
+
+    Note over Test,S: Arrange
+    Test->>Test: create CreateTableRequest
+
+    Note over Test,S: Act
+    Test->>S: createTable(request)
+    activate S
+
+    S->>S: ensureObjectNameIsUnique(request.name)
+
+    S->>F: createTable(request)
+    activate F
+
+    F->>B: new TableBuilder()
+    activate B
+    B-->>F: builder
+    deactivate B
+
+    F->>B: setName(request.name)
+    activate B
+    B-->>F: this
+    deactivate B
+
+    F->>B: setEngine(request.engine)
+    activate B
+    B-->>F: this
+    deactivate B
+
+    loop For each column
+        F->>B: addColumn(column)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each constraint
+        F->>B: addConstraint(constraint)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each index
+        F->>B: addIndex(index)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each partition
+        F->>B: addPartition(partition)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    loop For each trigger
+        F->>B: addTrigger(trigger)
+        activate B
+        B-->>F: this
+        deactivate B
+    end
+
+    F->>B: build()
+    activate B
+
+    B->>B: validate()
+
+    B->>T: new Table(builder)
+    activate T
+    T-->>B: table
+    deactivate T
+
+    B-->>F: table
+    deactivate B
+
+    F-->>S: table
+    deactivate F
+
+    S->>S: addObject(table)
+
+    S-->>Test: table
+    deactivate S
+
+    Note over Test,T: Assert
+    Test->>T: getName()
+    T-->>Test: expected name
+
+    Test->>T: getColumns()
+    T-->>Test: expected columns
+```
+
+# 11. Schema Object Traversal and Metadata Export
+## Using Iterator, Visitor Pattern
+
+# 11.1 Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Client & Elements
+%% =====================================================
+
+class Schema {
+    +schemaId
+    +name
+    +owner
+    -objects : List~DatabaseObject~
+    +iterator() DatabaseObjectIterator
+    +accept(visitor : DatabaseObjectVisitor) void
+}
+
+class DatabaseObject {
+    <<abstract>>
+    #objectId
+    #name
+    #owner
+    +accept(visitor : DatabaseObjectVisitor)* void
+}
+
+class Table
+class View
+class StoredProcedure
+class Sequence
+
+DatabaseObject <|-- Table
+DatabaseObject <|-- View
+DatabaseObject <|-- StoredProcedure
+DatabaseObject <|-- Sequence
+
+%% =====================================================
+%% Iterator Pattern
+%% =====================================================
+
+class DatabaseObjectIterator {
+    <<interface>>
+
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+class SchemaObjectIterator {
+    -objects : List~DatabaseObject~
+    -currentIndex : int
+
+    +SchemaObjectIterator(objects)
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+DatabaseObjectIterator <|.. SchemaObjectIterator
+
+Schema ..> SchemaObjectIterator : creates
+SchemaObjectIterator --> DatabaseObject : iterates
+
+%% =====================================================
+%% Visitor Pattern
+%% =====================================================
+
+class DatabaseObjectVisitor {
+    <<interface>>
+
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+}
+
+class ExportDDLVisitor {
+    -result : StringBuilder
+
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+
+    +getResult() String
+}
+
+DatabaseObjectVisitor <|.. ExportDDLVisitor
+
+Schema ..> DatabaseObjectVisitor : accepts
+DatabaseObject ..> DatabaseObjectVisitor : accepts
+
+DatabaseObjectVisitor ..> Table : visits
+DatabaseObjectVisitor ..> View : visits
+DatabaseObjectVisitor ..> StoredProcedure : visits
+DatabaseObjectVisitor ..> Sequence : visits
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style DatabaseObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style SchemaObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style DatabaseObjectVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
+style ExportDDLVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
+```
+
+# 11.2 Sequence Diagram
+
+### 1. shouldTraverseSchemaObjectsUsingIterator() 
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Client / Test Suite
+    participant Test as SchemaTest
+    end
+
+    box #e8f5e9 Schema Component
+    participant S as Schema
+    participant I as SchemaObjectIterator
+    participant O as DatabaseObject
+    end
+
+    Note over Test,O: 1. Request Iterator from Schema
+    Test->>S: iterator()
+    activate S
+    S->>I: new SchemaObjectIterator(objects)
+    activate I
+    I-->>S: iterator
+    deactivate I
+    S-->>Test: DatabaseObjectIterator
+    deactivate S
+
+    Note over Test,O: 2. Iterate through Database Objects
+    loop While iterator.hasNext()
+        Test->>I: hasNext()
+        activate I
+        I-->>Test: true
+        deactivate I
+
+        Test->>I: next()
+        activate I
+        I-->>Test: obj : DatabaseObject
+        deactivate I
+
+        Test->>O: process(obj)
+    end
+```
+
+### 2. shouldExportSchemaDDLUsingVisitor()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Client / Test Suite
+    participant Test as SchemaTest
+    end
+
+    box #fce4ec Visitor Component
+    participant V as ExportDDLVisitor
+    end
+
+    box #e8f5e9 Catalog Component
+    participant S as Schema
+    participant T as Table
+    participant W as View
+    end
+
+    Note over Test,W: 1. Create Visitor and Accept Schema
+    Test->>V: new ExportDDLVisitor()
+    Test->>S: accept(visitor)
+    activate S
+
+    Note over S,W: 2. Double Dispatch to Table and View
+    S->>T: accept(visitor)
+    activate T
+    T->>V: visit(this [Table])
+    activate V
+    V->>V: append("CREATE TABLE ...")
+    V-->>T: void
+    deactivate V
+    T-->>S: void
+    deactivate T
+
+    S->>W: accept(visitor)
+    activate W
+    W->>V: visit(this [View])
+    activate V
+    V->>V: append("CREATE VIEW ...")
+    V-->>W: void
+    deactivate V
+    W-->>S: void
+    deactivate W
+
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,V: 3. Retrieve DDL Result
+    Test->>V: getResult()
+    activate V
+    V-->>Test: ddlString
+    deactivate V
+```
