@@ -2771,14 +2771,59 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     box #e1f5fe Test Suite
-    participant Test as DatabaseObjectsModuleIntegrationTest
-    end
-    box #e8f5e9 Database Objects Module Components
-    participant System as System
+    participant Test as DatabaseObjectsIntegrationTest
     end
 
-    Test->>System: shouldCreateDatabaseWithSchemaAndTable()
-    System-->>Test: success
+    box #e3f2fd Composite Root (Database)
+    participant DB as db : Database
+    end
+
+    box #fff3e0 Composite Child (Schema)
+    participant S as schema : Schema
+    end
+
+    box #e8f5e9 Leaf Component (Table)
+    participant T as table : Table
+    end
+
+    Note over Test,T: 1. Arrange Composite Hierarchy Components
+    Test->>DB: new Database("db-001", "HuyDB", "admin", ONLINE, createdAt)
+    Test->>S: new Schema("schema-001", "StudentSchema", "admin")
+    Test->>T: new Table("tbl-001", "users", "InnoDB")
+
+    Note over Test,T: 2. Act: Build Composite Tree (Database -> Schema -> Table)
+    Test->>S: addObject(table)
+    activate S
+    S->>S: objects.add(table)
+    S-->>Test: void
+    deactivate S
+
+    Test->>DB: addSchema(schema)
+    activate DB
+    DB->>DB: schemas.add(schema)
+    DB-->>Test: void
+    deactivate DB
+
+    Note over Test,T: 3. Act: Traverse & Access Uniform DatabaseComponent Interface
+    Test->>DB: findSchema("StudentSchema")
+    activate DB
+    DB-->>Test: schema : Schema
+    deactivate DB
+
+    Test->>S: findObject("users")
+    activate S
+    S-->>Test: table : DatabaseObject
+    deactivate S
+
+    Test->>T: getQualifiedName()
+    activate T
+    T-->>Test: "HuyDB.StudentSchema.users"
+    deactivate T
+
+    Note over Test,T: 4. Assert Composite Hierarchy Output
+    Test->>Test: assertNotNull(schema)
+    Test->>Test: assertNotNull(table)
+    Test->>Test: assertEquals("HuyDB.StudentSchema.users", table.getQualifiedName())
 ```
 
 ### 2. shouldInsertRowWithConstraints()

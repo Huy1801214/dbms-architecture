@@ -2,7 +2,7 @@
 
 | Priority | Core Feature | Mức độ ưu tiên | Design Pattern phù hợp |
 |---:|---|---|---|
-| 1 | Schema and Database Object Lifecycle Management | Bắt buộc | Composite |
+| 1 | Database Object Hierarchy and Lifecycle Management | Bắt buộc | Composite |
 | 2 | Table Definition and Construction | Bắt buộc | Builder |
 | 3 | Column Definition and Data Type Management | Bắt buộc | Factory Method |
 | 4 | Constraint Definition and Validation | Bắt buộc | Strategy, Factory Method |
@@ -15,7 +15,7 @@
 | 11 | Schema Object Traversal and Metadata Export | Hỗ trợ | Iterator, Visitor |
 | 12 | Partition and Trigger Management | Nâng cao | Strategy, Observer, Command |
 
-# 1. Schema and Database Object Lifecycle Management
+# 1. Database Object Hierarchy and Lifecycle Management
 ## Using Composite Pattern
 
 ## 1.1 Class Diagram
@@ -24,145 +24,204 @@ classDiagram
 direction TB
 
 %% =====================================================
-%% Composite Containers
+%% Composite Pattern - Database Catalog Structure
+%% =====================================================
+
+class DatabaseComponent {
+    <<interface>>
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+}
+
+%% =====================================================
+%% Composite: Database
 %% =====================================================
 
 class Database {
-    +databaseId
-    +name
-    +owner
+    -databaseId : UUID
+    -name : String
+    -owner : String
+    -status : DatabaseStatus
     -schemas : List~Schema~
-    +open()
-    +close()
-    +createSchema(name, owner) Schema
-    +dropSchema(schemaId)
+
+    +addSchema(schema : Schema) void
+    +removeSchema(schemaId : UUID) void
+    +findSchema(name : String) Schema
+    +listSchemas() List~Schema~
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
 }
+
+class DatabaseStatus {
+    <<enumeration>>
+
+    ONLINE
+    OFFLINE
+    OPENING
+    CLOSING
+}
+
+%% =====================================================
+%% Composite: Schema
+%% =====================================================
 
 class Schema {
-    +schemaId
-    +name
-    +owner
+    -schemaId : UUID
+    -name : String
+    -owner : String
     -objects : List~DatabaseObject~
-    +addObject(object)
-    +dropObject(objectId)
-    +findObject(name) DatabaseObject
+
+    +addObject(object : DatabaseObject) void
+    +removeObject(objectId : UUID) void
+    +findObject(name : String) DatabaseObject
     +listObjects() List~DatabaseObject~
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
 }
 
-%% Component Interface / Base Class
+%% =====================================================
+%% Abstract Leaf
+%% =====================================================
+
 class DatabaseObject {
     <<abstract>>
-    #objectId
-    #name
-    #owner
-    +create()* void
-    +drop()* void
-    +rename(newName)* void
+
+    #objectId : UUID
+    #name : String
+    #owner : String
+    #schemaId : UUID
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+    +rename(newName : String) void
 }
 
-%% Leaf Components
+%% =====================================================
+%% Concrete Leaves
+%% =====================================================
+
 class Table {
     +tableId : UUID
     +engine : String
     +rowCount : Long
-    +create() void
-    +drop() void
-    +rename(newName) void
 }
 
 class View {
     +queryDefinition : String
-    +create() void
-    +drop() void
-    +rename(newName) void
 }
 
 class StoredProcedure {
     +code : String
-    +create() void
-    +drop() void
-    +rename(newName) void
 }
 
 class Sequence {
     +currentValue : Long
-    +create() void
-    +drop() void
-    +rename(newName) void
 }
 
-%% Relationships (Composite Pattern)
-Database *--> Schema : contains
-Schema *--> "0..*" DatabaseObject : contains (Composite)
+%% =====================================================
+%% Composite Relationships
+%% =====================================================
 
-DatabaseObject <|-- Table : extends (Leaf)
-DatabaseObject <|-- View : extends (Leaf)
-DatabaseObject <|-- StoredProcedure : extends (Leaf)
-DatabaseObject <|-- Sequence : extends (Leaf)
+DatabaseComponent <|.. Database
+DatabaseComponent <|.. Schema
+DatabaseComponent <|.. DatabaseObject
+
+DatabaseObject <|-- Table
+DatabaseObject <|-- View
+DatabaseObject <|-- StoredProcedure
+DatabaseObject <|-- Sequence
+
+Database *--> "0..*" Schema : contains
+Schema *--> "0..*" DatabaseObject : contains
+
+Database --> DatabaseStatus
 
 %% =====================================================
 %% Styling
 %% =====================================================
 
+style DatabaseComponent fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
 style Database fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style DatabaseStatus fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
-style DatabaseObject fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-
+style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 ```
 
-## 1.2 Sequence Diagram
+## 1.2 Sequence Diagram shouldCreateDatabaseWithSchemaAndTable()
 ```mermaid
 sequenceDiagram
     autonumber
     box #e1f5fe Client / Test Suite
-    participant Test as SchemaTest
+    participant Test as DatabaseObjectsIntegrationTest
     end
 
-    box #e3f2fd Composite Container
-    participant S as Schema
+    box #e3f2fd Composite Root (Database)
+    participant DB as db : Database
     end
 
-    box #fff3e0 Component Abstraction
-    participant O as obj : DatabaseObject
+    box #fff3e0 Composite Child (Schema)
+    participant S as schema : Schema
     end
 
-    box #e8f5e9 Concrete Leaf
-    participant T as Table
+    box #e8f5e9 Leaf Component (Table)
+    participant T as table : Table
     end
 
-    Note over Test,T: Act
+    Note over Test,T: 1. Arrange Composite Hierarchy Components
+    Test->>DB: new Database("db-001", "HuyDB", "admin", ONLINE, createdAt)
+    Test->>S: new Schema("schema-001", "StudentSchema", "admin")
+    Test->>T: new Table("tbl-001", "users", "InnoDB")
 
-    Test->>S: dropObject("tbl-001")
+    Note over Test,T: 2. Act: Build Composite Tree (Database -> Schema -> Table)
+    Test->>S: addObject(table)
     activate S
-
-    S->>S: findObjectById("tbl-001")
-    note right of S: Returns object as abstract type DatabaseObject
-
-    S->>O: drop()
-    activate O
-    note over O,T: Polymorphic call to concrete target object
-    O->>T: drop()
-    activate T
-    T-->>O: void
-    deactivate T
-    O-->>S: void
-    deactivate O
-
-    S->>S: removeObject("tbl-001")
+    S->>S: objects.add(table)
     S-->>Test: void
     deactivate S
 
-    Note over Test,S: Assert
+    Test->>DB: addSchema(schema)
+    activate DB
+    DB->>DB: schemas.add(schema)
+    DB-->>Test: void
+    deactivate DB
+
+    Note over Test,T: 3. Act: Traverse & Access Uniform DatabaseComponent Interface
+    Test->>DB: findSchema("StudentSchema")
+    activate DB
+    DB-->>Test: schema : Schema
+    deactivate DB
+
     Test->>S: findObject("users")
     activate S
-    S-->>Test: null
+    S-->>Test: table : DatabaseObject
     deactivate S
 
+    Test->>T: getQualifiedName()
+    activate T
+    T-->>Test: "HuyDB.StudentSchema.users"
+    deactivate T
+
+    Note over Test,T: 4. Assert Composite Hierarchy Output
+    Test->>Test: assertNotNull(schema)
+    Test->>Test: assertNotNull(table)
+    Test->>Test: assertEquals("HuyDB.StudentSchema.users", table.getQualifiedName())
 ```
 
 # 2. Table Definition and Construction

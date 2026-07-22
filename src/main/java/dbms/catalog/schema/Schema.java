@@ -8,8 +8,9 @@ import dbms.catalog.sequence.*;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.UUID;
 
-public class Schema {
+public class Schema implements DatabaseComponent {
     public String schemaId;
     public String name;
     public String owner;
@@ -40,6 +41,19 @@ public class Schema {
 
     public String getOwner() {
         return owner;
+    }
+
+    @Override
+    public UUID getId() {
+        return null;
+    }
+
+    @Override
+    public String getQualifiedName() {
+        return null;
+    }
+
+    public void removeObject(UUID objectId) {
     }
 
     public Table createTable(TableCreateRequest request) {

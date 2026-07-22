@@ -1,9 +1,12 @@
 package dbms.catalog.base;
 
-public abstract class DatabaseObject {
+import java.util.UUID;
+
+public abstract class DatabaseObject implements DatabaseComponent {
     public String objectId;
     public String name;
     public String owner;
+    public String schemaId;
 
     public abstract void create();
     public abstract void drop();
@@ -20,5 +23,15 @@ public abstract class DatabaseObject {
 
     public String getOwner() {
         return owner;
+    }
+
+    @Override
+    public UUID getId() {
+        return null;
+    }
+
+    @Override
+    public String getQualifiedName() {
+        return null;
     }
 }
