@@ -161,39 +161,74 @@ class DatabaseManager{
     +listDatabases()
 }
 
+class DatabaseComponent {
+    <<interface>>
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+}
+
 class Database{
-    +databaseId
-    +name
-    +owner
-    +open()
-    +close()
+    -databaseId : UUID
+    -name : String
+    -owner : String
+    -status : DatabaseStatus
+    -schemas : List~Schema~
+
+    +addSchema(schema : Schema) void
+    +removeSchema(schemaId : UUID) void
+    +findSchema(name : String) Schema
+    +listSchemas() List~Schema~
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+}
+
+class DatabaseStatus {
+    <<enumeration>>
+
+    ONLINE
+    OFFLINE
+    OPENING
+    CLOSING
 }
 
 class Schema{
-    +schemaId
-    +name
-    +owner
+    -schemaId : UUID
+    -name : String
+    -owner : String
     -objects : List~DatabaseObject~
-    -factory : DatabaseObjectFactory
-    +createTable(request)
-    +createView(request)
-    +createProcedure(request)
-    +createSequence(request)
-    +dropObject(objectId)
-    +findObject(name)
-    +listObjects()
+
+    +addObject(object : DatabaseObject) void
+    +removeObject(objectId : UUID) void
+    +findObject(name : String) DatabaseObject
+    +listObjects() List~DatabaseObject~
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
     +iterator() DatabaseObjectIterator
     +accept(visitor : DatabaseObjectVisitor) void
 }
 
 class DatabaseObject{
     <<abstract>>
-    #objectId
-    #name
-    #owner
-    +create()* void
-    +drop()* void
-    +rename(newName)* void
+
+    #objectId : UUID
+    #name : String
+    #owner : String
+    #schemaId : UUID
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+    +rename(newName : String) void
     +accept(visitor : DatabaseObjectVisitor)* void
 }
 
@@ -450,13 +485,19 @@ DatabaseServer --> StorageEngine
 DatabaseServer --> CatalogManager
 DatabaseServer --> SecurityManager
 
-DatabaseManager --> Database
-Database --> Schema
-Schema *--> DatabaseObject
+DatabaseComponent <|.. Database
+DatabaseComponent <|.. Schema
+DatabaseComponent <|.. DatabaseObject
+
 DatabaseObject <|-- Table
 DatabaseObject <|-- View
 DatabaseObject <|-- StoredProcedure
 DatabaseObject <|-- Sequence
+
+Database *--> "0..*" Schema : contains
+Schema *--> "0..*" DatabaseObject : contains
+
+Database --> DatabaseStatus
 
 Schema --> DatabaseObjectFactory
 DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
@@ -549,6 +590,7 @@ style Role fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Permission fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
 %% Catalog & Database Objects (Green)
+style DatabaseComponent fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Schema fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -857,11 +899,31 @@ direction TB
 %% Database
 %% =====================================================
 
+class DatabaseComponent {
+    <<interface>>
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+}
+
 class Database{
-    +databaseId
-    +name
-    +owner
-    +status
+    -databaseId : UUID
+    -name : String
+    -owner : String
+    -status : DatabaseStatus
+    -schemas : List~Schema~
+
+    +addSchema(schema : Schema) void
+    +removeSchema(schemaId : UUID) void
+    +findSchema(name : String) Schema
+    +listSchemas() List~Schema~
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
 }
 
 class DatabaseStatus{
@@ -872,31 +934,21 @@ class DatabaseStatus{
     CLOSING
 }
 
-Database --> Schema
-Database --> DatabaseStatus
-
-%% =====================================================
-%% Composite Pattern
-%% =====================================================
-
 class Schema{
-    +schemaId
-    +name
-    +owner
-
+    -schemaId : UUID
+    -name : String
+    -owner : String
     -objects : List~DatabaseObject~
-    -factory : DatabaseObjectFactory
 
-    +createTable()
-    +createView()
-    +createProcedure()
-    +createSequence()
+    +addObject(object : DatabaseObject) void
+    +removeObject(objectId : UUID) void
+    +findObject(name : String) DatabaseObject
+    +listObjects() List~DatabaseObject~
 
-    +addObject(obj)
-    +removeObject(objectId)
-    +findObject(name)
-    +listObjects()
-
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
     +iterator() DatabaseObjectIterator
     +accept(visitor : DatabaseObjectVisitor) void
 }
@@ -904,17 +956,26 @@ class Schema{
 class DatabaseObject{
     <<abstract>>
 
-    #objectId
-    #name
-    #owner
+    #objectId : UUID
+    #name : String
+    #owner : String
+    #schemaId : UUID
 
-    +create()* void
-    +drop()* void
-    +rename(newName)* void
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+    +rename(newName : String) void
     +accept(visitor : DatabaseObjectVisitor)* void
 }
 
-Schema *--> DatabaseObject
+DatabaseComponent <|.. Database
+DatabaseComponent <|.. Schema
+DatabaseComponent <|.. DatabaseObject
+
+Database *--> "0..*" Schema : contains
+Schema *--> "0..*" DatabaseObject : contains
+Database --> DatabaseStatus
 
 %% =====================================================
 %% Factory Method

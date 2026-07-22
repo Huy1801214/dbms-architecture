@@ -1,12 +1,14 @@
 package dbms.catalog.database;
 
+import dbms.catalog.base.DatabaseComponent;
 import dbms.catalog.schema.Schema;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-public class Database {
+public class Database implements DatabaseComponent {
     private String databaseId;
     private String name;
     private String owner;
@@ -68,6 +70,26 @@ public class Database {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    @Override
+    public UUID getId() {
+        return null;
+    }
+
+    @Override
+    public String getQualifiedName() {
+        return null;
+    }
+
+    public void addSchema(Schema schema) {
+    }
+
+    public void removeSchema(UUID schemaId) {
+    }
+
+    public Schema findSchema(String name) {
+        return null;
     }
 
     public Schema createSchema(String name, String owner) {
