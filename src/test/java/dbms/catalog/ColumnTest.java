@@ -1,6 +1,11 @@
 package dbms.catalog;
 
 import org.junit.jupiter.api.Test;
+
+import dbms.catalog.table.Column;
+import dbms.catalog.table.ColumnStatus;
+import dbms.catalog.table.DataType;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ColumnTest {

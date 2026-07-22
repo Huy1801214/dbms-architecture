@@ -1729,48 +1729,37 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as PrimaryKeyValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant PK as PrimaryKey (Concrete Strategy)
+    participant Row
+
+    Note over Test,Row: Arrange
+
+    Test->>Factory: createPrimaryKey(request)
+    Factory->>PK: new PrimaryKey(...)
+    PK-->>Factory: primaryKey
+    Factory-->>Test: primaryKey
+
+    Test->>Table: addConstraint(primaryKey)
+    Test->>Row: new Row()
+    Test->>Row: setValue("id", 1)
+
+    Note over Test,Row: Act and Assert
+
+    Test->>Table: assertDoesNotThrow(() -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>PK: validate(row, table)
+        PK->>Row: getValue("id")
+        Row-->>PK: 1
+        PK->>Table: existsPrimaryKey(1)
+        Table-->>PK: false
+        PK-->>Table: validation completed
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant PK as PrimaryKey
-    end
-
-    box #fff3e0 Table
-    participant T as Table
-    end
-
-    box #fff8e1 Row
-    participant R as Row
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createPrimaryKey(request)
-    activate F
-    F->>PK: new PrimaryKey(...)
-    PK-->>F: PrimaryKey
-    deactivate F
-    F-->>Test: PrimaryKey
-
-    Test->>R: create Row
-
-    Note over Test,R: Act
-    Test->>PK: validate(row,table)
-    activate PK
-    PK->>R: getColumnValue("id")
-    R-->>PK: value
-    PK->>T: existsPrimaryKey(value)
-    T-->>PK: false
-    PK-->>Test: success
-    deactivate PK
-
-    Note over Test,R: Assert
-    Test->>Test: assertDoesNotThrow()
+    Table-->>Test: completed without exception
 ```
 
 ### 2. shouldRejectDuplicatePrimaryKey()
@@ -1778,48 +1767,37 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as PrimaryKeyValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant PK as PrimaryKey (Concrete Strategy)
+    participant Row
+
+    Note over Test,Row: Arrange
+
+    Test->>Factory: createPrimaryKey(request)
+    Factory->>PK: new PrimaryKey(...)
+    PK-->>Factory: primaryKey
+    Factory-->>Test: primaryKey
+
+    Test->>Table: addConstraint(primaryKey)
+    Test->>Row: new Row()
+    Test->>Row: setValue("id", 1)
+
+    Note over Test,Row: Act and Assert
+
+    Test->>Table: assertThrows(DuplicatePrimaryKeyException.class, () -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>PK: validate(row, table)
+        PK->>Row: getValue("id")
+        Row-->>PK: 1
+        PK->>Table: existsPrimaryKey(1)
+        Table-->>PK: true
+        PK--x Table: DuplicatePrimaryKeyException
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant PK as PrimaryKey
-    end
-
-    box #fff8e1 Table
-    participant T as Table
-    end
-
-    box #f3e5f5 Row
-    participant R as Row
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createPrimaryKey(request)
-    activate F
-    F->>PK: new PrimaryKey(...)
-    PK-->>F: PrimaryKey
-    deactivate F
-    F-->>Test: PrimaryKey
-
-    Test->>R: create Row(id="row-001")
-
-    Note over Test,PK: Act
-    Test->>PK: validate(row, table)
-    activate PK
-    PK->>R: getColumnValue("id")
-    R-->>PK: "row-001"
-    PK->>T: existsPrimaryKey("row-001")
-    T-->>PK: true
-    PK--x Test: DuplicatePrimaryKeyException
-    deactivate PK
-
-    Note over Test,R: Assert
-    Test->>Test: assertThrows(...)
+    Table-->>Test: throws DuplicatePrimaryKeyException
 ```
 
 ### 3. shouldValidateForeignKey()
@@ -1827,48 +1805,38 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as ForeignKeyValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant FK as ForeignKey (Concrete Strategy)
+    participant ParentTable as ParentTable (Referenced Context)
+    participant ChildRow
+
+    Note over Test,ChildRow: Arrange
+
+    Test->>Factory: createForeignKey(request)
+    Factory->>FK: new ForeignKey(...)
+    FK-->>Factory: foreignKey
+    Factory-->>Test: foreignKey
+
+    Test->>Table: addConstraint(foreignKey)
+    Test->>ChildRow: new Row()
+    Test->>ChildRow: setValue("user_id", "parent-001")
+
+    Note over Test,ChildRow: Act and Assert
+
+    Test->>Table: assertDoesNotThrow(() -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>FK: validate(row, parentTable)
+        FK->>ChildRow: getValue("user_id")
+        ChildRow-->>FK: "parent-001"
+        FK->>ParentTable: existsRow("parent-001")
+        ParentTable-->>FK: true
+        FK-->>Table: validation completed
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant FK as ForeignKey
-    end
-
-    box #fff8e1 ParentTable
-    participant PT as ParentTable
-    end
-
-    box #f3e5f5 Row
-    participant R as ChildRow
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createForeignKey(request)
-    activate F
-    F->>FK: new ForeignKey(...)
-    FK-->>F: ForeignKey
-    deactivate F
-    F-->>Test: ForeignKey
-
-    Test->>R: create ChildRow
-
-    Note over Test,FK: Act
-    Test->>FK: validate(row,parentTable)
-    activate FK
-    FK->>R: getColumnValue("user_id")
-    R-->>FK: "parent-001"
-    FK->>PT: existsRow("parent-001")
-    PT-->>FK: true
-    FK-->>Test: validation succeeds
-    deactivate FK
-
-    Note over Test,R: Assert
-    Test->>Test: assertDoesNotThrow()
+    Table-->>Test: completed without exception
 ```
 
 ### 4. shouldRejectBrokenForeignKey()
@@ -1876,48 +1844,38 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as ForeignKeyValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant FK as ForeignKey (Concrete Strategy)
+    participant ParentTable as ParentTable (Referenced Context)
+    participant ChildRow
+
+    Note over Test,ChildRow: Arrange
+
+    Test->>Factory: createForeignKey(request)
+    Factory->>FK: new ForeignKey(...)
+    FK-->>Factory: foreignKey
+    Factory-->>Test: foreignKey
+
+    Test->>Table: addConstraint(foreignKey)
+    Test->>ChildRow: new Row()
+    Test->>ChildRow: setValue("user_id", "unknown-parent")
+
+    Note over Test,ChildRow: Act and Assert
+
+    Test->>Table: assertThrows(ForeignKeyViolationException.class, () -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>FK: validate(row, parentTable)
+        FK->>ChildRow: getValue("user_id")
+        ChildRow-->>FK: "unknown-parent"
+        FK->>ParentTable: existsRow("unknown-parent")
+        ParentTable-->>FK: false
+        FK--x Table: ForeignKeyViolationException
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant FK as ForeignKey
-    end
-
-    box #fff8e1 ParentTable
-    participant PT as ParentTable
-    end
-
-    box #f3e5f5 Row
-    participant R as ChildRow
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createForeignKey(request)
-    activate F
-    F->>FK: new ForeignKey(...)
-    FK-->>F: ForeignKey
-    deactivate F
-    F-->>Test: ForeignKey
-
-    Test->>R: create ChildRow
-
-    Note over Test,FK: Act
-    Test->>FK: validate(row,parentTable)
-    activate FK
-    FK->>R: getColumnValue("user_id")
-    R-->>FK: "unknown-parent"
-    FK->>PT: existsRow("unknown-parent")
-    PT-->>FK: false
-    FK--x Test: ForeignKeyViolationException
-    deactivate FK
-
-    Note over Test,R: Assert
-    Test->>Test: assertThrows(...)
+    Table-->>Test: throws ForeignKeyViolationException
 ```
 
 ### 5. shouldValidateUniqueConstraint()
@@ -1925,48 +1883,37 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as UniqueConstraintValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant UQ as UniqueConstraint (Concrete Strategy)
+    participant Row
+
+    Note over Test,Row: Arrange
+
+    Test->>Factory: createUnique(request)
+    Factory->>UQ: new UniqueConstraint(...)
+    UQ-->>Factory: uniqueConstraint
+    Factory-->>Test: uniqueConstraint
+
+    Test->>Table: addConstraint(uniqueConstraint)
+    Test->>Row: new Row()
+    Test->>Row: setValue("email", "user@example.com")
+
+    Note over Test,Row: Act and Assert
+
+    Test->>Table: assertDoesNotThrow(() -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>UQ: validate(row, table)
+        UQ->>Row: getValue("email")
+        Row-->>UQ: "user@example.com"
+        UQ->>Table: existsUniqueValue("email", "user@example.com")
+        Table-->>UQ: false
+        UQ-->>Table: validation completed
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant UQ as UniqueConstraint
-    end
-
-    box #fff8e1 Table
-    participant T as Table
-    end
-
-    box #f3e5f5 Row
-    participant R as Row
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createUnique(request)
-    activate F
-    F->>UQ: new UniqueConstraint(...)
-    UQ-->>F: UniqueConstraint
-    deactivate F
-    F-->>Test: UniqueConstraint
-
-    Test->>R: create Row
-
-    Note over Test,UQ: Act
-    Test->>UQ: validate(row,table)
-    activate UQ
-    UQ->>R: getColumnValue("email")
-    R-->>UQ: "test@dbms.com"
-    UQ->>T: existsUniqueValue("email","test@dbms.com")
-    T-->>UQ: false
-    UQ-->>Test: validation succeeds
-    deactivate UQ
-
-    Note over Test,R: Assert
-    Test->>Test: assertDoesNotThrow()
+    Table-->>Test: completed without exception
 ```
 
 ### 6. shouldRejectDuplicateUniqueValue()
@@ -1974,48 +1921,37 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as UniqueConstraintValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant UQ as UniqueConstraint (Concrete Strategy)
+    participant Row
+
+    Note over Test,Row: Arrange
+
+    Test->>Factory: createUnique(request)
+    Factory->>UQ: new UniqueConstraint(...)
+    UQ-->>Factory: uniqueConstraint
+    Factory-->>Test: uniqueConstraint
+
+    Test->>Table: addConstraint(uniqueConstraint)
+    Test->>Row: new Row()
+    Test->>Row: setValue("email", "user@example.com")
+
+    Note over Test,Row: Act and Assert
+
+    Test->>Table: assertThrows(DuplicateUniqueValueException.class, () -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>UQ: validate(row, table)
+        UQ->>Row: getValue("email")
+        Row-->>UQ: "user@example.com"
+        UQ->>Table: existsUniqueValue("email", "user@example.com")
+        Table-->>UQ: true
+        UQ--x Table: DuplicateUniqueValueException
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant UQ as UniqueConstraint
-    end
-
-    box #fff8e1 Table
-    participant T as Table
-    end
-
-    box #f3e5f5 Row
-    participant R as Row
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createUnique(request)
-    activate F
-    F->>UQ: new UniqueConstraint(...)
-    UQ-->>F: UniqueConstraint
-    deactivate F
-    F-->>Test: UniqueConstraint
-
-    Test->>R: create Row
-
-    Note over Test,UQ: Act
-    Test->>UQ: validate(row,table)
-    activate UQ
-    UQ->>R: getColumnValue("email")
-    R-->>UQ: "test@dbms.com"
-    UQ->>T: existsUniqueValue("email","test@dbms.com")
-    T-->>UQ: true
-    UQ--x Test: DuplicateUniqueValueException
-    deactivate UQ
-
-    Note over Test,R: Assert
-    Test->>Test: assertThrows(...)
+    Table-->>Test: throws DuplicateUniqueValueException
 ```
 
 ### 7. shouldValidateCheckConstraint()
@@ -2023,43 +1959,36 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as CheckConstraintValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant CK as CheckConstraint (Concrete Strategy)
+    participant Row
+
+    Note over Test,Row: Arrange
+
+    Test->>Factory: createCheck(request)
+    Factory->>CK: new CheckConstraint(...)
+    CK-->>Factory: checkConstraint
+    Factory-->>Test: checkConstraint
+
+    Test->>Table: addConstraint(checkConstraint)
+    Test->>Row: new Row()
+    Test->>Row: setValue("age", 20)
+
+    Note over Test,Row: Act and Assert
+
+    Test->>Table: assertDoesNotThrow(() -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>CK: validate(row, table)
+        CK->>Row: getValue("age")
+        Row-->>CK: 20
+        CK->>CK: evaluateExpression("age >= 18", 20)
+        CK-->>Table: validation completed
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant CK as CheckConstraint
-    end
-
-    box #f3e5f5 Row
-    participant R as Row
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createCheck(request)
-    activate F
-    F->>CK: new CheckConstraint(...)
-    CK-->>F: CheckConstraint
-    deactivate F
-    F-->>Test: CheckConstraint
-
-    Test->>R: create Row(age=20)
-
-    Note over Test,CK: Act
-    Test->>CK: validate(row,null)
-    activate CK
-    CK->>R: getColumnValue("age")
-    R-->>CK: 20
-    CK->>CK: evaluateExpression()
-    CK-->>Test: validation succeeds
-    deactivate CK
-
-    Note over Test,R: Assert
-    Test->>Test: assertDoesNotThrow()
+    Table-->>Test: completed without exception
 ```
 
 ### 8. shouldRejectInvalidCheckConstraint()
@@ -2067,43 +1996,36 @@ sequenceDiagram
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as ConstraintTest
+    participant Test as CheckConstraintValidationTest
+    participant Factory as DefaultConstraintFactory
+    participant Table as Table (Context)
+    participant CK as CheckConstraint (Concrete Strategy)
+    participant Row
+
+    Note over Test,Row: Arrange
+
+    Test->>Factory: createCheck(request)
+    Factory->>CK: new CheckConstraint(...)
+    CK-->>Factory: checkConstraint
+    Factory-->>Test: checkConstraint
+
+    Test->>Table: addConstraint(checkConstraint)
+    Test->>Row: new Row()
+    Test->>Row: setValue("age", 15)
+
+    Note over Test,Row: Act and Assert
+
+    Test->>Table: assertThrows(CheckConstraintViolationException.class, () -> validate(row))
+
+    loop Every enabled Constraint
+        Table->>CK: validate(row, table)
+        CK->>Row: getValue("age")
+        Row-->>CK: 15
+        CK->>CK: evaluateExpression("age >= 18", 15)
+        CK--x Table: CheckConstraintViolationException
     end
 
-    box #fff3e0 Factory
-    participant F as DefaultConstraintFactory
-    end
-
-    box #e8f5e9 Strategy
-    participant CK as CheckConstraint
-    end
-
-    box #f3e5f5 Row
-    participant R as Row
-    end
-
-    Note over Test,R: Arrange
-    Test->>F: createCheck(request)
-    activate F
-    F->>CK: new CheckConstraint(...)
-    CK-->>F: CheckConstraint
-    deactivate F
-    F-->>Test: CheckConstraint
-
-    Test->>R: create Row(age=15)
-
-    Note over Test,CK: Act
-    Test->>CK: validate(row,null)
-    activate CK
-    CK->>R: getColumnValue("age")
-    R-->>CK: 15
-    CK->>CK: evaluateExpression()
-    CK--x Test: CheckConstraintViolationException
-    deactivate CK
-
-    Note over Test,R: Assert
-    Test->>Test: assertThrows(...)
+    Table-->>Test: throws CheckConstraintViolationException
 ```
 
 ## BTreeIndexTest

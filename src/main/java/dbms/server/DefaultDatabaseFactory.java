@@ -1,7 +1,7 @@
 package dbms.server;
 
-import dbms.catalog.Database;
-import dbms.catalog.DatabaseStatus;
+import dbms.catalog.database.Database;
+import dbms.catalog.database.DatabaseStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
 

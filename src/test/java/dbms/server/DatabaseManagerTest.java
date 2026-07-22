@@ -2,7 +2,8 @@ package dbms.server;
 
 import org.junit.jupiter.api.Test;
 
-import dbms.catalog.Database;
+import dbms.catalog.database.Database;
+import dbms.catalog.database.DatabaseStatus;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,7 +20,7 @@ public class DatabaseManagerTest {
         Database database = manager.createDatabase(request);
         // Assert
         assertNotNull(database);
-        assertEquals(dbms.catalog.DatabaseStatus.ONLINE, database.getStatus());
+        assertEquals(DatabaseStatus.ONLINE, database.getStatus());
     }
 
     @Test
@@ -142,5 +143,4 @@ public class DatabaseManagerTest {
         // Assert
         assertNotEquals(database1Id, database2Id);
     }
-
 }

@@ -1,5 +1,6 @@
 package dbms.catalog;
 
+import dbms.catalog.table.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
