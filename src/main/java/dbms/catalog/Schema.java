@@ -59,6 +59,13 @@ public class Schema {
         return null;
     }
 
+    public DatabaseObjectIterator iterator() {
+        return null;
+    }
+
+    public void accept(DatabaseObjectVisitor visitor) {
+    }
+
     public void addObject(DatabaseObject obj) {
     }
 

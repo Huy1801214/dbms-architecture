@@ -3,14 +3,14 @@ package dbms.catalog;
 import java.util.List;
 
 public class Table extends DatabaseObject {
+    public java.util.UUID tableId;
     public String engine;
     public long rowCount;
 
     private List<Column> columns = new java.util.ArrayList<>();
     private List<Constraint> constraints = new java.util.ArrayList<>();
     private List<Index> indexes = new java.util.ArrayList<>();
-    private List<Partition> partitions = new java.util.ArrayList<>();
-    private List<Trigger> triggers = new java.util.ArrayList<>();
+    private List<Row> rows = new java.util.ArrayList<>();
 
     public Table() {
     }
@@ -19,7 +19,6 @@ public class Table extends DatabaseObject {
         this.objectId = tableId;
         this.name = name;
         this.engine = engine;
-        this.rowCount = 0;
     }
 
     public String getTableId() {
@@ -41,6 +40,27 @@ public class Table extends DatabaseObject {
         return 0;
     }
 
+    public void addColumn(Column column) {
+    }
+
+    public List<Column> getColumns() {
+        return null;
+    }
+
+    public void addConstraint(Constraint constraint) {
+    }
+
+    public List<Constraint> getConstraints() {
+        return null;
+    }
+
+    public void addIndex(Index index) {
+    }
+
+    public List<Index> getIndexes() {
+        return null;
+    }
+
     public void insert(Row row) {
     }
 
@@ -60,7 +80,11 @@ public class Table extends DatabaseObject {
         return null;
     }
 
-    public java.util.List<Row> listAllRows() {
+    public List<Row> listAllRows() {
+        return null;
+    }
+
+    public List<Row> getRows() {
         return null;
     }
 
@@ -73,10 +97,6 @@ public class Table extends DatabaseObject {
     }
 
     public Row findRowByPrimaryKey(Object value) {
-        return null;
-    }
-
-    public List<Row> getRows() {
         return null;
     }
 
@@ -94,6 +114,9 @@ public class Table extends DatabaseObject {
 
     @Override
     public void rename(String newName) {
-        this.name = newName;
+    }
+
+    @Override
+    public void accept(DatabaseObjectVisitor visitor) {
     }
 }

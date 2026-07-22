@@ -148,4 +148,23 @@ public class TableTest {
                 IllegalStateException.class,
                 () -> table.update("row-999", newRow));
     }
+
+    @Test
+    public void shouldAddAndGetColumns() {
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        Column col1 = new Column("id", DataType.INT, false);
+        Column col2 = new Column("name", DataType.VARCHAR, true);
+
+        table.addColumn(col1);
+        table.addColumn(col2);
+
+        assertEquals(2, table.getColumns().size());
+        assertEquals("id", table.getColumns().get(0).name);
+    }
+
+    @Test
+    public void shouldReturnEngine() {
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        assertEquals("InnoDB", table.getEngine());
+    }
 }

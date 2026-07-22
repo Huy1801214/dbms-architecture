@@ -20,7 +20,8 @@ public class StoredProcedure extends DatabaseObject {
     public void drop() {}
 
     @Override
-    public void rename(String newName) {
-        this.name = newName;
-    }
+    public void rename(String newName) {}
+
+    @Override
+    public void accept(DatabaseObjectVisitor visitor) {}
 }
