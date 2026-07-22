@@ -3,8 +3,15 @@ package dbms.catalog;
 import java.util.List;
 
 public class Table extends DatabaseObject {
+    public java.util.UUID tableId;
     public String engine;
     public long rowCount;
+    public String collation;
+    public CompressionType compression;
+    public Boolean encrypted;
+    public EncryptionType encryptionType;
+    public String comment;
+    public TableStatus status;
 
     private List<Column> columns = new java.util.ArrayList<>();
     private List<Constraint> constraints = new java.util.ArrayList<>();
@@ -20,6 +27,11 @@ public class Table extends DatabaseObject {
         this.name = name;
         this.engine = engine;
         this.rowCount = 0;
+        try {
+            this.tableId = java.util.UUID.fromString(tableId);
+        } catch (IllegalArgumentException e) {
+            this.tableId = java.util.UUID.randomUUID();
+        }
     }
 
     public String getTableId() {

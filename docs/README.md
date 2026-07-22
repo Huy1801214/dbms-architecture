@@ -195,8 +195,15 @@ class DatabaseObject{
 }
 
 class Table{
-    +engine
-    +rowCount
+    +tableId : UUID
+    +engine : String
+    +rowCount : Long
+    +collation : String
+    +compression : CompressionType
+    +encrypted : Boolean
+    +encryptionType : EncryptionType
+    +comment : String
+    +status : TableStatus
     -constraintFactory
     -constraints
     +insert()
@@ -207,9 +214,24 @@ class Table{
 }
 
 class Column{
-    +columnId
-    +name
-    +dataType
+    +columnId : UUID
+    +name : String
+    +dataType : DataType
+    +length : Integer
+    +precision : Integer
+    +scale : Integer
+    +nullable : Boolean
+    +defaultValue : Object
+    +identity : Boolean
+    +generated : Boolean
+    +collation : String
+    +compression : CompressionType
+    +masked : Boolean
+    +maskingRule : MaskingRule
+    +encrypted : Boolean
+    +encryptionType : EncryptionType
+    +comment : String
+    +status : ColumnStatus
 }
 
 class Row
@@ -940,8 +962,15 @@ DefaultTableBuilder --> Table
 %% =====================================================
 
 class Table{
-    +engine
-    +rowCount
+    +tableId : UUID
+    +engine : String
+    +rowCount : Long
+    +collation : String
+    +compression : CompressionType
+    +encrypted : Boolean
+    +encryptionType : EncryptionType
+    +comment : String
+    +status : TableStatus
 
     -constraintFactory
     -constraints
@@ -978,9 +1007,24 @@ DatabaseObject <|-- Sequence
 %% =====================================================
 
 class Column{
-    +columnId
-    +name
-    +dataType
+    +columnId : UUID
+    +name : String
+    +dataType : DataType
+    +length : Integer
+    +precision : Integer
+    +scale : Integer
+    +nullable : Boolean
+    +defaultValue : Object
+    +identity : Boolean
+    +generated : Boolean
+    +collation : String
+    +compression : CompressionType
+    +masked : Boolean
+    +maskingRule : MaskingRule
+    +encrypted : Boolean
+    +encryptionType : EncryptionType
+    +comment : String
+    +status : ColumnStatus
 }
 
 class Row
@@ -1208,6 +1252,16 @@ direction TB
 %% =====================================================
 
 class Table{
+    +tableId : UUID
+    +engine : String
+    +rowCount : Long
+    +collation : String
+    +compression : CompressionType
+    +encrypted : Boolean
+    +encryptionType : EncryptionType
+    +comment : String
+    +status : TableStatus
+
     -constraints : List~Constraint~
     -factory : ConstraintFactory
 
@@ -1323,10 +1377,16 @@ direction TB
 %% =====================================================
 
 class Table{
-    -tableId
-    -name
-    -engine
-    -rowCount
+    -tableId : UUID
+    -name : String
+    -engine : String
+    -rowCount : Long
+    -collation : String
+    -compression : CompressionType
+    -encrypted : Boolean
+    -encryptionType : EncryptionType
+    -comment : String
+    -status : TableStatus
 
     -columns : List~Column~
     -constraints : List~Constraint~
