@@ -13,12 +13,24 @@ public class Column {
     public Object defaultValue;
     public Boolean identity;
     public Boolean generated;
-    public String collation;
-    public CompressionType compression;
-    public Boolean masked;
-    public MaskingRule maskingRule;
-    public Boolean encrypted;
-    public EncryptionType encryptionType;
-    public String comment;
     public ColumnStatus status;
+
+    public Column() {
+        this.columnId = UUID.randomUUID();
+        this.nullable = true;
+        this.identity = false;
+        this.generated = false;
+        this.status = ColumnStatus.ACTIVE;
+    }
+
+    public Column(String name, DataType dataType) {
+        this();
+        this.name = name;
+        this.dataType = dataType;
+    }
+
+    public Column(String name, DataType dataType, Boolean nullable) {
+        this(name, dataType);
+        this.nullable = nullable;
+    }
 }

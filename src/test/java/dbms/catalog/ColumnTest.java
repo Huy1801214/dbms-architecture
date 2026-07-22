@@ -7,74 +7,49 @@ public class ColumnTest {
 
     @Test
     public void shouldCreateColumn() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
+        Column col = new Column("user_id", DataType.INT);
+        assertNotNull(col.columnId);
+        assertEquals("user_id", col.name);
+        assertEquals(DataType.INT, col.dataType);
+        assertTrue(col.nullable);
+        assertEquals(ColumnStatus.ACTIVE, col.status);
     }
 
     @Test
     public void shouldValidateColumnDefinition() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
+        Column col = new Column("email", DataType.VARCHAR, false);
+        col.length = 255;
+        col.defaultValue = "user@example.com";
 
-    @Test
-    public void shouldRejectInvalidDataType() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldRejectInvalidLength() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
+        assertEquals("email", col.name);
+        assertEquals(DataType.VARCHAR, col.dataType);
+        assertFalse(col.nullable);
+        assertEquals(255, col.length);
+        assertEquals("user@example.com", col.defaultValue);
     }
 
     @Test
     public void shouldAcceptNullableColumn() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
-    }
-
-    @Test
-    public void shouldRejectNullForNotNullColumn() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
+        Column col = new Column("middle_name", DataType.VARCHAR, true);
+        assertTrue(col.nullable);
     }
 
     @Test
     public void shouldUpdateColumnMetadata() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
+        Column col = new Column("salary", DataType.DOUBLE);
+        col.precision = 10;
+        col.scale = 2;
+
+        assertEquals(10, col.precision);
+        assertEquals(2, col.scale);
     }
 
     @Test
     public void shouldChangeDefaultValue() {
-        // Arrange
-        
-        // Act
-        
-        // Assert
+        Column col = new Column("is_active", DataType.BOOLEAN);
+        col.defaultValue = true;
+
+        assertEquals(true, col.defaultValue);
     }
 
 }

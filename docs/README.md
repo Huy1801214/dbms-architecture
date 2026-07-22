@@ -182,6 +182,8 @@ class Schema{
     +dropObject(objectId)
     +findObject(name)
     +listObjects()
+    +iterator() DatabaseObjectIterator
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 class DatabaseObject{
@@ -192,18 +194,13 @@ class DatabaseObject{
     +create()* void
     +drop()* void
     +rename(newName)* void
+    +accept(visitor : DatabaseObjectVisitor)* void
 }
 
 class Table{
     +tableId : UUID
     +engine : String
     +rowCount : Long
-    +collation : String
-    +compression : CompressionType
-    +encrypted : Boolean
-    +encryptionType : EncryptionType
-    +comment : String
-    +status : TableStatus
     -constraintFactory
     -constraints
     +insert()
@@ -211,6 +208,7 @@ class Table{
     +delete()
     +truncate()
     +analyze()
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 class Column{
@@ -224,13 +222,6 @@ class Column{
     +defaultValue : Object
     +identity : Boolean
     +generated : Boolean
-    +collation : String
-    +compression : CompressionType
-    +masked : Boolean
-    +maskingRule : MaskingRule
-    +encrypted : Boolean
-    +encryptionType : EncryptionType
-    +comment : String
     +status : ColumnStatus
 }
 
@@ -242,7 +233,29 @@ class DataType{
 
 class Constraint{
     <<abstract>>
+    +constraintId : UUID
+    +constraintName : String
+    +constraintType : ConstraintType
+    +tableId : UUID
+    +columns : List~Column~
+    +status : ConstraintStatus
+    +enabled : Boolean
+    +validated : Boolean
+    +deferrable : Boolean
+    +initiallyDeferred : Boolean
+    +owner : String
+    +description : String
+    +createdAt : Timestamp
+    +modifiedAt : Timestamp
     +validate(row,table)*
+}
+
+class ConstraintType{
+    <<enumeration>>
+}
+
+class ConstraintStatus{
+    <<enumeration>>
 }
 
 class PrimaryKey
@@ -452,6 +465,18 @@ DefaultDatabaseObjectFactory ..> View
 DefaultDatabaseObjectFactory ..> StoredProcedure
 DefaultDatabaseObjectFactory ..> Sequence
 
+DatabaseObjectIterator <|.. SchemaObjectIterator
+Schema ..> SchemaObjectIterator : creates
+SchemaObjectIterator --> DatabaseObject : iterates
+
+DatabaseObjectVisitor <|.. ExportDDLVisitor
+Schema ..> DatabaseObjectVisitor : accepts
+DatabaseObject ..> DatabaseObjectVisitor : accepts
+DatabaseObjectVisitor ..> Table : visits
+DatabaseObjectVisitor ..> View : visits
+DatabaseObjectVisitor ..> StoredProcedure : visits
+DatabaseObjectVisitor ..> Sequence : visits
+
 TableBuilder <|.. DefaultTableBuilder
 DefaultDatabaseObjectFactory --> TableBuilder
 DefaultTableBuilder --> Table
@@ -467,6 +492,8 @@ Constraint <|-- PrimaryKey
 Constraint <|-- ForeignKey
 Constraint <|-- UniqueConstraint
 Constraint <|-- CheckConstraint
+Constraint --> ConstraintType
+Constraint --> ConstraintStatus
 
 ConstraintFactory <|.. DefaultConstraintFactory
 Table --> ConstraintFactory
@@ -532,6 +559,8 @@ style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Row fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DataType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -553,6 +582,12 @@ style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultTableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style DatabaseObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style SchemaObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style DatabaseObjectVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
+style ExportDDLVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
 
 
 %% Query Engine (Yellow/Orange)
@@ -879,6 +914,9 @@ class Schema{
     +removeObject(objectId)
     +findObject(name)
     +listObjects()
+
+    +iterator() DatabaseObjectIterator
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 class DatabaseObject{
@@ -891,6 +929,7 @@ class DatabaseObject{
     +create()* void
     +drop()* void
     +rename(newName)* void
+    +accept(visitor : DatabaseObjectVisitor)* void
 }
 
 Schema *--> DatabaseObject
@@ -917,6 +956,63 @@ class DefaultDatabaseObjectFactory{
 
 Schema --> DatabaseObjectFactory
 DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
+
+%% =====================================================
+%% Iterator Pattern
+%% =====================================================
+
+class DatabaseObjectIterator{
+    <<interface>>
+
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+class SchemaObjectIterator{
+    -objects : List~DatabaseObject~
+    -currentIndex : int
+
+    +SchemaObjectIterator(objects)
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+DatabaseObjectIterator <|.. SchemaObjectIterator
+Schema ..> SchemaObjectIterator : creates
+SchemaObjectIterator --> DatabaseObject : iterates
+
+%% =====================================================
+%% Visitor Pattern
+%% =====================================================
+
+class DatabaseObjectVisitor{
+    <<interface>>
+
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+}
+
+class ExportDDLVisitor{
+    -result : StringBuilder
+
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+
+    +getResult() String
+}
+
+DatabaseObjectVisitor <|.. ExportDDLVisitor
+Schema ..> DatabaseObjectVisitor : accepts
+DatabaseObject ..> DatabaseObjectVisitor : accepts
+
+DatabaseObjectVisitor ..> Table : visits
+DatabaseObjectVisitor ..> View : visits
+DatabaseObjectVisitor ..> StoredProcedure : visits
+DatabaseObjectVisitor ..> Sequence : visits
 
 %% =====================================================
 %% Builder Pattern
@@ -965,12 +1061,6 @@ class Table{
     +tableId : UUID
     +engine : String
     +rowCount : Long
-    +collation : String
-    +compression : CompressionType
-    +encrypted : Boolean
-    +encryptionType : EncryptionType
-    +comment : String
-    +status : TableStatus
 
     -constraintFactory
     -constraints
@@ -981,20 +1071,26 @@ class Table{
     +truncate()
     +analyze()
 
+    +addColumn(...)
+    +getColumns()
     +addConstraint(...)
     +removeConstraint(...)
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 class View{
     +queryDefinition
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 class StoredProcedure{
     +execute()
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 class Sequence{
     +nextValue()
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 DatabaseObject <|-- Table
@@ -1017,13 +1113,6 @@ class Column{
     +defaultValue : Object
     +identity : Boolean
     +generated : Boolean
-    +collation : String
-    +compression : CompressionType
-    +masked : Boolean
-    +maskingRule : MaskingRule
-    +encrypted : Boolean
-    +encryptionType : EncryptionType
-    +comment : String
     +status : ColumnStatus
 }
 
@@ -1050,7 +1139,29 @@ Column --> DataType
 
 class Constraint{
     <<abstract>>
+    +constraintId : UUID
+    +constraintName : String
+    +constraintType : ConstraintType
+    +tableId : UUID
+    +columns : List~Column~
+    +status : ConstraintStatus
+    +enabled : Boolean
+    +validated : Boolean
+    +deferrable : Boolean
+    +initiallyDeferred : Boolean
+    +owner : String
+    +description : String
+    +createdAt : Timestamp
+    +modifiedAt : Timestamp
     +validate(row,table)*
+}
+
+class ConstraintType{
+    <<enumeration>>
+}
+
+class ConstraintStatus{
+    <<enumeration>>
 }
 
 class PrimaryKey
@@ -1062,6 +1173,8 @@ Constraint <|-- PrimaryKey
 Constraint <|-- ForeignKey
 Constraint <|-- UniqueConstraint
 Constraint <|-- CheckConstraint
+Constraint --> ConstraintType
+Constraint --> ConstraintStatus
 
 Table --> Constraint
 
@@ -1124,6 +1237,8 @@ style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Partition fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DataType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -1142,7 +1257,7 @@ style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,colo
 ```
 ---
 
-## Schema Management Class Diagram using Composite pattern
+## Schema Management Class Diagram using Composite + Iterator + Visitor + Factory pattern
 ```mermaid
 classDiagram
 direction TB
@@ -1151,46 +1266,74 @@ direction TB
 %% Root Aggregate
 %% =====================================================
 
-class Schema{
-    +schemaId
-    +name
-    +owner
+class Schema {
+    +schemaId : UUID
+    +name : String
+    +owner : String
 
     -objects : List~DatabaseObject~
     -factory : DatabaseObjectFactory
 
-    +createTable(request)
-    +createView(request)
-    +createProcedure(request)
-    +createSequence(request)
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
 
-    +dropObject(objectId)
-    +findObject(name)
-    +listObjects()
+    +dropObject(objectId) void
+    +findObject(name) DatabaseObject
+    +listObjects() List~DatabaseObject~
+
+    +iterator() DatabaseObjectIterator
+    +accept(visitor : DatabaseObjectVisitor) void
 }
 
 %% =====================================================
-%% Composite Pattern
+%% Composite Structure
 %% =====================================================
 
-class DatabaseObject{
+class DatabaseObject {
     <<abstract>>
 
-    #objectId
-    #name
-    #owner
+    #objectId : UUID
+    #name : String
+    #owner : String
 
     +create()* void
     +drop()* void
-    +rename(newName)* void
+    +rename(newName : String)* void
+
+    +accept(visitor : DatabaseObjectVisitor)* void
 }
 
-class Table
-class View
-class StoredProcedure
-class Sequence
+class Table {
+    +create() void
+    +drop() void
+    +rename(newName : String) void
+    +accept(visitor : DatabaseObjectVisitor) void
+}
 
-Schema *--> DatabaseObject
+class View {
+    +create() void
+    +drop() void
+    +rename(newName : String) void
+    +accept(visitor : DatabaseObjectVisitor) void
+}
+
+class StoredProcedure {
+    +create() void
+    +drop() void
+    +rename(newName : String) void
+    +accept(visitor : DatabaseObjectVisitor) void
+}
+
+class Sequence {
+    +create() void
+    +drop() void
+    +rename(newName : String) void
+    +accept(visitor : DatabaseObjectVisitor) void
+}
+
+Schema *--> "0..*" DatabaseObject : contains
 
 DatabaseObject <|-- Table
 DatabaseObject <|-- View
@@ -1198,10 +1341,10 @@ DatabaseObject <|-- StoredProcedure
 DatabaseObject <|-- Sequence
 
 %% =====================================================
-%% Factory Method
+%% Factory Method Pattern
 %% =====================================================
 
-class DatabaseObjectFactory{
+class DatabaseObjectFactory {
     <<interface>>
 
     +createTable(request) Table
@@ -1210,21 +1353,80 @@ class DatabaseObjectFactory{
     +createSequence(request) Sequence
 }
 
-class DefaultDatabaseObjectFactory{
+class DefaultDatabaseObjectFactory {
     +createTable(request) Table
     +createView(request) View
     +createProcedure(request) StoredProcedure
     +createSequence(request) Sequence
 }
 
-Schema --> DatabaseObjectFactory
+Schema --> DatabaseObjectFactory : uses
 
 DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
 
-DefaultDatabaseObjectFactory ..> Table
-DefaultDatabaseObjectFactory ..> View
-DefaultDatabaseObjectFactory ..> StoredProcedure
-DefaultDatabaseObjectFactory ..> Sequence
+DefaultDatabaseObjectFactory ..> Table : creates
+DefaultDatabaseObjectFactory ..> View : creates
+DefaultDatabaseObjectFactory ..> StoredProcedure : creates
+DefaultDatabaseObjectFactory ..> Sequence : creates
+
+%% =====================================================
+%% Iterator Pattern
+%% =====================================================
+
+class DatabaseObjectIterator {
+    <<interface>>
+
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+class SchemaObjectIterator {
+    -objects : List~DatabaseObject~
+    -currentIndex : int
+
+    +SchemaObjectIterator(objects)
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+DatabaseObjectIterator <|.. SchemaObjectIterator
+
+Schema ..> SchemaObjectIterator : creates
+SchemaObjectIterator --> DatabaseObject : iterates
+
+%% =====================================================
+%% Visitor Pattern
+%% =====================================================
+
+class DatabaseObjectVisitor {
+    <<interface>>
+
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+}
+
+class ExportDDLVisitor {
+    -result : StringBuilder
+
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+
+    +getResult() String
+}
+
+DatabaseObjectVisitor <|.. ExportDDLVisitor
+
+Schema ..> DatabaseObjectVisitor : accepts
+DatabaseObject ..> DatabaseObjectVisitor : accepts
+
+DatabaseObjectVisitor ..> Table : visits
+DatabaseObjectVisitor ..> View : visits
+DatabaseObjectVisitor ..> StoredProcedure : visits
+DatabaseObjectVisitor ..> Sequence : visits
 
 %% =====================================================
 %% Styling
@@ -1240,7 +1442,115 @@ style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
 style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style DatabaseObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style SchemaObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style DatabaseObjectVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
+style ExportDDLVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
 ```
+
+---
+
+## Schema Objects Traversal Sequence Diagram (Iterator Pattern)
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Client / Application Layer
+    participant Client as Client Application
+    end
+
+    box #e8f5e9 Catalog Component
+    participant Schema as Schema
+    participant Iterator as SchemaObjectIterator
+    participant Obj as DatabaseObject
+    end
+
+    Note over Client,Obj: 1. Request Iterator from Schema
+    Client->>Schema: iterator()
+    activate Schema
+    Schema->>Iterator: new SchemaObjectIterator(objects)
+    activate Iterator
+    Iterator-->>Schema: iteratorInstance
+    deactivate Iterator
+    Schema-->>Client: DatabaseObjectIterator
+    deactivate Schema
+
+    Note over Client,Obj: 2. Traversal Loop
+    loop While iterator.hasNext()
+        Client->>Iterator: hasNext()
+        activate Iterator
+        Iterator-->>Client: true
+        deactivate Iterator
+
+        Client->>Iterator: next()
+        activate Iterator
+        Iterator-->>Client: obj : DatabaseObject
+        deactivate Iterator
+
+        Client->>Obj: process(obj)
+    end
+```
+
+---
+
+## Schema DDL Export Sequence Diagram (Visitor Pattern)
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Client / Application Layer
+    participant Client as Client Application
+    end
+
+    box #fce4ec Visitor Component
+    participant Visitor as ExportDDLVisitor
+    end
+
+    box #e8f5e9 Catalog Component
+    participant Schema as Schema
+    participant Table as Table
+    participant View as View
+    end
+
+    Note over Client,View: 1. Initialize Visitor & Accept Schema
+    Client->>Visitor: new ExportDDLVisitor()
+    Client->>Schema: accept(visitor)
+    activate Schema
+
+    Note over Schema,View: 2. Double Dispatch to Schema Objects
+    Schema->>Table: accept(visitor)
+    activate Table
+    Table->>Visitor: visit(this [Table])
+    activate Visitor
+    Visitor->>Visitor: append("CREATE TABLE ...")
+    Visitor-->>Table: void
+    deactivate Visitor
+    Table-->>Schema: void
+    deactivate Table
+
+    Schema->>View: accept(visitor)
+    activate View
+    View->>Visitor: visit(this [View])
+    activate Visitor
+    Visitor->>Visitor: append("CREATE VIEW ...")
+    Visitor-->>View: void
+    deactivate Visitor
+    View-->>Schema: void
+    deactivate View
+
+    Schema-->>Client: void
+    deactivate Schema
+
+    Note over Client,Visitor: 3. Retrieve Result
+    Client->>Visitor: getResult()
+    activate Visitor
+    Visitor-->>Client: ddlString
+    deactivate Visitor
+```
+
+---
 
 ## Constraint Management Class Diagram using factory method and strategy pattern
 ```mermaid
@@ -1255,12 +1565,6 @@ class Table{
     +tableId : UUID
     +engine : String
     +rowCount : Long
-    +collation : String
-    +compression : CompressionType
-    +encrypted : Boolean
-    +encryptionType : EncryptionType
-    +comment : String
-    +status : TableStatus
 
     -constraints : List~Constraint~
     -factory : ConstraintFactory
@@ -1281,10 +1585,30 @@ class Table{
 class Constraint{
     <<abstract>>
 
-    #constraintName
-    #columns
+    +constraintId : UUID
+    +constraintName : String
+    +constraintType : ConstraintType
+    +tableId : UUID
+    +columns : List~Column~
+    +status : ConstraintStatus
+    +enabled : Boolean
+    +validated : Boolean
+    +deferrable : Boolean
+    +initiallyDeferred : Boolean
+    +owner : String
+    +description : String
+    +createdAt : Timestamp
+    +modifiedAt : Timestamp
 
     +validate(row, table)* void
+}
+
+class ConstraintType{
+    <<enumeration>>
+}
+
+class ConstraintStatus{
+    <<enumeration>>
 }
 
 class PrimaryKey{
@@ -1312,6 +1636,8 @@ Constraint <|-- PrimaryKey
 Constraint <|-- ForeignKey
 Constraint <|-- UniqueConstraint
 Constraint <|-- CheckConstraint
+Constraint --> ConstraintType
+Constraint --> ConstraintStatus
 
 %% =====================================================
 %% Factory Method
@@ -1357,6 +1683,8 @@ ForeignKey --> Table
 style Table fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
 style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ConstraintStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -1381,18 +1709,10 @@ class Table{
     -name : String
     -engine : String
     -rowCount : Long
-    -collation : String
-    -compression : CompressionType
-    -encrypted : Boolean
-    -encryptionType : EncryptionType
-    -comment : String
-    -status : TableStatus
 
     -columns : List~Column~
     -constraints : List~Constraint~
     -indexes : List~Index~
-    -partitions : List~Partition~
-    -triggers : List~Trigger~
 
     +insert()
     +update()

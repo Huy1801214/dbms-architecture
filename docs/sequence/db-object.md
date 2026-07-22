@@ -2963,3 +2963,103 @@ sequenceDiagram
     Test->>System: shouldRefreshViewAfterTableUpdate()
     System-->>Test: success
 ```
+
+---
+
+## Schema Management Pattern Sequence Diagrams (Iterator & Visitor)
+
+### 13. shouldTraverseSchemaObjectsUsingIterator()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Client / Test Suite
+    participant Test as SchemaTest
+    end
+
+    box #e8f5e9 Schema Component
+    participant S as Schema
+    participant I as SchemaObjectIterator
+    participant O as DatabaseObject
+    end
+
+    Note over Test,O: 1. Request Iterator from Schema
+    Test->>S: iterator()
+    activate S
+    S->>I: new SchemaObjectIterator(objects)
+    activate I
+    I-->>S: iterator
+    deactivate I
+    S-->>Test: DatabaseObjectIterator
+    deactivate S
+
+    Note over Test,O: 2. Iterate through Database Objects
+    loop While iterator.hasNext()
+        Test->>I: hasNext()
+        activate I
+        I-->>Test: true
+        deactivate I
+
+        Test->>I: next()
+        activate I
+        I-->>Test: obj : DatabaseObject
+        deactivate I
+
+        Test->>O: process(obj)
+    end
+```
+
+### 14. shouldExportSchemaDDLUsingVisitor()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e1f5fe Client / Test Suite
+    participant Test as SchemaTest
+    end
+
+    box #fce4ec Visitor Component
+    participant V as ExportDDLVisitor
+    end
+
+    box #e8f5e9 Catalog Component
+    participant S as Schema
+    participant T as Table
+    participant W as View
+    end
+
+    Note over Test,W: 1. Create Visitor and Accept Schema
+    Test->>V: new ExportDDLVisitor()
+    Test->>S: accept(visitor)
+    activate S
+
+    Note over S,W: 2. Double Dispatch to Table and View
+    S->>T: accept(visitor)
+    activate T
+    T->>V: visit(this [Table])
+    activate V
+    V->>V: append("CREATE TABLE ...")
+    V-->>T: void
+    deactivate V
+    T-->>S: void
+    deactivate T
+
+    S->>W: accept(visitor)
+    activate W
+    W->>V: visit(this [View])
+    activate V
+    V->>V: append("CREATE VIEW ...")
+    V-->>W: void
+    deactivate V
+    W-->>S: void
+    deactivate W
+
+    S-->>Test: void
+    deactivate S
+
+    Note over Test,V: 3. Retrieve DDL Result
+    Test->>V: getResult()
+    activate V
+    V-->>Test: ddlString
+    deactivate V
+```
