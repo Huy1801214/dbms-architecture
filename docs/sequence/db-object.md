@@ -166,34 +166,73 @@ sequenceDiagram
     Test->>Test: assertEquals(OFFLINE, database.getStatus())
 ```
 
-### 6. shouldRejectOpenWhenAlreadyOnline()
+### 6. shouldRejectOpenBaseOnCurrentState()
 ```mermaid
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
-    participant Test as DatabaseTest
+    participant DM as DatabaseManager
+    participant DB as Database 
+    participant OPENING as state OpeningState
+    participant ONLINE as state OnlineState
+    participant CLOSING as state ClosingState
+
+    Note over DM: openDatabase(databaseId) is requested
+
+    DM ->> DM: findDatabaseById(databaseId)
+    Note over DM,DB: Target Database found
+
+    alt Current state is OpeningState
+        Note over DB,OPENING: DB.state references OpeningState
+
+        DM ->> DB: open()
+        activate DB
+
+        DB ->> OPENING: open(DB)
+        activate OPENING
+
+        OPENING -->> DB: throw InvalidStateException
+        deactivate OPENING
+
+        DB -->> DM: Database is already opening
+        deactivate DB
+
+        Note over DB: State remains OpeningState
+
+    else Current state is OnlineState
+        Note over DB,ONLINE: DB.state references OnlineState
+
+        DM ->> DB: open()
+        activate DB
+
+        DB ->> ONLINE: open(DB)
+        activate ONLINE
+
+        ONLINE -->> DB: throw InvalidStateException
+        deactivate ONLINE
+
+        DB -->> DM: Database is already online
+        deactivate DB
+
+        Note over DB: State remains OnlineState
+
+    else Current state is ClosingState
+        Note over DB,CLOSING: DB.state references ClosingState
+
+        DM ->> DB: open()
+        activate DB
+
+        DB ->> CLOSING: open(DB)
+        activate CLOSING
+
+        CLOSING -->> DB: throw InvalidStateException
+        deactivate CLOSING
+
+        DB -->> DM: Database is currently closing
+        deactivate DB
+
+        Note over DB: State remains ClosingState
     end
-
-    box #e8f5e9 Database Component
-    participant D as Database
-    end
-
-    Note over Test,D: Arrange
-    Test->>D: status = OFFLINE
-
-    Note over Test,D: Act
-    Test->>D: close()
-
-    activate D
-    D->>D: validateCurrentState()
-    D-->>Test: IllegalStateException
-    deactivate D
-    
-    Note over Test: Assert
-    Test->>Test: assertThrows(IllegalStateException.class)
-    Test->>Test: assertEquals(OFFLINE, database.getStatus())
-    
 ```
 
 ### 7. shouldRejectCloseWhenAlreadyOffline()
