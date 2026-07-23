@@ -177,7 +177,6 @@ class DatabaseManager{
 
 class DatabaseComponent {
     <<interface>>
-
     +getId() UUID
     +getName() String
     +getOwner() String
@@ -188,8 +187,16 @@ class Database{
     -databaseId : UUID
     -name : String
     -owner : String
-    -status : DatabaseStatus
+    -state : DatabaseState
     -schemas : List~Schema~
+
+    +open() void
+    +close() void
+    +rename(newName : String) void
+    +completeOpening() void
+    +failOpening() void
+    +changeState(state : DatabaseState) void
+    +getStatus() DatabaseStatus
 
     +addSchema(schema : Schema) void
     +removeSchema(schemaId : UUID) void
@@ -204,35 +211,48 @@ class Database{
 
 class DatabaseStatus {
     <<enumeration>>
-
     ONLINE
     OFFLINE
     OPENING
     CLOSING
 }
 
+class DatabaseState {
+    <<interface>>
+    +open(database : Database) void
+    +close(database : Database) void
+    +rename(database : Database, newName : String) void
+    +openingSucceeded(database : Database) void
+    +openingFailed(database : Database) void
+    +getStatus() DatabaseStatus
+}
+
+class OfflineState
+class OpeningState
+class OnlineState
+class ClosingState
+
 class Schema{
     -schemaId : UUID
     -name : String
     -owner : String
-    -objects : List~DatabaseObject~
+    -objects : List~SchemaObject~
 
-    +addObject(object : DatabaseObject) void
+    +addObject(object : SchemaObject) void
     +removeObject(objectId : UUID) void
-    +findObject(name : String) DatabaseObject
-    +listObjects() List~DatabaseObject~
+    +findObject(name : String) SchemaObject
+    +listObjects() List~SchemaObject~
 
     +getId() UUID
     +getName() String
     +getOwner() String
     +getQualifiedName() String
-    +iterator() DatabaseObjectIterator
-    +accept(visitor : DatabaseObjectVisitor) void
+    +iterator() SchemaObjectIterator
+    +accept(visitor : SchemaObjectVisitor) void
 }
 
-class DatabaseObject{
+class SchemaObject{
     <<abstract>>
-
     #objectId : UUID
     #name : String
     #owner : String
@@ -243,7 +263,7 @@ class DatabaseObject{
     +getOwner() String
     +getQualifiedName() String
     +rename(newName : String) void
-    +accept(visitor : DatabaseObjectVisitor)* void
+    +accept(visitor : SchemaObjectVisitor)* void
 }
 
 class Table{
@@ -265,7 +285,7 @@ class Table{
     +getColumns() List~Column~
     +addConstraint(constraint : Constraint) void
     +removeConstraint(name : String) void
-    +accept(visitor : DatabaseObjectVisitor) void
+    +accept(visitor : SchemaObjectVisitor) void
 }
 
 class Column{
@@ -285,6 +305,10 @@ class Column{
 class Row
 
 class DataType{
+    <<enumeration>>
+}
+
+class ColumnStatus{
     <<enumeration>>
 }
 
@@ -335,7 +359,7 @@ class DefaultConstraintFactory {
     +createCheck(...)
 }
 
-class DatabaseObjectFactory{
+class SchemaObjectFactory{
     <<interface>>
     +createTable(request) Table
     +createView(request) View
@@ -343,7 +367,7 @@ class DatabaseObjectFactory{
     +createSequence(request) Sequence
 }
 
-class DefaultDatabaseObjectFactory{
+class DefaultSchemaObjectFactory{
     +createTable(request) Table
     +createView(request) View
     +createProcedure(request) StoredProcedure
@@ -382,9 +406,7 @@ class Index{
 }
 
 class BTreeIndex
-
 class HashIndex
-
 class BitmapIndex
 
 class Partition{
@@ -405,6 +427,48 @@ class Trigger{
 
 class Sequence{
     +nextValue()
+}
+
+class QueryExecutor {
+    +execute(command : TableDataCommand, context : DataOperationContext) void
+}
+
+class TableDataCommand {
+    <<interface>>
+    +execute(context : DataOperationContext) void
+}
+
+class AbstractTableDataCommand {
+    <<abstract>>
+    +execute(context : DataOperationContext) void
+    #validateRequest(context : DataOperationContext)* void
+    #acquireLocks(context : DataOperationContext)* void
+    #validateConstraints(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext)* void
+    #modifyRow(context : DataOperationContext)* void
+    #updateIndexes(context : DataOperationContext)* void
+    #afterExecution(context : DataOperationContext) void
+}
+
+class InsertRowCommand {
+    -row : Row
+    +InsertRowCommand(row : Row)
+}
+
+class UpdateRowCommand {
+    -rowId : UUID
+    -newRow : Row
+    +UpdateRowCommand(rowId : UUID, newRow : Row)
+}
+
+class DeleteRowCommand {
+    -rowId : UUID
+    +DeleteRowCommand(rowId : UUID)
+}
+
+class DataOperationContext {
+    +table : Table
+    +transactionId : UUID
 }
 
 class Transaction{
@@ -487,10 +551,6 @@ class PhysicalPlan{
     +operators
 }
 
-class QueryExecutor{
-    +execute()
-}
-
 class StatisticsManager{
     +collect()
 }
@@ -501,29 +561,27 @@ class SecurityManager{
 }
 
 class User
-
 class Role
-
 class Permission
 
 class ConfigurationManager
 class MonitoringManager
 
-class DatabaseObjectIterator {
+class SchemaObjectIterator {
     <<interface>>
     +hasNext() boolean
-    +next() DatabaseObject
+    +next() SchemaObject
 }
 
-class SchemaObjectIterator {
-    -objects : List~DatabaseObject~
+class DefaultSchemaObjectIterator {
+    -objects : List~SchemaObject~
     -currentIndex : int
-    +SchemaObjectIterator(objects)
+    +DefaultSchemaObjectIterator(objects)
     +hasNext() boolean
-    +next() DatabaseObject
+    +next() SchemaObject
 }
 
-class DatabaseObjectVisitor {
+class SchemaObjectVisitor {
     <<interface>>
     +visit(table : Table) void
     +visit(view : View) void
@@ -550,36 +608,42 @@ DatabaseServer --> MonitoringManager
 
 DatabaseComponent <|.. Database
 DatabaseComponent <|.. Schema
-DatabaseComponent <|.. DatabaseObject
+DatabaseComponent <|.. SchemaObject
 
-DatabaseObject <|-- Table
-DatabaseObject <|-- View
-DatabaseObject <|-- StoredProcedure
-DatabaseObject <|-- Sequence
+SchemaObject <|-- Table
+SchemaObject <|-- View
+SchemaObject <|-- StoredProcedure
+SchemaObject <|-- Sequence
 
 Database *--> "0..*" Schema : contains
-Schema *--> "0..*" DatabaseObject : contains
+Schema *--> "0..*" SchemaObject : contains
 
 Database --> DatabaseStatus
+Database --> DatabaseState : current state
+DatabaseState <|.. OfflineState
+DatabaseState <|.. OpeningState
+DatabaseState <|.. OnlineState
+DatabaseState <|.. ClosingState
+DatabaseState --> DatabaseStatus : represents
 
-Schema --> DatabaseObjectFactory
-DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
-DefaultDatabaseObjectFactory ..> Table
-DefaultDatabaseObjectFactory ..> View
-DefaultDatabaseObjectFactory ..> StoredProcedure
-DefaultDatabaseObjectFactory ..> Sequence
+Schema --> SchemaObjectFactory
+SchemaObjectFactory <|.. DefaultSchemaObjectFactory
+DefaultSchemaObjectFactory ..> Table
+DefaultSchemaObjectFactory ..> View
+DefaultSchemaObjectFactory ..> StoredProcedure
+DefaultSchemaObjectFactory ..> Sequence
 
-DatabaseObjectIterator <|.. SchemaObjectIterator
-Schema ..> SchemaObjectIterator : creates
-SchemaObjectIterator --> DatabaseObject : iterates
+SchemaObjectIterator <|.. DefaultSchemaObjectIterator
+Schema ..> DefaultSchemaObjectIterator : creates
+DefaultSchemaObjectIterator --> SchemaObject : iterates
 
-DatabaseObjectVisitor <|.. ExportDDLVisitor
-Schema ..> DatabaseObjectVisitor : accepts
-DatabaseObject ..> DatabaseObjectVisitor : accepts
-DatabaseObjectVisitor ..> Table : visits
-DatabaseObjectVisitor ..> View : visits
-DatabaseObjectVisitor ..> StoredProcedure : visits
-DatabaseObjectVisitor ..> Sequence : visits
+SchemaObjectVisitor <|.. ExportDDLVisitor
+Schema ..> SchemaObjectVisitor : accepts
+SchemaObject ..> SchemaObjectVisitor : accepts
+SchemaObjectVisitor ..> Table : visits
+SchemaObjectVisitor ..> View : visits
+SchemaObjectVisitor ..> StoredProcedure : visits
+SchemaObjectVisitor ..> Sequence : visits
 
 TableBuilder ..> Table : builds
 
@@ -589,6 +653,9 @@ Table --> Index
 Table --> Constraint
 Table --> Partition
 Table --> Trigger
+
+Column --> DataType
+Column --> ColumnStatus
 
 Constraint <|-- PrimaryKey
 Constraint <|-- ForeignKey
@@ -608,8 +675,17 @@ Index <|-- BTreeIndex
 Index <|-- HashIndex
 Index <|-- BitmapIndex
 
-Column --> DataType
 ForeignKey --> Table
+
+TableDataCommand <|.. AbstractTableDataCommand
+AbstractTableDataCommand <|-- InsertRowCommand
+AbstractTableDataCommand <|-- UpdateRowCommand
+AbstractTableDataCommand <|-- DeleteRowCommand
+QueryExecutor --> TableDataCommand : invokes
+AbstractTableDataCommand --> DataOperationContext : uses
+DataOperationContext --> Table : provides receiver
+InsertRowCommand *--> Row : contains
+UpdateRowCommand *--> Row : contains
 
 TransactionManager --> Transaction
 TransactionManager --> LockManager
@@ -658,11 +734,12 @@ style MonitoringManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0842
 style DatabaseComponent fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Schema fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style SchemaObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Row fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DataType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style ColumnStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ConstraintType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style ConstraintStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -681,18 +758,31 @@ style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style CatalogManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
-style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style SchemaObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultSchemaObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
-style DatabaseObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 style SchemaObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style DefaultSchemaObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 
-style DatabaseObjectVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
+style SchemaObjectVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
 style ExportDDLVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
 
+style DatabaseState fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style OfflineState fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style OpeningState fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style OnlineState fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style ClosingState fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+style DatabaseStatus fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+
+style TableDataCommand fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style AbstractTableDataCommand fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style InsertRowCommand fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style UpdateRowCommand fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style DeleteRowCommand fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style DataOperationContext fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 
 %% Query Engine (Yellow/Orange)
 style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
@@ -717,6 +807,7 @@ style LockManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 style MVCCManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 style WALManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 style RecoveryManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
+
 ```
 
 --- 

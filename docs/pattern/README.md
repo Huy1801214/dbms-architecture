@@ -18,7 +18,7 @@ flowchart LR
     %% HIGH-PRIORITY FEATURES
     %% =====================================================
     H1["1. Database Lifecycle Management"]
-    H1P["State (Conditional)"]
+    H1P["State"]
 
     H2["2. Schema Management"]
     H2P["None"]
@@ -33,13 +33,13 @@ flowchart LR
     H5P["None"]
 
     H6["6. Constraint Definition and Validation"]
-    H6P["Strategy + Abstract Factory (Conditional)"]
+    H6P["Strategy"]
 
     H7["7. Table Data and Row Operations"]
-    H7P["Template Method + Command (Conditional)"]
+    H7P["Template Method + Command"]
 
     H8["8. Object Naming, Lookup and Uniqueness"]
-    H8P["Chain of Responsibility + Facade"]
+    H8P["None"]
 
     HIGH --> H1
     HIGH --> H2
@@ -136,14 +136,14 @@ flowchart LR
 
 | Priority | Feature | Suitable Design Pattern | Usage | Justification / Rationale |
 |---:|---|---|---|---|
-| 1 | Database Lifecycle Management | State (Conditional) | Define a `DatabaseState` interface with implementations such as `OnlineState`, `OfflineState`, `OpeningState`, and `ClosingState`. The `Database` delegates state-dependent operations such as `open()`, `close()`, and `rename()` to its current state. | State is suitable when each database state has different behaviors and transition rules. If the lifecycle only requires a few simple conditions, a `DatabaseStatus` enum is sufficient and State would be unnecessary. |
+| 1 | Database Lifecycle Management | State | Define a `DatabaseState` interface with implementations such as `OnlineState`, `OfflineState`, `OpeningState`, and `ClosingState`. The `Database` delegates state-dependent operations such as `open()`, `close()`, and `rename()` to its current state. | State is suitable when each database state has different behaviors and transition rules. If the lifecycle only requires a few simple conditions, a `DatabaseStatus` enum is sufficient and State would be unnecessary. |
 | 2 | Schema Management | None | The `Database` directly manages its `Schema` collection through methods such as `addSchema()`, `removeSchema()`, `findSchema()`, and `listSchemas()`. | `Schema` is currently a straightforward domain entity and container. Introducing a design pattern would add complexity without solving a meaningful variation or coupling problem. |
 | 3 | Database Object Hierarchy and Lifecycle Management | Composite | `DatabaseComponent` acts as the common component. `Database` and `Schema` act as composite containers, while `Table`, `View`, `StoredProcedure`, and `Sequence` act as leaf objects. `Schema` may use `DatabaseObjectFactory` to create schema objects. | Composite matches the hierarchical structure `Database → Schema → DatabaseObject`. Abstract Factory is only justified when the system supports multiple families of database objects, such as different SQL dialects, storage engines, or catalog implementations. |
 | 4 | Table Definition and Lifecycle Management | Builder | `TableBuilder` incrementally collects the table name, engine, columns, constraints, indexes, partitions, and triggers. Its `build()` method validates the complete configuration before creating a `Table`. | `Table` is a complex object containing multiple collections and consistency rules. Builder prevents telescoping constructors and ensures that an invalid or incomplete table cannot be created. |
 | 5 | Column Definition and Data Type Management | None | Create a `Column` directly through a constructor or static creation method with parameters such as `DataType`, length, precision, scale, nullability, and default value. | `Column` is a relatively simple value/domain object with no complex product family or interchangeable algorithm. Applying a GoF pattern would be unnecessary over-engineering. |
-| 6 | Constraint Definition and Data Integrity Validation | Strategy; Abstract Factory (Conditional) | `Table` maintains a collection of `Constraint` objects and calls `validate(row, table)` without knowing whether the concrete constraint is a `PrimaryKey`, `ForeignKey`, `UniqueConstraint`, or `CheckConstraint`. `ConstraintFactory` may create constraints from parsed SQL or configuration requests. | Each constraint implements a different validation algorithm, making Strategy appropriate. A factory is only necessary when constraints must be created dynamically from external input; otherwise, direct construction is sufficient. |
-| 7 | Table Data and Row Operations | Template Method; Command (Conditional) | Define an abstract `DataModificationOperation` with a standard execution flow: validate data, acquire locks, write WAL records, modify rows, update indexes, and release resources. Concrete operations such as `InsertOperation`, `UpdateOperation`, and `DeleteOperation` customize specific steps. DML requests may optionally be represented as command objects. | Template Method ensures that every data modification follows the same safe transactional workflow. Command is useful only when operations must be queued, schedule, passed as objects, or executed by an invoker. Transaction rollback should still rely on Transaction Management and WAL rather than only on `Command.undo()`. |
-| 8 | Object Naming, Lookup, and Uniqueness Management | Chain of Responsibility; Facade | Build a validation chain such as `NullNameValidator → FormatValidator → ReservedWordValidator → UniquenessValidator`. `CatalogManager` exposes a unified API for registering, finding, and removing database objects. | Chain of Responsibility separates independent naming rules and allows new validators to be added without modifying existing validators. Facade allows clients to access catalog operations without depending directly on `Database`, `Schema`, and internal catalog structures. |
+| 6 | Constraint Definition and Data Integrity Validation | Strategy | `Table` maintains a collection of `Constraint` objects and calls `validate(row, table)` without knowing whether the concrete constraint is a `PrimaryKey`, `ForeignKey`, `UniqueConstraint`, or `CheckConstraint`. `ConstraintFactory` may create constraints from parsed SQL or configuration requests. | Each constraint implements a different validation algorithm, making Strategy appropriate. A factory is only necessary when constraints must be created dynamically from external input; otherwise, direct construction is sufficient. |
+| 7 | Table Data and Row Operations | Template Method; Command | Define an abstract `DataModificationOperation` with a standard execution flow: validate data, acquire locks, write WAL records, modify rows, update indexes, and release resources. Concrete operations such as `InsertOperation`, `UpdateOperation`, and `DeleteOperation` customize specific steps. DML requests may optionally be represented as command objects. | Template Method ensures that every data modification follows the same safe transactional workflow. Command is useful only when operations must be queued, schedule, passed as objects, or executed by an invoker. Transaction rollback should still rely on Transaction Management and WAL rather than only on `Command.undo()`. |
+| 8 | Object Naming, Lookup, and Uniqueness Management | Facade | Build a validation chain such as `NullNameValidator → FormatValidator → ReservedWordValidator → UniquenessValidator`. `CatalogManager` exposes a unified API for registering, finding, and removing database objects. | Chain of Responsibility separates independent naming rules and allows new validators to be added without modifying existing validators. Facade allows clients to access catalog operations without depending directly on `Database`, `Schema`, and internal catalog structures. |
 | 9 | Index Definition and Management | Strategy; Factory Method (Conditional) | Define a common index abstraction with operations such as `search()`, `insertKey()`, and `deleteKey()`. `BTreeIndex`, `HashIndex`, and `BitmapIndex` provide different implementations. Concrete index creators may be introduced when each index type has a significantly different construction process. | Index structures use different search and update algorithms, making Strategy appropriate. Factory Method is only justified when object construction varies through creator subclasses. A single `IndexFactory.create(type)` method containing a switch statement is a Simple Factory, not the GoF Factory Method pattern. |
 | 10 | View Management | None in the Current Design; Proxy (Conditional) | If clients must query a `View` exactly like a `Table`, introduce a `QueryableRelation` interface implemented by both classes. The `View` stores a query definition and delegates execution to `QueryExecutor` or its underlying tables. | The current `View` only stores `queryDefinition` and does not share a query interface with `Table`; therefore, it is not currently a Proxy. Proxy becomes appropriate only when transparent access to tables and views through the same abstraction is required. |
 | 11 | Stored Procedure Management | Command | Keep `StoredProcedure` as the catalog definition. Represent each invocation as a `ProcedureCallCommand` containing the procedure identifier, arguments, and execution context. `ProcedureExecutor` acts as the invoker. | A stored procedure call is an independent executable request with parameters, results, and error handling. Command separates procedure metadata from invocation and execution responsibilities. |
@@ -908,6 +908,21 @@ DatabaseState <|.. ClosingState
 
 DatabaseState --> DatabaseStatus : represents
 Database *--> "0..*" Schema : contains
+
+%% =====================================================
+%% Styling
+%% =====================================================
+style DatabaseComponent fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DatabaseManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Database fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style DatabaseState fill:#fde8e8,stroke:#e84a5f,stroke-width:2px,color:#9b1c1c
+style OfflineState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style OpeningState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style OnlineState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style ClosingState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style DatabaseStatus fill:#fde8e8,stroke:#e84a5f,stroke-width:2px,color:#9b1c1c
 ```
 
 ### 1.2 Sequence Diagram for shouldRejectOpenBaseOnCurrentState()
@@ -1592,23 +1607,22 @@ Table *--> "0..*" Trigger : registers
 %% =====================================================
 %% Styling
 %% =====================================================
-
 style SchemaObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
-style Column fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
-style Constraint fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
-style Index fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
-style Partition fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
-style Trigger fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style Constraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style Index fill:#fff8e1,stroke:#ffb300,stroke-width:2px,color:#5d4037
+style Partition fill:#eceff1,stroke:#607d8b,stroke-width:1px,color:#263238
+style Trigger fill:#eceff1,stroke:#607d8b,stroke-width:1px,color:#263238
 
-style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style TableBuilder fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e65100
 
 style LifecycleStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 style DropMode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 ```
 
-### 4.2 Sequence Diagram
+### 4.2 Sequence Diagram shouldBuildValidTableWithColumnsAndConstraints()
 ```mermaid
 sequenceDiagram
     autonumber
@@ -1708,18 +1722,239 @@ sequenceDiagram
 ---
 
 # 6. Constraint Definition and Data Integrity Validation
-## Using Strategy & Factory Method Pattern
+## Using Strategy Pattern
 
 ### 6.1 Class Diagram
 ```mermaid
 classDiagram
-%% TODO: Implement class diagram
+direction TB
+
+%% =====================================================
+%% Context
+%% =====================================================
+
+class Table {
+    +tableId : UUID
+    +engine : String
+    +rowCount : Long
+
+    -columns : List~Column~
+    -constraints : List~Constraint~
+
+    +addConstraint(constraint : Constraint) void
+    +removeConstraint(name : String) void
+    +validateConstraints(row : Row) void
+}
+
+%% =====================================================
+%% Strategy
+%% =====================================================
+
+class Constraint {
+    <<abstract>>
+
+    +constraintId : UUID
+    +constraintName : String
+    +constraintType : ConstraintType
+    +tableId : UUID
+    +columns : List~Column~
+    +status : ConstraintStatus
+    +enabled : Boolean
+
+    +validate(row : Row, table : Table)* void
+}
+
+%% =====================================================
+%% Concrete Strategies
+%% =====================================================
+
+class PrimaryKey {
+    +validate(row : Row, table : Table) void
+}
+
+class ForeignKey {
+    +referencedTable : Table
+    +referencedColumns : List~Column~
+
+    +validate(row : Row, table : Table) void
+}
+
+class UniqueConstraint {
+    +validate(row : Row, table : Table) void
+}
+
+class CheckConstraint {
+    +expression : String
+
+    +validate(row : Row, table : Table) void
+}
+
+%% =====================================================
+%% Supporting Types
+%% =====================================================
+
+class ConstraintType {
+    <<enumeration>>
+
+    PRIMARY_KEY
+    FOREIGN_KEY
+    UNIQUE
+    CHECK
+}
+
+class ConstraintStatus {
+    <<enumeration>>
+
+    ACTIVE
+    DISABLED
+    INVALID
+}
+
+class Column {
+    +columnId : UUID
+    +name : String
+    +dataType : DataType
+    +nullable : Boolean
+}
+
+class Row {
+    +rowId : UUID
+    +values : Map~UUID, Object~
+}
+
+class DataType {
+    <<enumeration>>
+}
+
+%% =====================================================
+%% Table Builder
+%% =====================================================
+
+class TableBuilder {
+    -columns : List~Column~
+    -constraints : List~Constraint~
+
+    +addColumn(column : Column) TableBuilder
+    +addConstraint(constraint : Constraint) TableBuilder
+    +build() Table
+}
+
+%% =====================================================
+%% Strategy Relationships
+%% =====================================================
+
+Table *--> "0..*" Constraint : contains and executes
+
+Constraint <|-- PrimaryKey
+Constraint <|-- ForeignKey
+Constraint <|-- UniqueConstraint
+Constraint <|-- CheckConstraint
+
+%% =====================================================
+%% Table Structure and Data
+%% =====================================================
+
+Table *--> "1..*" Column : defines
+Table --> "0..*" Row : logically contains
+
+Column --> DataType : uses
+
+%% =====================================================
+%% Constraint Dependencies
+%% =====================================================
+
+Constraint --> ConstraintType : identifies
+Constraint --> ConstraintStatus : has status
+Constraint --> "1..*" Column : applies to
+Constraint ..> Row : validates
+Constraint ..> Table : receives context
+
+ForeignKey --> Table : references
+ForeignKey --> "1..*" Column : references columns
+
+%% =====================================================
+%% Builder Relationships
+%% =====================================================
+
+TableBuilder --> Column : collects
+TableBuilder --> Constraint : collects
+TableBuilder ..> Table : builds
+
+%% =====================================================
+%% Styling
+%% =====================================================
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style Constraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style PrimaryKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style ForeignKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style UniqueConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style CheckConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style ConstraintType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style ConstraintStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+
+style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style DataType fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+
+style TableBuilder fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e65100
 ```
 
-### 6.2 Sequence Diagram
+### 6.2 Sequence Diagram shouldValidateRowUsingMultipleConstraint()
 ```mermaid
 sequenceDiagram
-%% TODO: Implement sequence diagram
+    autonumber
+
+    participant Test as TableConstraintValidationTest
+    participant T as usersTable : Table
+    participant PK as pk : Constraint (PrimaryKey)
+    participant UQ as uniqueEmail : Constraint (UniqueConstraint)
+    participant CK as checkAge : Constraint (CheckConstraint)
+
+    Note over Test,CK: Arrange Table with interchangeable Constraint strategies
+
+    Test ->> T: addConstraint(pk)
+    T ->> T: constraints.add(pk)
+    T -->> Test: void
+
+    Test ->> T: addConstraint(uniqueEmail)
+    T ->> T: constraints.add(uniqueEmail)
+    T -->> Test: void
+
+    Test ->> T: addConstraint(checkAge)
+    T ->> T: constraints.add(checkAge)
+    T -->> Test: void
+
+    Note over Test,CK: Row contains id=1, email="huy@example.com", age=20
+
+    Test ->> T: validateConstraints(row)
+    activate T
+
+    Note over T,CK: Table delegates validation through Constraint abstraction
+
+    T ->> PK: validate(row, usersTable)
+    activate PK
+    PK ->> PK: check primary key is not null
+    PK ->> PK: check primary key is unique
+    PK -->> T: validation passed
+    deactivate PK
+
+    T ->> UQ: validate(row, usersTable)
+    activate UQ
+    UQ ->> UQ: check email is unique
+    UQ -->> T: validation passed
+    deactivate UQ
+
+    T ->> CK: validate(row, usersTable)
+    activate CK
+    CK ->> CK: evaluate age >= 18
+    CK -->> T: validation passed
+    deactivate CK
+
+    T -->> Test: validation completed
+    deactivate T
+
+    Test ->> Test: assertDoesNotThrow()
 ```
 
 ### 6.3 Code Example
@@ -1735,13 +1970,259 @@ sequenceDiagram
 ### 7.1 Class Diagram
 ```mermaid
 classDiagram
-%% TODO: Implement class diagram
+direction TB
+
+%% =====================================================
+%% Command Invoker
+%% =====================================================
+
+class QueryExecutor {
+    +execute(command : TableDataCommand, context : DataOperationContext) void
+}
+
+%% =====================================================
+%% Command Pattern
+%% =====================================================
+
+class TableDataCommand {
+    <<interface>>
+
+    +execute(context : DataOperationContext) void
+}
+
+%% =====================================================
+%% Template Method
+%% =====================================================
+
+class AbstractTableDataCommand {
+    <<abstract>>
+
+    +execute(context : DataOperationContext) void
+
+    #validateRequest(context : DataOperationContext)* void
+    #acquireLocks(context : DataOperationContext)* void
+    #validateConstraints(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext)* void
+    #modifyRow(context : DataOperationContext)* void
+    #updateIndexes(context : DataOperationContext)* void
+    #afterExecution(context : DataOperationContext) void
+}
+
+%% =====================================================
+%% Concrete Commands
+%% =====================================================
+
+class InsertRowCommand {
+    -row : Row
+
+    +InsertRowCommand(row : Row)
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext) void
+    #modifyRow(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+}
+
+class UpdateRowCommand {
+    -rowId : UUID
+    -newRow : Row
+
+    +UpdateRowCommand(rowId : UUID, newRow : Row)
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext) void
+    #modifyRow(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+}
+
+class DeleteRowCommand {
+    -rowId : UUID
+
+    +DeleteRowCommand(rowId : UUID)
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext) void
+    #modifyRow(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+}
+
+%% =====================================================
+%% Execution Context
+%% =====================================================
+
+class DataOperationContext {
+    +table : Table
+    +transactionId : UUID
+}
+
+%% =====================================================
+%% Receiver and Data
+%% =====================================================
+
+class Table {
+    +tableId : UUID
+    +rowCount : Long
+
+    +validateConstraints(row : Row) void
+    +insertRow(row : Row) void
+    +updateRow(rowId : UUID, row : Row) void
+    +deleteRow(rowId : UUID) void
+    +updateIndexes() void
+}
+
+class Row {
+    +rowId : UUID
+    +values : Map~UUID, Object~
+}
+
+%% =====================================================
+%% Command Relationships
+%% =====================================================
+
+TableDataCommand <|.. AbstractTableDataCommand
+
+AbstractTableDataCommand <|-- InsertRowCommand
+AbstractTableDataCommand <|-- UpdateRowCommand
+AbstractTableDataCommand <|-- DeleteRowCommand
+
+QueryExecutor --> TableDataCommand : invokes
+AbstractTableDataCommand --> DataOperationContext : uses
+
+%% =====================================================
+%% Receiver Relationships
+%% =====================================================
+
+DataOperationContext --> Table : provides receiver
+
+InsertRowCommand *--> Row : contains
+UpdateRowCommand *--> Row : contains
+
+Table --> "0..*" Row : logically manages
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style QueryExecutor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style TableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style AbstractTableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style InsertRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style UpdateRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style DeleteRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style DataOperationContext fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style Table fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style Row fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
 ```
 
-### 7.2 Sequence Diagram
+### 7.2 Sequence Diagram shouldExecuteInsertRowCommand()
 ```mermaid
 sequenceDiagram
-%% TODO: Implement sequence diagram
+    autonumber
+
+    participant Test as TableDataCommandIntegrationTest
+    participant QE as queryExecutor : QueryExecutor
+    participant CMD as insertCommand : InsertRowCommand
+    participant T as usersTable : Table
+
+    Note over Test,T: 1. Arrange Command, Receiver and Input
+
+    Test ->> Test: create row
+    Test ->> CMD: new InsertRowCommand(row)
+    CMD -->> Test: insertCommand
+
+    Note over Test,T: 2. Client submits Command to Invoker
+
+    Test ->> QE: execute(insertCommand, context)
+    activate QE
+
+    Note over QE,CMD: QueryExecutor does not know Insert implementation
+
+    QE ->> CMD: execute(context)
+    activate CMD
+
+    Note over CMD,T: Concrete Command invokes its Receiver
+
+    CMD ->> T: insertRow(row)
+    activate T
+
+    T ->> T: store row logically
+    T ->> T: rowCount++
+
+    T -->> CMD: insertion completed
+    deactivate T
+
+    CMD -->> QE: command completed
+    deactivate CMD
+
+    QE -->> Test: execution completed
+    deactivate QE
+
+    Note over Test,T: 3. Verify Command Result
+
+    Test ->> T: findRow(rowId)
+    T -->> Test: inserted row
+
+    Test ->> Test: assertEquals(row, insertedRow)
+```
+
+### 7.2 Sequence Diagram shouldExecuteInsertUsingTemplateWorkflow()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Test as InsertRowCommandTest
+    participant CMD as insertCommand : InsertRowCommand
+    participant T as usersTable : Table
+
+    Note over Test,T: execute() is inherited from AbstractTableDataCommand
+
+    Test ->> CMD: execute(context)
+    activate CMD
+
+    Note over CMD: Start fixed Template Method workflow
+
+    CMD ->> CMD: validateRequest(context)
+    Note over CMD: InsertRowCommand implementation
+
+    CMD ->> CMD: acquireLocks(context)
+    Note over CMD: InsertRowCommand implementation
+
+    CMD ->> T: validateConstraints(row)
+    activate T
+    T -->> CMD: validation passed
+    deactivate T
+
+    CMD ->> CMD: writeAheadLog(context)
+    Note over CMD: WAL is written before data modification
+
+    CMD ->> CMD: modifyRow(context)
+    Note over CMD: InsertRowCommand-specific step
+
+    CMD ->> T: insertRow(row)
+    activate T
+    T ->> T: rowCount++
+    T -->> CMD: insertion completed
+    deactivate T
+
+    CMD ->> CMD: updateIndexes(context)
+
+    CMD ->> T: updateIndexes()
+    activate T
+    T -->> CMD: indexes updated
+    deactivate T
+
+    CMD ->> CMD: afterExecution(context)
+
+    Note over CMD: End fixed Template Method workflow
+
+    CMD -->> Test: execution completed
+    deactivate CMD
+
+    Test ->> Test: assertDoesNotThrow()
 ```
 
 ### 7.3 Code Example
@@ -1752,21 +2233,4 @@ sequenceDiagram
 ---
 
 # 8. Object Naming, Lookup, and Uniqueness Management
-## Using Chain of Responsibility & Facade Pattern
-
-### 8.1 Class Diagram
-```mermaid
-classDiagram
-%% TODO: Implement class diagram
-```
-
-### 8.2 Sequence Diagram
-```mermaid
-sequenceDiagram
-%% TODO: Implement sequence diagram
-```
-
-### 8.3 Code Example
-```java
-// TODO: Implement code example
-```
+## Standard Domain Entity (No Pattern)
