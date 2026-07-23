@@ -653,7 +653,7 @@ sequenceDiagram
 ```
 
 # 5. Database Object Creation
-## Using Factory Method
+## Using Abstract Factory 
 
 ## 5.1 Class Diagram
 ```mermaid
@@ -665,24 +665,24 @@ direction TB
 %% =====================================================
 
 class Schema {
-    +schemaId
-    +name
-    +owner
+    -schemaId : UUID
+    -name : String
+    -owner : String
     -objects : List~DatabaseObject~
     -factory : DatabaseObjectFactory
-    +createTable(request)
-    +createView(request)
-    +createProcedure(request)
-    +createSequence(request)
-    +dropObject(objectId)
-    +findObject(name)
-    +listObjects()
-    +iterator() DatabaseObjectIterator
-    +accept(visitor : DatabaseObjectVisitor) void
+
+    +createTable(request) Table
+    +createView(request) View
+    +createProcedure(request) StoredProcedure
+    +createSequence(request) Sequence
+
+    +removeObject(objectId : UUID) void
+    +findObject(name : String) DatabaseObject
+    +listObjects() List~DatabaseObject~
 }
 
 %% =====================================================
-%% Factory Method Pattern
+%% Abstract Factory
 %% =====================================================
 
 class DatabaseObjectFactory {
@@ -702,18 +702,60 @@ class DefaultDatabaseObjectFactory {
 }
 
 DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
-
 Schema --> DatabaseObjectFactory : uses
 
 %% =====================================================
-%% Products (Database Objects)
+%% Abstract Product
 %% =====================================================
 
-class Table
-class View
-class StoredProcedure
-class Sequence
+class DatabaseObject {
+    <<abstract>>
 
+    #objectId : UUID
+    #name : String
+    #owner : String
+    #schemaId : UUID
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+    +rename(newName : String) void
+}
+
+%% =====================================================
+%% Concrete Products
+%% =====================================================
+
+class Table {
+    -engine : String
+    -rowCount : Long
+}
+
+class View {
+    -queryDefinition : String
+}
+
+class StoredProcedure {
+    -procedureDefinition : String
+}
+
+class Sequence {
+    -currentValue : Long
+    -incrementValue : Long
+
+    +nextValue() Long
+}
+
+DatabaseObject <|-- Table
+DatabaseObject <|-- View
+DatabaseObject <|-- StoredProcedure
+DatabaseObject <|-- Sequence
+
+%% Schema owns the created products
+Schema *--> "0..*" DatabaseObject : contains
+
+%% Concrete factory creates concrete products
 DefaultDatabaseObjectFactory ..> Table : creates
 DefaultDatabaseObjectFactory ..> View : creates
 DefaultDatabaseObjectFactory ..> StoredProcedure : creates
@@ -728,6 +770,7 @@ style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
+style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -739,115 +782,84 @@ style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 sequenceDiagram
     autonumber
 
-    box #e1f5fe Test Suite
+    box #e1f5fe Test Suite / Client
         participant Test as SchemaTest
     end
 
-    box #e3f2fd Schema
-        participant S as Schema
+    box #e3f2fd Context
+        participant S as Schema (Client)
     end
 
-    box #fff3e0 Factory
+    box #fff3e0 Abstract Factory
         participant F as DefaultDatabaseObjectFactory
     end
 
-    box #fff8e1 Builder
-        participant B as TableBuilder
-    end
-
-    box #e8f5e9 Domain
+    box #e8f5e9 Concrete Products
         participant T as Table
+        participant V as View
+        participant P as StoredProcedure
+        participant Seq as Sequence
     end
 
-    Note over Test,S: Arrange
-    Test->>Test: create CreateTableRequest
-
-    Note over Test,S: Act
-    Test->>S: createTable(request)
+    Note over Test,Seq: 1. Create Table via Abstract Factory
+    Test->>S: createTable(tableRequest)
     activate S
-
-    S->>S: ensureObjectNameIsUnique(request.name)
-
-    S->>F: createTable(request)
+    S->>F: createTable(tableRequest)
     activate F
-
-    F->>B: new TableBuilder()
-    activate B
-    B-->>F: builder
-    deactivate B
-
-    F->>B: setName(request.name)
-    activate B
-    B-->>F: this
-    deactivate B
-
-    F->>B: setEngine(request.engine)
-    activate B
-    B-->>F: this
-    deactivate B
-
-    loop For each column
-        F->>B: addColumn(column)
-        activate B
-        B-->>F: this
-        deactivate B
-    end
-
-    loop For each constraint
-        F->>B: addConstraint(constraint)
-        activate B
-        B-->>F: this
-        deactivate B
-    end
-
-    loop For each index
-        F->>B: addIndex(index)
-        activate B
-        B-->>F: this
-        deactivate B
-    end
-
-    loop For each partition
-        F->>B: addPartition(partition)
-        activate B
-        B-->>F: this
-        deactivate B
-    end
-
-    loop For each trigger
-        F->>B: addTrigger(trigger)
-        activate B
-        B-->>F: this
-        deactivate B
-    end
-
-    F->>B: build()
-    activate B
-
-    B->>B: validate()
-
-    B->>T: new Table(builder)
+    F->>T: new Table(request)
     activate T
-    T-->>B: table
+    T-->>F: table
     deactivate T
-
-    B-->>F: table
-    deactivate B
-
     F-->>S: table
     deactivate F
-
     S->>S: addObject(table)
-
     S-->>Test: table
     deactivate S
 
-    Note over Test,T: Assert
-    Test->>T: getName()
-    T-->>Test: expected name
+    Note over Test,Seq: 2. Create View via Abstract Factory
+    Test->>S: createView(viewRequest)
+    activate S
+    S->>F: createView(viewRequest)
+    activate F
+    F->>V: new View(request)
+    activate V
+    V-->>F: view
+    deactivate V
+    F-->>S: view
+    deactivate F
+    S->>S: addObject(view)
+    S-->>Test: view
+    deactivate S
 
-    Test->>T: getColumns()
-    T-->>Test: expected columns
+    Note over Test,Seq: 3. Create Stored Procedure via Abstract Factory
+    Test->>S: createProcedure(procedureRequest)
+    activate S
+    S->>F: createProcedure(procedureRequest)
+    activate F
+    F->>P: new StoredProcedure(request)
+    activate P
+    P-->>F: procedure
+    deactivate P
+    F-->>S: procedure
+    deactivate F
+    S->>S: addObject(procedure)
+    S-->>Test: procedure
+    deactivate S
+
+    Note over Test,Seq: 4. Create Sequence via Abstract Factory
+    Test->>S: createSequence(sequenceRequest)
+    activate S
+    S->>F: createSequence(sequenceRequest)
+    activate F
+    F->>Seq: new Sequence(request)
+    activate Seq
+    Seq-->>F: sequence
+    deactivate Seq
+    F-->>S: sequence
+    deactivate F
+    S->>S: addObject(sequence)
+    S-->>Test: sequence
+    deactivate S
 ```
 
 # 11. Schema Object Traversal and Metadata Export
