@@ -2234,3 +2234,111 @@ sequenceDiagram
 
 # 8. Object Naming, Lookup, and Uniqueness Management
 ## Standard Domain Entity (No Pattern)
+
+--- 
+
+# Query Processing feature mindmap
+flowchart LR
+    %% =====================================================
+    %% ROOT
+    %% =====================================================
+
+    ROOT((Query Processing Features))
+
+    %% =====================================================
+    %% PRIORITY GROUPS
+    %% =====================================================
+
+    HIGH["High Priority — Mandatory"]
+    MEDIUM["Medium Priority — Important"]
+
+    ROOT --> HIGH
+    ROOT --> MEDIUM
+
+    %% =====================================================
+    %% HIGH PRIORITY FEATURES
+    %% =====================================================
+
+    H1["1. SQL Lexical Analysis"]
+    H1P["None / State (Conditional)"]
+
+    H2["2. SQL Syntax Parsing and AST Construction"]
+    H2P["Composite"]
+
+    H3["3. Semantic Analysis and Name Binding"]
+    H3P["Visitor"]
+
+    H4["4. Type Checking and Expression Validation"]
+    H4P["Visitor"]
+
+    H5["5. Logical Plan Generation"]
+    H5P["Visitor"]
+
+    H6["6. Logical Plan Validation and Normalization"]
+    H6P["None / Chain of Responsibility (Conditional)"]
+
+    H7["7. Physical Plan Generation"]
+    H7P["None / Simple Factory / Factory Method (Conditional)"]
+
+    H8["8. Query Execution Coordination"]
+    H8P["None / Facade (Conditional)"]
+
+    H9["9. Runtime Execution Context Management"]
+    H9P["None / Builder (Conditional)"]
+
+    H10["10. Physical Operator Execution"]
+    H10P["Composite + Iterator (Conditional)"]
+
+    H11["11. Expression Evaluation"]
+    H11P["Interpreter"]
+
+    H12["12. Query Result Production"]
+    H12P["None / Builder (Conditional)"]
+
+    HIGH --> H1
+    HIGH --> H2
+    HIGH --> H3
+    HIGH --> H4
+    HIGH --> H5
+    HIGH --> H6
+    HIGH --> H7
+    HIGH --> H8
+
+    MEDIUM --> H9
+    MEDIUM --> H10
+    MEDIUM --> H11
+    MEDIUM --> H12
+
+    H1 --> H1P
+    H2 --> H2P
+    H3 --> H3P
+    H4 --> H4P
+    H5 --> H5P
+    H6 --> H6P
+    H7 --> H7P
+    H8 --> H8P
+    H9 --> H9P
+    H10 --> H10P
+    H11 --> H11P
+    H12 --> H12P
+
+    %% =====================================================
+    %% STYLE ASSIGNMENTS
+    %% =====================================================
+
+    class ROOT rootStyle
+
+    class HIGH,H1,H1P,H2,H2P,H3,H3P,H4,H4P highStyle
+    class H5,H5P,H6,H6P,H7,H7P,H8,H8P highStyle
+
+    class MEDIUM,H9,H9P,H10,H10P,H11,H11P,H12,H12P mediumStyle
+
+    %% =====================================================
+    %% STYLE DEFINITIONS
+    %% =====================================================
+
+    classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#ffffff,font-weight:bold
+
+    classDef highStyle fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704,font-weight:bold
+
+    classDef mediumStyle fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#664d03,font-weight:bold
