@@ -160,39 +160,359 @@ flowchart LR
 ### 1.1 Class Diagram
 ```mermaid
 classDiagram
-%% TODO: Implement class diagram
+direction LR
+
+class DatabaseManager {
+    -databases : Map~String, Database~
+
+    +createDatabase(request) Database
+    +dropDatabase(databaseId) void
+    +findDatabaseById(databaseId) Database
+    +findDatabaseByName(name) Database
+    +listAllDatabases() List~Database~
+}
+
+class DatabaseComponent {
+    <<interface>>
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+}
+
+class Database {
+    -databaseId : UUID
+    -name : String
+    -owner : String
+    -state : DatabaseState
+    -schemas : List~Schema~
+
+    +open() void
+    +close() void
+    +rename(newName : String) void
+    +changeState(state : DatabaseState) void
+
+    +addSchema(schema : Schema) void
+    +removeSchema(schemaId : UUID) void
+    +findSchema(name : String) Schema
+    +listSchemas() List~Schema~
+
+    +getId() UUID
+    +getName() String
+    +getOwner() String
+    +getQualifiedName() String
+}
+
+class DatabaseState {
+    <<interface>>
+
+    +open(database : Database) void
+    +close(database : Database) void
+    +rename(database : Database, newName : String) void
+    +getStatus() DatabaseStatus
+}
+
+class OfflineState {
+    +open(database : Database) void
+    +close(database : Database) void
+    +rename(database : Database, newName : String) void
+    +getStatus() DatabaseStatus
+}
+
+class OpeningState {
+    +open(database : Database) void
+    +close(database : Database) void
+    +rename(database : Database, newName : String) void
+    +getStatus() DatabaseStatus
+}
+
+class OnlineState {
+    +open(database : Database) void
+    +close(database : Database) void
+    +rename(database : Database, newName : String) void
+    +getStatus() DatabaseStatus
+}
+
+class ClosingState {
+    +open(database : Database) void
+    +close(database : Database) void
+    +rename(database : Database, newName : String) void
+    +getStatus() DatabaseStatus
+}
+
+class DatabaseStatus {
+    <<enumeration>>
+
+    ONLINE
+    OFFLINE
+    OPENING
+    CLOSING
+}
+
+class Schema
+
+DatabaseManager --> Database : creates and manages
+DatabaseComponent <|.. Database
+
+Database --> DatabaseState : current state
+DatabaseState <|.. OfflineState
+DatabaseState <|.. OpeningState
+DatabaseState <|.. OnlineState
+DatabaseState <|.. ClosingState
+
+DatabaseState --> DatabaseStatus : represents
+Database *--> "0..*" Schema : contains
 ```
 
-### 1.2 Sequence Diagram
+### 1.2 Sequence Diagram for shouldRejectOpenBaseOnCurrentState()
 ```mermaid
 sequenceDiagram
-%% TODO: Implement sequence diagram
+    autonumber
+
+    participant DM as DatabaseManager
+    participant DB as Database 
+    participant OPENING as state OpeningState
+    participant ONLINE as state OnlineState
+    participant CLOSING as state ClosingState
+
+    Note over DM: openDatabase(databaseId) is requested
+
+    DM ->> DM: findDatabaseById(databaseId)
+    Note over DM,DB: Target Database found
+
+    alt Current state is OpeningState
+        Note over DB,OPENING: DB.state references OpeningState
+
+        DM ->> DB: open()
+        activate DB
+
+        DB ->> OPENING: open(DB)
+        activate OPENING
+
+        OPENING -->> DB: throw InvalidStateException
+        deactivate OPENING
+
+        DB -->> DM: Database is already opening
+        deactivate DB
+
+        Note over DB: State remains OpeningState
+
+    else Current state is OnlineState
+        Note over DB,ONLINE: DB.state references OnlineState
+
+        DM ->> DB: open()
+        activate DB
+
+        DB ->> ONLINE: open(DB)
+        activate ONLINE
+
+        ONLINE -->> DB: throw InvalidStateException
+        deactivate ONLINE
+
+        DB -->> DM: Database is already online
+        deactivate DB
+
+        Note over DB: State remains OnlineState
+
+    else Current state is ClosingState
+        Note over DB,CLOSING: DB.state references ClosingState
+
+        DM ->> DB: open()
+        activate DB
+
+        DB ->> CLOSING: open(DB)
+        activate CLOSING
+
+        CLOSING -->> DB: throw InvalidStateException
+        deactivate CLOSING
+
+        DB -->> DM: Database is currently closing
+        deactivate DB
+
+        Note over DB: State remains ClosingState
+    end
 ```
 
 ### 1.3 Code Example
+
+#### State Interface and Enum State
 ```java
-// TODO: Implement code example
+public enum DatabaseStatus {
+    OFFLINE, OPENING, ONLINE, CLOSING
+}
+
+public interface DatabaseState {
+
+    void open(Database database);
+    
+    void close(Database database);
+    
+    void rename(Database database, String newName);
+    
+    DatabaseStatus getStatus();
+}
 ```
+
+#### Concrete State Classes
+```java
+public class OfflineState implements DatabaseState {
+
+    @Override
+    public void open(Database database) {
+        database.validateNewName();
+        database.initialize();
+        database.changeState(new OpeningState());
+    }
+
+    @Override
+    public void close(Database database) {
+        
+    }
+
+    @Override
+    public void rename(Database database, String newName) {
+        
+    }
+
+    @Override
+    public DatabaseStatus getStatus() {
+        return DatabaseStatus.OFFLINE;
+    }
+}
+
+public class OpeningState implements DatabaseState {
+
+    @Override
+    public void open(Database database) {
+        
+    }
+
+    @Override
+    public void close(Database database) {
+        
+    }
+
+    @Override
+    public void rename(Database database, String newName) {
+        
+    }
+
+    @Override
+    public DatabaseStatus getStatus() {
+        return DatabaseStatus.OPENING;
+    }
+}
+
+public class OnlineState implements DatabaseState {
+
+    @Override
+    public void open(Database database) {
+        
+    }
+
+    @Override
+    public void close(Database database) {
+        
+    }
+
+    @Override
+    public void rename(Database database, String newName) {
+        
+    }
+
+    @Override
+    public DatabaseStatus getStatus() {
+        return DatabaseStatus.ONLINE;
+    }
+}
+
+public class ClosingState implements DatabaseState {
+
+    @Override
+    public void open(Database database) {
+       
+    }
+
+    @Override
+    public void close(Database database) {
+       
+    }
+
+    @Override
+    public void rename(Database database, String newName) {
+        
+    }
+
+    @Override
+    public DatabaseStatus getStatus() {
+        return DatabaseStatus.CLOSING;
+    }
+}
+```
+
+#### Context
+```java
+public class Database {
+    private DatabaseState state;
+    private String name;
+    private String owner;
+    private UUID databaseId;
+    private List<Schema> schemas;
+
+    public Database(String name, String owner) {
+        this.name = name;
+        this.owner = owner;
+        this.state = new OfflineState();
+        this.schemas = new ArrayList<>();
+    }
+
+    public void open() {
+        state.open(this);
+    }
+
+    public void close() {
+        state.close(this);
+    }
+
+    public void rename(String newName) {
+        state.rename(this, newName);
+    }
+
+    public void changeState(DatabaseState state) {
+        this.state = state;
+    }
+
+    public DatabaseStatus getStatus() {
+        return state.getStatus();
+    }
+}
+```
+
+#### Client 
+```java
+public class DatabaseManager() {
+    private Map<UUID, Database> databases = new HashMap<>();
+    private StorageEngine storageEngine;
+    private CatalogManager catalogManager;
+
+    public DatabaseManager(StorageEngine storageEngine, CatalogManager catalogManager) {
+        this.storageEngine = storageEngine;
+        this.catalogManager = catalogManager;
+    }
+
+    public Database openDatabase(UUID databaseId) {
+        return null;
+    }   
+}
+```
+
+---
 
 # 2. Schema Management
 ## Standard Domain Entity (No Pattern)
 
-### 2.1 Class Diagram
-```mermaid
-classDiagram
-%% TODO: Implement class diagram
-```
-
-### 2.2 Sequence Diagram
-```mermaid
-sequenceDiagram
-%% TODO: Implement sequence diagram
-```
-
-### 2.3 Code Example
-```java
-// TODO: Implement code example
-```
+---
 
 # 3. Database Object Hierarchy and Lifecycle Management
 ## Using Composite & Abstract Factory Pattern
@@ -214,6 +534,8 @@ sequenceDiagram
 // TODO: Implement code example
 ```
 
+--- 
+
 # 4. Table Definition and Lifecycle Management
 ## Using Builder Pattern
 
@@ -233,6 +555,8 @@ sequenceDiagram
 ```java
 // TODO: Implement code example
 ```
+
+--- 
 
 # 5. Column Definition and Data Type Management
 ## Standard Domain Entity (No Pattern)
@@ -254,6 +578,8 @@ sequenceDiagram
 // TODO: Implement code example
 ```
 
+---
+
 # 6. Constraint Definition and Data Integrity Validation
 ## Using Strategy & Factory Method Pattern
 
@@ -274,6 +600,8 @@ sequenceDiagram
 // TODO: Implement code example
 ```
 
+---
+
 # 7. Table Data and Row Operations
 ## Using Template Method & Command Pattern
 
@@ -293,6 +621,8 @@ sequenceDiagram
 ```java
 // TODO: Implement code example
 ```
+
+---
 
 # 8. Object Naming, Lookup, and Uniqueness Management
 ## Using Chain of Responsibility & Facade Pattern
