@@ -26,7 +26,8 @@ flowchart LR
     LogRecord["Log Record"]:::leafStyle
 
     %% Right-side Branches
-    Database["**Database**"]:::highlightCatalog
+    DatabaseObjects["**Database Objects**"]:::highlightCatalog
+    Database["Database"]:::branchCatalog
     Storage["**Storage Engine**"]:::highlightStorage
     Query["**Query Processing**"]:::highlightQuery
     Transaction["Transaction"]:::branchTx
@@ -36,7 +37,11 @@ flowchart LR
     Table["Table"]:::leafStyle
     Column["Column"]:::leafStyle
     Row["Row"]:::leafStyle
+    Constraint["Constraint"]:::leafStyle
     Index["Index"]:::leafStyle
+    View["View"]:::leafStyle
+    StoredProcedure["Stored Procedure"]:::leafStyle
+    Sequence["Sequence"]:::leafStyle
     
     BufferPool["Buffer Pool"]:::leafStyle
     PageManager["Page Manager"]:::leafStyle
@@ -86,17 +91,22 @@ flowchart LR
     LogRecord --> Recovery
 
     %% Right Side Connections (pointing right)
-    DBMS --> Database
+    DBMS --> DatabaseObjects
     DBMS --> Storage
     DBMS --> Query
     DBMS --> Transaction
     DBMS --> Metadata
 
+    DatabaseObjects --> Database
     Database --> Schema
-    Database --> Table
-    Database --> Column
-    Database --> Row
-    Database --> Index
+    Schema --> Table
+    Schema --> View
+    Schema --> StoredProcedure
+    Schema --> Sequence
+    Table --> Column
+    Table --> Row
+    Table --> Constraint
+    Table --> Index
 
     Storage --> BufferPool
     Storage --> PageManager
@@ -149,16 +159,20 @@ class DatabaseServer{
     +serverId
     +version
     +status
+    +configuration
+    +startTime
     +start()
     +stop()
     +restart()
 }
 
 class DatabaseManager{
-    +createDatabase()
-    +dropDatabase()
-    +getDatabase()
-    +listDatabases()
+    -databases : Map~String, Database~
+    +createDatabase(request) Database
+    +dropDatabase(databaseId)
+    +findDatabaseById(databaseId) Database
+    +findDatabaseByName(name) Database
+    +listAllDatabases() List~Database~
 }
 
 class DatabaseComponent {
@@ -236,13 +250,21 @@ class Table{
     +tableId : UUID
     +engine : String
     +rowCount : Long
-    -constraintFactory
-    -constraints
+    -columns : List~Column~
+    -constraints : List~Constraint~
+    -indexes : List~Index~
+    -partitions : List~Partition~
+    -triggers : List~Trigger~
+    -constraintFactory : ConstraintFactory
     +insert()
     +update()
     +delete()
     +truncate()
     +analyze()
+    +addColumn(column : Column) void
+    +getColumns() List~Column~
+    +addConstraint(constraint : Constraint) void
+    +removeConstraint(name : String) void
     +accept(visitor : DatabaseObjectVisitor) void
 }
 
@@ -306,7 +328,12 @@ class ConstraintFactory{
     +createCheck(...)
 }
 
-class DefaultConstraintFactory
+class DefaultConstraintFactory {
+    +createPrimaryKey(...)
+    +createForeignKey(...)
+    +createUnique(...)
+    +createCheck(...)
+}
 
 class DatabaseObjectFactory{
     <<interface>>
@@ -479,11 +506,47 @@ class Role
 
 class Permission
 
+class ConfigurationManager
+class MonitoringManager
+
+class DatabaseObjectIterator {
+    <<interface>>
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+class SchemaObjectIterator {
+    -objects : List~DatabaseObject~
+    -currentIndex : int
+    +SchemaObjectIterator(objects)
+    +hasNext() boolean
+    +next() DatabaseObject
+}
+
+class DatabaseObjectVisitor {
+    <<interface>>
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+}
+
+class ExportDDLVisitor {
+    -result : StringBuilder
+    +visit(table : Table) void
+    +visit(view : View) void
+    +visit(procedure : StoredProcedure) void
+    +visit(sequence : Sequence) void
+    +getResult() String
+}
+
 DatabaseServer --> DatabaseManager
 DatabaseServer --> TransactionManager
 DatabaseServer --> StorageEngine
 DatabaseServer --> CatalogManager
 DatabaseServer --> SecurityManager
+DatabaseServer --> ConfigurationManager
+DatabaseServer --> MonitoringManager
 
 DatabaseComponent <|.. Database
 DatabaseComponent <|.. Schema
@@ -588,6 +651,8 @@ style SecurityManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style User fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Role fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Permission fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style ConfigurationManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style MonitoringManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
 %% Catalog & Database Objects (Green)
 style DatabaseComponent fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
@@ -656,77 +721,8 @@ style RecoveryManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 
 --- 
 
-# Database Server Module
-```mermaid
-classDiagram
-direction TB
-
-class DatabaseServer{
-    +serverId
-    +version
-    +status
-    +configuration
-    +startTime
-
-    +start()
-    +stop()
-    +restart()
-}
-
-class DatabaseManager{
-    -databases : Map~String, Database~
-
-    +createDatabase(request) Database
-    +dropDatabase(databaseId)
-    +findDatabaseById(databaseId) Database
-    +findDatabaseByName(name) Database
-    +listAllDatabases() List~Database~
-}
-
-class Database{
-    +databaseId
-    +name
-    +owner
-    +status
-    +createdAt
-
-    +open()
-    +close()
-}
-
-class ConfigurationManager
-
-class SecurityManager{
-    +authenticate()
-    +authorize()
-    +grantPermission()
-    +revokePermission()
-}
-
-class MonitoringManager
-
-DatabaseServer --> DatabaseManager
-DatabaseServer --> ConfigurationManager
-DatabaseServer --> SecurityManager
-DatabaseServer --> MonitoringManager
-
-DatabaseManager ..> Database : creates / manages
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style DatabaseServer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style DatabaseManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-
-style ConfigurationManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style SecurityManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style MonitoringManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-
-style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-```
---- 
-
-# Database Server Test
+# Test Mindmap
+## Database Server Test
 ```mermaid
 flowchart LR
 
@@ -889,602 +885,8 @@ flowchart LR
 ```
 ---
 
-# Database Objects Module
 
-```mermaid
-classDiagram
-direction TB
-
-%% =====================================================
-%% Database
-%% =====================================================
-
-class DatabaseComponent {
-    <<interface>>
-
-    +getId() UUID
-    +getName() String
-    +getOwner() String
-    +getQualifiedName() String
-}
-
-class Database{
-    -databaseId : UUID
-    -name : String
-    -owner : String
-    -status : DatabaseStatus
-    -schemas : List~Schema~
-
-    +addSchema(schema : Schema) void
-    +removeSchema(schemaId : UUID) void
-    +findSchema(name : String) Schema
-    +listSchemas() List~Schema~
-
-    +getId() UUID
-    +getName() String
-    +getOwner() String
-    +getQualifiedName() String
-}
-
-class DatabaseStatus{
-    <<enumeration>>
-    ONLINE
-    OFFLINE
-    OPENING
-    CLOSING
-}
-
-class Schema{
-    -schemaId : UUID
-    -name : String
-    -owner : String
-    -objects : List~DatabaseObject~
-
-    +addObject(object : DatabaseObject) void
-    +removeObject(objectId : UUID) void
-    +findObject(name : String) DatabaseObject
-    +listObjects() List~DatabaseObject~
-
-    +getId() UUID
-    +getName() String
-    +getOwner() String
-    +getQualifiedName() String
-    +iterator() DatabaseObjectIterator
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-class DatabaseObject{
-    <<abstract>>
-
-    #objectId : UUID
-    #name : String
-    #owner : String
-    #schemaId : UUID
-
-    +getId() UUID
-    +getName() String
-    +getOwner() String
-    +getQualifiedName() String
-    +rename(newName : String) void
-    +accept(visitor : DatabaseObjectVisitor)* void
-}
-
-DatabaseComponent <|.. Database
-DatabaseComponent <|.. Schema
-DatabaseComponent <|.. DatabaseObject
-
-Database *--> "0..*" Schema : contains
-Schema *--> "0..*" DatabaseObject : contains
-Database --> DatabaseStatus
-
-%% =====================================================
-%% Factory Method
-%% =====================================================
-
-class DatabaseObjectFactory{
-    <<interface>>
-
-    +createTable(request) Table
-    +createView(request) View
-    +createProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
-}
-
-class DefaultDatabaseObjectFactory{
-    +createTable(request) Table
-    +createView(request) View
-    +createProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
-}
-
-Schema --> DatabaseObjectFactory
-DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
-
-%% =====================================================
-%% Iterator Pattern
-%% =====================================================
-
-class DatabaseObjectIterator{
-    <<interface>>
-
-    +hasNext() boolean
-    +next() DatabaseObject
-}
-
-class SchemaObjectIterator{
-    -objects : List~DatabaseObject~
-    -currentIndex : int
-
-    +SchemaObjectIterator(objects)
-    +hasNext() boolean
-    +next() DatabaseObject
-}
-
-DatabaseObjectIterator <|.. SchemaObjectIterator
-Schema ..> SchemaObjectIterator : creates
-SchemaObjectIterator --> DatabaseObject : iterates
-
-%% =====================================================
-%% Visitor Pattern
-%% =====================================================
-
-class DatabaseObjectVisitor{
-    <<interface>>
-
-    +visit(table : Table) void
-    +visit(view : View) void
-    +visit(procedure : StoredProcedure) void
-    +visit(sequence : Sequence) void
-}
-
-class ExportDDLVisitor{
-    -result : StringBuilder
-
-    +visit(table : Table) void
-    +visit(view : View) void
-    +visit(procedure : StoredProcedure) void
-    +visit(sequence : Sequence) void
-
-    +getResult() String
-}
-
-DatabaseObjectVisitor <|.. ExportDDLVisitor
-Schema ..> DatabaseObjectVisitor : accepts
-DatabaseObject ..> DatabaseObjectVisitor : accepts
-
-DatabaseObjectVisitor ..> Table : visits
-DatabaseObjectVisitor ..> View : visits
-DatabaseObjectVisitor ..> StoredProcedure : visits
-DatabaseObjectVisitor ..> Sequence : visits
-
-%% =====================================================
-%% Builder Pattern
-%% =====================================================
-
-class TableBuilder{
-    -tableId : UUID
-    -name : String
-    -engine : String
-
-    -columns : List~Column~
-    -constraints : List~Constraint~
-    -indexes : List~Index~
-    -partitions : List~Partition~
-    -triggers : List~Trigger~
-
-    +setName(name : String) TableBuilder
-    +setEngine(engine : String) TableBuilder
-
-    +addColumn(column : Column) TableBuilder
-    +addConstraint(constraint : Constraint) TableBuilder
-    +addIndex(index : Index) TableBuilder
-    +addPartition(partition : Partition) TableBuilder
-    +addTrigger(trigger : Trigger) TableBuilder
-
-    +build() Table
-    -validate() void
-}
-
-TableBuilder ..> Table : builds
-
-%% =====================================================
-%% Database Objects
-%% =====================================================
-
-class Table{
-    +tableId : UUID
-    +engine : String
-    +rowCount : Long
-
-    -constraintFactory
-    -constraints
-
-    +insert()
-    +update()
-    +delete()
-    +truncate()
-    +analyze()
-
-    +addColumn(...)
-    +getColumns()
-    +addConstraint(...)
-    +removeConstraint(...)
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-class View{
-    +queryDefinition
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-class StoredProcedure{
-    +execute()
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-class Sequence{
-    +nextValue()
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-DatabaseObject <|-- Table
-DatabaseObject <|-- View
-DatabaseObject <|-- StoredProcedure
-DatabaseObject <|-- Sequence
-
-%% =====================================================
-%% Table Components
-%% =====================================================
-
-class Column{
-    +columnId : UUID
-    +name : String
-    +dataType : DataType
-    +length : Integer
-    +precision : Integer
-    +scale : Integer
-    +nullable : Boolean
-    +defaultValue : Object
-    +identity : Boolean
-    +generated : Boolean
-    +status : ColumnStatus
-}
-
-class Row
-
-class Trigger
-
-class Partition
-
-class DataType{
-    <<enumeration>>
-}
-
-Table --> Column
-Table --> Row
-Table --> Trigger
-Table --> Partition
-
-Column --> DataType
-
-%% =====================================================
-%% Strategy Pattern
-%% =====================================================
-
-class Constraint{
-    <<abstract>>
-    +constraintId : UUID
-    +constraintName : String
-    +constraintType : ConstraintType
-    +tableId : UUID
-    +columns : List~Column~
-    +status : ConstraintStatus
-    +enabled : Boolean
-    +validated : Boolean
-    +deferrable : Boolean
-    +initiallyDeferred : Boolean
-    +owner : String
-    +description : String
-    +createdAt : Timestamp
-    +modifiedAt : Timestamp
-    +validate(row,table)*
-}
-
-class ConstraintType{
-    <<enumeration>>
-}
-
-class ConstraintStatus{
-    <<enumeration>>
-}
-
-class PrimaryKey
-class ForeignKey
-class UniqueConstraint
-class CheckConstraint
-
-Constraint <|-- PrimaryKey
-Constraint <|-- ForeignKey
-Constraint <|-- UniqueConstraint
-Constraint <|-- CheckConstraint
-Constraint --> ConstraintType
-Constraint --> ConstraintStatus
-
-Table --> Constraint
-
-%% =====================================================
-%% Constraint Factory
-%% =====================================================
-
-class ConstraintFactory{
-    <<interface>>
-
-    +createPrimaryKey(...)
-    +createForeignKey(...)
-    +createUnique(...)
-    +createCheck(...)
-}
-
-class DefaultConstraintFactory
-
-ConstraintFactory <|.. DefaultConstraintFactory
-
-Table --> ConstraintFactory
-
-DefaultConstraintFactory --> PrimaryKey
-DefaultConstraintFactory --> ForeignKey
-DefaultConstraintFactory --> UniqueConstraint
-DefaultConstraintFactory --> CheckConstraint
-
-%% =====================================================
-%% Index
-%% =====================================================
-
-class Index{
-    <<abstract>>
-}
-
-class BTreeIndex
-class HashIndex
-class BitmapIndex
-
-Index <|-- BTreeIndex
-Index <|-- HashIndex
-Index <|-- BitmapIndex
-
-Table --> Index
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style DatabaseStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Schema fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Column fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Row fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Trigger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Partition fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style DataType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Constraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style ConstraintType fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style ConstraintStatus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style PrimaryKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style ForeignKey fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style UniqueConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style CheckConstraint fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style BTreeIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style HashIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style BitmapIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-
-style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style TableBuilder fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style ConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultConstraintFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-```
----
-
-## Schema Management Class Diagram using Composite + Iterator + Visitor + Factory pattern
-```mermaid
-classDiagram
-direction TB
-
-%% =====================================================
-%% Root Aggregate
-%% =====================================================
-
-class Schema {
-    +schemaId : UUID
-    +name : String
-    +owner : String
-
-    -objects : List~DatabaseObject~
-    -factory : DatabaseObjectFactory
-
-    +createTable(request) Table
-    +createView(request) View
-    +createProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
-
-    +dropObject(objectId) void
-    +findObject(name) DatabaseObject
-    +listObjects() List~DatabaseObject~
-
-    +iterator() DatabaseObjectIterator
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-%% =====================================================
-%% Composite Structure
-%% =====================================================
-
-class DatabaseObject {
-    <<abstract>>
-
-    #objectId : UUID
-    #name : String
-    #owner : String
-
-    +create()* void
-    +drop()* void
-    +rename(newName : String)* void
-
-    +accept(visitor : DatabaseObjectVisitor)* void
-}
-
-class Table {
-    +create() void
-    +drop() void
-    +rename(newName : String) void
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-class View {
-    +create() void
-    +drop() void
-    +rename(newName : String) void
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-class StoredProcedure {
-    +create() void
-    +drop() void
-    +rename(newName : String) void
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-class Sequence {
-    +create() void
-    +drop() void
-    +rename(newName : String) void
-    +accept(visitor : DatabaseObjectVisitor) void
-}
-
-Schema *--> "0..*" DatabaseObject : contains
-
-DatabaseObject <|-- Table
-DatabaseObject <|-- View
-DatabaseObject <|-- StoredProcedure
-DatabaseObject <|-- Sequence
-
-%% =====================================================
-%% Factory Method Pattern
-%% =====================================================
-
-class DatabaseObjectFactory {
-    <<interface>>
-
-    +createTable(request) Table
-    +createView(request) View
-    +createProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
-}
-
-class DefaultDatabaseObjectFactory {
-    +createTable(request) Table
-    +createView(request) View
-    +createProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
-}
-
-Schema --> DatabaseObjectFactory : uses
-
-DatabaseObjectFactory <|.. DefaultDatabaseObjectFactory
-
-DefaultDatabaseObjectFactory ..> Table : creates
-DefaultDatabaseObjectFactory ..> View : creates
-DefaultDatabaseObjectFactory ..> StoredProcedure : creates
-DefaultDatabaseObjectFactory ..> Sequence : creates
-
-%% =====================================================
-%% Iterator Pattern
-%% =====================================================
-
-class DatabaseObjectIterator {
-    <<interface>>
-
-    +hasNext() boolean
-    +next() DatabaseObject
-}
-
-class SchemaObjectIterator {
-    -objects : List~DatabaseObject~
-    -currentIndex : int
-
-    +SchemaObjectIterator(objects)
-    +hasNext() boolean
-    +next() DatabaseObject
-}
-
-DatabaseObjectIterator <|.. SchemaObjectIterator
-
-Schema ..> SchemaObjectIterator : creates
-SchemaObjectIterator --> DatabaseObject : iterates
-
-%% =====================================================
-%% Visitor Pattern
-%% =====================================================
-
-class DatabaseObjectVisitor {
-    <<interface>>
-
-    +visit(table : Table) void
-    +visit(view : View) void
-    +visit(procedure : StoredProcedure) void
-    +visit(sequence : Sequence) void
-}
-
-class ExportDDLVisitor {
-    -result : StringBuilder
-
-    +visit(table : Table) void
-    +visit(view : View) void
-    +visit(procedure : StoredProcedure) void
-    +visit(sequence : Sequence) void
-
-    +getResult() String
-}
-
-DatabaseObjectVisitor <|.. ExportDDLVisitor
-
-Schema ..> DatabaseObjectVisitor : accepts
-DatabaseObject ..> DatabaseObjectVisitor : accepts
-
-DatabaseObjectVisitor ..> Table : visits
-DatabaseObjectVisitor ..> View : visits
-DatabaseObjectVisitor ..> StoredProcedure : visits
-DatabaseObjectVisitor ..> Sequence : visits
-
-%% =====================================================
-%% Styling
-%% =====================================================
-
-style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-
-style DatabaseObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-
-style DatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style DefaultDatabaseObjectFactory fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-
-style DatabaseObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
-style SchemaObjectIterator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
-
-style DatabaseObjectVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
-style ExportDDLVisitor fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
-```
----
-
-# Database Objects Test
+##  Database Objects Test
 ```mermaid
 flowchart LR
 
@@ -1848,57 +1250,6 @@ flowchart LR
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
 ---
-# Storage Engine Module
-
-```mermaid
-classDiagram
-direction TB
-
-class StorageEngine{
-    +pageSize
-    +dataFiles
-    +freeSpaceMap
-
-    +readPage()
-    +writePage()
-    +allocatePage()
-    +checkpoint()
-}
-
-class BufferPool{
-    +pages
-    +capacity
-    +replacementPolicy
-
-    +pinPage()
-    +unpinPage()
-    +flushPage()
-    +evictPage()
-}
-
-class Page{
-    +pageId
-}
-
-class FileManager{
-    +read()
-    +write()
-}
-
-StorageEngine --> BufferPool
-StorageEngine --> FileManager
-
-BufferPool --> Page
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style StorageEngine fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
-style BufferPool fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
-style Page fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
-style FileManager fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
-```
---- 
 
 # Storage Engine Test
 ```mermaid
@@ -2037,64 +1388,6 @@ flowchart LR
 ```
 ---
 
-# Query Processing Module
-
-```mermaid
-classDiagram
-direction TB
-
-class SQLParser{
-    +parse()
-    +tokenize()
-    +validateSyntax()
-}
-
-class Lexer
-
-class AST
-
-class QueryOptimizer{
-    +optimize()
-    +estimateCost()
-    +chooseJoinOrder()
-}
-
-class LogicalPlan
-
-class PhysicalPlan
-
-class StatisticsManager
-
-class QueryExecutor{
-    +execute()
-    +fetch()
-    +cancel()
-}
-
-SQLParser --> Lexer
-SQLParser --> AST
-
-AST --> LogicalPlan
-
-QueryOptimizer --> LogicalPlan
-QueryOptimizer --> PhysicalPlan
-QueryOptimizer --> StatisticsManager
-
-QueryExecutor --> PhysicalPlan
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style AST fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style LogicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style PhysicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style StatisticsManager fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style QueryExecutor fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-```
----
 
 # Query Processing Test
 ```mermaid
@@ -2367,72 +1660,6 @@ flowchart LR
 ```
 ---
 
-# Transaction Management Module
-```mermaid
-classDiagram
-direction TB
-
-class Transaction{
-    +transactionId
-    +isolationLevel
-    +state
-    +startTime
-
-    +begin()
-    +commit()
-    +rollback()
-    +savepoint()
-}
-
-class TransactionManager{
-    +beginTransaction()
-    +commit()
-    +rollback()
-    +recover()
-}
-
-class LockManager{
-    +acquireLock()
-    +releaseLock()
-    +detectDeadlock()
-}
-
-class MVCCManager{
-    +createVersion()
-    +garbageCollect()
-}
-
-class WALManager{
-    +currentLSN
-    +logFiles
-
-    +append()
-    +flush()
-    +replay()
-}
-
-class RecoveryManager{
-    +recover()
-}
-
-TransactionManager --> Transaction
-TransactionManager --> LockManager
-TransactionManager --> MVCCManager
-TransactionManager --> WALManager
-
-RecoveryManager --> WALManager
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style Transaction fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-style TransactionManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-style LockManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-style MVCCManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-style WALManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-style RecoveryManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-```
----
 
 # Transaction Management Test
 ```mermaid
@@ -2590,43 +1817,7 @@ flowchart LR
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
 
-# Metadata Module
-```mermaid
-classDiagram
-direction TB
 
-class CatalogManager{
-    +metadataCache
-
-    +registerTable()
-    +getTable()
-    +getSchema()
-    +refreshMetadata()
-}
-
-class Database
-
-class Schema
-
-class Table
-
-class Index
-
-CatalogManager --> Database
-CatalogManager --> Schema
-CatalogManager --> Table
-CatalogManager --> Index
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style CatalogManager fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Database fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Schema fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-```
----
 # Metadata Test
 ```mermaid
 flowchart LR
@@ -2720,55 +1911,7 @@ flowchart LR
 ```
 ---
 
-# Security Module
-```mermaid
-classDiagram
-direction TB
 
-class SecurityManager{
-    +users
-    +roles
-    +policies
-
-    +authenticate()
-    +authorize()
-    +grantPermission()
-    +revokePermission()
-}
-
-class User{
-    +userId
-    +username
-    +passwordHash
-    +status
-}
-
-class Role{
-    +roleId
-    +name
-    +permissions
-}
-
-class Permission{
-    +permissionId
-    +resource
-    +action
-}
-
-SecurityManager --> User
-SecurityManager --> Role
-
-Role --> Permission
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style SecurityManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style User fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style Role fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style Permission fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-```
----
 
 # Security Test
 ```mermaid
@@ -2889,37 +2032,6 @@ flowchart LR
 ```
 --- 
 
-# Recovery Module 
-```mermaid
-classDiagram
-direction TB
-
-class RecoveryManager{
-    +recover()
-}
-
-class WALManager{
-    +currentLSN
-    +logFiles
-
-    +append()
-    +flush()
-    +replay()
-}
-
-class LogRecord
-
-RecoveryManager --> WALManager
-WALManager --> LogRecord
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style RecoveryManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-style WALManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-style LogRecord fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-```
---- 
 
 # Recovery Test
 ```mermaid
@@ -3017,35 +2129,6 @@ flowchart LR
     classDef leafStyle fill:#ffffff,stroke:#b0bec5,stroke-width:1px,color:#37474f;
 ```
 ---
-# Replication Module 
-```mermaid
-classDiagram
-direction TB
-
-class ReplicationManager{
-    +replicationMode
-    +replicas
-
-    +replicate()
-    +synchronize()
-    +electLeader()
-}
-
-class ClusterNode
-
-class WALManager
-
-ReplicationManager --> ClusterNode
-ReplicationManager --> WALManager
-
-%% =====================================================
-%% STYLING DEFINITIONS
-%% =====================================================
-style ReplicationManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style ClusterNode fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style WALManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
-```
---- 
 
 # Replication Test
 ```mermaid
