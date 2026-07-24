@@ -485,34 +485,105 @@ class ConstraintStatus {
 %% INDEXES
 %% =====================================================
 
+class IndexManager {
+    -indexes : Map~UUID, Index~
+    -creators : Map~IndexType, IndexCreator~
+
+    +createIndex(request : CreateIndexRequest, table : Table) Index
+    +dropIndex(indexId : UUID, table : Table) void
+    +findIndex(indexId : UUID) Index
+    +listIndexes(tableId : UUID) List~Index~
+
+    +search(indexId : UUID, key : IndexKey) List~RowId~
+    +insertEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
+    +deleteEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
+    +rebuildIndex(indexId : UUID) void
+}
+
 class Index {
     <<abstract>>
 
-    +indexId : UUID
-    +name : String
-    +columns : List~Column~
+    #indexId : UUID
+    #name : String
+    #tableId : UUID
+    #columns : List~Column~
+    #unique : Boolean
 
-    +search(key) List~Row~
-    +insertKey(key, rowId : UUID) void
-    +deleteKey(key, rowId : UUID) void
+    +getId() UUID
+    +getName() String
+    +getColumns() List~Column~
+
+    +search(key : IndexKey)* List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId)* void
+    +deleteKey(key : IndexKey, rowId : RowId)* void
+    +rebuild()* void
 }
 
 class BTreeIndex {
-    +search(key) List~Row~
-    +insertKey(key, rowId : UUID) void
-    +deleteKey(key, rowId : UUID) void
+    +search(key : IndexKey) List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId) void
+    +deleteKey(key : IndexKey, rowId : RowId) void
+    +rebuild() void
 }
 
 class HashIndex {
-    +search(key) List~Row~
-    +insertKey(key, rowId : UUID) void
-    +deleteKey(key, rowId : UUID) void
+    +search(key : IndexKey) List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId) void
+    +deleteKey(key : IndexKey, rowId : RowId) void
+    +rebuild() void
 }
 
 class BitmapIndex {
-    +search(key) List~Row~
-    +insertKey(key, rowId : UUID) void
-    +deleteKey(key, rowId : UUID) void
+    +search(key : IndexKey) List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId) void
+    +deleteKey(key : IndexKey, rowId : RowId) void
+    +rebuild() void
+}
+
+class IndexCreator {
+    <<abstract>>
+
+    +create(request : CreateIndexRequest) Index
+    #createIndex(request : CreateIndexRequest)* Index
+    #validate(request : CreateIndexRequest) void
+    #initialize(index : Index) void
+}
+
+class BTreeIndexCreator {
+    #createIndex(request : CreateIndexRequest) Index
+}
+
+class HashIndexCreator {
+    #createIndex(request : CreateIndexRequest) Index
+}
+
+class BitmapIndexCreator {
+    #createIndex(request : CreateIndexRequest) Index
+}
+
+class IndexKey {
+    +values : List~Object~
+}
+
+class RowId {
+    +pageId : UUID
+    +slotNumber : Integer
+}
+
+class CreateIndexRequest {
+    +name : String
+    +type : IndexType
+    +tableId : UUID
+    +columnIds : List~UUID~
+    +unique : Boolean
+}
+
+class IndexType {
+    <<enumeration>>
+
+    BTREE
+    HASH
+    BITMAP
 }
 
 %% =====================================================
@@ -764,8 +835,22 @@ Index <|-- BTreeIndex
 Index <|-- HashIndex
 Index <|-- BitmapIndex
 
+IndexManager --> Index : selects and delegates
+Index --> IndexKey : uses
+Index --> RowId : maps to
 Index --> Column : indexes
-Index --> Row : locates
+
+IndexCreator <|-- BTreeIndexCreator
+IndexCreator <|-- HashIndexCreator
+IndexCreator <|-- BitmapIndexCreator
+
+BTreeIndexCreator ..> BTreeIndex : creates
+HashIndexCreator ..> HashIndex : creates
+BitmapIndexCreator ..> BitmapIndex : creates
+
+IndexManager --> IndexCreator : selects creator
+IndexCreator --> CreateIndexRequest : receives
+CreateIndexRequest --> IndexType : specifies
 
 %% =====================================================
 %% BUILDER RELATIONSHIPS
@@ -2806,6 +2891,515 @@ public class QueryExecutor {
 
 --- 
 
+# 9. Index Definition and Management
+## Using Strategy and Factory Method
+
+### 9.1 Class diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Context and Factory Client
+%% =====================================================
+
+class IndexManager {
+    -indexes : Map~UUID, Index~
+    -creators : Map~IndexType, IndexCreator~
+
+    +createIndex(request : CreateIndexRequest, table : Table) Index
+    +dropIndex(indexId : UUID, table : Table) void
+    +findIndex(indexId : UUID) Index
+    +listIndexes(tableId : UUID) List~Index~
+
+    +search(indexId : UUID, key : IndexKey) List~RowId~
+    +insertEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
+    +deleteEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
+    +rebuildIndex(indexId : UUID) void
+}
+
+%% =====================================================
+%% Strategy and Product
+%% =====================================================
+
+class Index {
+    <<abstract>>
+
+    #indexId : UUID
+    #name : String
+    #tableId : UUID
+    #columns : List~Column~
+    #unique : Boolean
+
+    +getId() UUID
+    +getName() String
+    +getColumns() List~Column~
+
+    +search(key : IndexKey)* List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId)* void
+    +deleteKey(key : IndexKey, rowId : RowId)* void
+    +rebuild()* void
+}
+
+%% =====================================================
+%% Concrete Strategies and Products
+%% =====================================================
+
+class BTreeIndex {
+    +search(key : IndexKey) List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId) void
+    +deleteKey(key : IndexKey, rowId : RowId) void
+    +rebuild() void
+}
+
+class HashIndex {
+    +search(key : IndexKey) List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId) void
+    +deleteKey(key : IndexKey, rowId : RowId) void
+    +rebuild() void
+}
+
+class BitmapIndex {
+    +search(key : IndexKey) List~RowId~
+    +insertKey(key : IndexKey, rowId : RowId) void
+    +deleteKey(key : IndexKey, rowId : RowId) void
+    +rebuild() void
+}
+
+%% =====================================================
+%% Factory Method Creator
+%% =====================================================
+
+class IndexCreator {
+    <<abstract>>
+
+    +create(request : CreateIndexRequest) Index
+    #createIndex(request : CreateIndexRequest)* Index
+    #validate(request : CreateIndexRequest) void
+    #initialize(index : Index) void
+}
+
+%% =====================================================
+%% Concrete Creators
+%% =====================================================
+
+class BTreeIndexCreator {
+    #createIndex(request : CreateIndexRequest) Index
+}
+
+class HashIndexCreator {
+    #createIndex(request : CreateIndexRequest) Index
+}
+
+class BitmapIndexCreator {
+    #createIndex(request : CreateIndexRequest) Index
+}
+
+%% =====================================================
+%% Table and Table Builder
+%% =====================================================
+
+class Table {
+    -tableId : UUID
+    -name : String
+    -columns : List~Column~
+    -indexes : List~Index~
+
+    +addIndex(index : Index) void
+    +removeIndex(indexId : UUID) void
+    +findIndex(indexId : UUID) Index
+    +listIndexes() List~Index~
+}
+
+class TableBuilder {
+    -indexes : List~Index~
+
+    +addIndex(index : Index) TableBuilder
+    +build() Table
+}
+
+%% =====================================================
+%% Supporting Domain Types
+%% =====================================================
+
+class Column {
+    +columnId : UUID
+    +name : String
+    +dataType : DataType
+}
+
+class CreateIndexRequest {
+    +name : String
+    +type : IndexType
+    +tableId : UUID
+    +columnIds : List~UUID~
+    +unique : Boolean
+}
+
+class IndexType {
+    <<enumeration>>
+
+    BTREE
+    HASH
+    BITMAP
+}
+
+class IndexKey {
+    +values : List~Object~
+}
+
+class RowId {
+    +pageId : UUID
+    +slotNumber : Integer
+}
+
+class DataType {
+    <<enumeration>>
+}
+
+%% =====================================================
+%% Strategy Relationships
+%% =====================================================
+
+Index <|-- BTreeIndex
+Index <|-- HashIndex
+Index <|-- BitmapIndex
+
+IndexManager --> Index : selects and delegates
+Index --> IndexKey : uses
+Index --> RowId : maps to
+Index --> "1..*" Column : indexes
+
+%% =====================================================
+%% Factory Method Relationships
+%% =====================================================
+
+IndexCreator <|-- BTreeIndexCreator
+IndexCreator <|-- HashIndexCreator
+IndexCreator <|-- BitmapIndexCreator
+
+BTreeIndexCreator ..> BTreeIndex : creates
+HashIndexCreator ..> HashIndex : creates
+BitmapIndexCreator ..> BitmapIndex : creates
+
+IndexManager --> IndexCreator : selects creator
+IndexCreator --> CreateIndexRequest : receives
+CreateIndexRequest --> IndexType : specifies
+
+%% =====================================================
+%% Table Relationships
+%% =====================================================
+
+Table *--> "1..*" Column : defines
+Table *--> "0..*" Index : owns
+
+IndexManager --> Table : manages indexes for
+TableBuilder --> "0..*" Index : collects
+TableBuilder ..> Table : builds
+
+Column --> DataType : uses
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style IndexManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Table fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style TableBuilder fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style BTreeIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style HashIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style BitmapIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style IndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style BTreeIndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style HashIndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style BitmapIndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style Column fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
+style CreateIndexRequest fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
+style IndexType fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
+style IndexKey fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
+style RowId fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
+style DataType fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
+```
+
+### 9.2 Sequence Diagram Search Rows Using Selected Index Strategy
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e3f2fd Query Execution
+        participant Client as executor : QueryExecutor
+    end
+
+    box #fff3e0 Strategy Context
+        participant Manager as indexManager : IndexManager
+    end
+
+    box #e8f5e9 Concrete Strategy
+        participant Index as index : BTreeIndex<br/>(used as Index)
+    end
+
+    Note over Client,Index: Search using the selected Index strategy
+
+    Client->>Manager: search(indexId, key)
+    activate Manager
+
+    Manager->>Manager: findIndex(indexId)
+    Manager-->>Manager: index : Index
+
+    Note right of Manager: IndexManager only depends<br/>on the Index abstraction
+
+    Manager->>Index: search(key)
+    activate Index
+
+    Index->>Index: traverseBTree(key)
+    Index-->>Manager: rowIds : List<RowId>
+
+    deactivate Index
+
+    Manager-->>Client: rowIds : List<RowId>
+    deactivate Manager
+```
+
+### 9.2 Sequence Diagram for Create B-Tree Index Successfully
+```mermaid
+sequenceDiagram
+    autonumber
+
+    box #e3f2fd Client
+        participant Client as DDLExecutor
+    end
+
+    box #e3f2fd Index Management
+        participant Manager as IndexManager
+        participant Table as Table
+    end
+
+    box #fff3e0 Factory Method
+        participant Creator as  BTreeIndexCreator 
+    end
+
+    box #e8f5e9 Concrete Product
+        participant Index as BTreeIndex 
+    end
+
+    Note over Client,Index: Create B-Tree Index Successfully
+
+    Client->>Manager: createIndex(request, table)
+    activate Manager
+
+    Manager->>Manager: selectCreator(request.type)
+    Manager-->>Manager: creator : IndexCreator
+
+    Manager->>Creator: create(request)
+    activate Creator
+
+    Creator->>Creator: validate(request)
+
+    Note right of Creator: createIndex() is the Factory Method
+
+    Creator->>Creator: createIndex(request)
+    Creator->>Index: new BTreeIndex(request)
+    activate Index
+
+    Index-->>Creator: index : BTreeIndex
+    deactivate Index
+
+    Creator->>Creator: initialize(index)
+
+    Creator->>Index: rebuild()
+    activate Index
+    Index->>Index: buildBTreeStructure()
+    Index-->>Creator: initialized
+    deactivate Index
+
+    Creator-->>Manager: index : Index
+    deactivate Creator
+
+    Manager->>Manager: indexes.put(index.getId(), index)
+
+    Manager->>Table: addIndex(index)
+    activate Table
+
+    Table->>Table: indexes.add(index)
+    Table-->>Manager: void
+
+    deactivate Table
+
+    Manager-->>Client: index : Index
+    deactivate Manager
+```
+
+### 9.3 Code Example for Search Rows Using Selected Index Strategy
+### Strategy Interface
+```java 
+public abstract class Index {
+    protected UUID indexId;
+    protected String name;
+    protected UUID tableId;
+    protected List<Column> columns;
+    protected boolean unique;
+    public UUID getId() {
+        return indexId;
+    }
+    public String getName() {
+        return name;
+    }
+    public List<Column> getColumns() {
+        return columns;
+    }
+    public abstract List<RowId> search(IndexKey key);
+    public abstract void insertKey(IndexKey key, RowId rowId);
+    public abstract void deleteKey(IndexKey key, RowId rowId);
+    public abstract void rebuild();
+}
+```
+
+### Concrete Strategy
+```java
+public class BTreeIndex extends Index {
+    @Override
+    public List<RowId> search(IndexKey key) {
+        return null;
+    }
+    @Override
+    public void insertKey(IndexKey key, RowId rowId) {
+        
+    }
+    @Override
+    public void deleteKey(IndexKey key, RowId rowId) {
+        
+    }
+    @Override
+    public void rebuild() {
+        
+    }
+}
+```
+
+### Context 
+```java
+public class IndexManager {
+    private final Map<UUID, Index> indexes = new ConcurrentHashMap<>();
+
+    public List<RowId> searchRows(UUID indexId, IndexKey key) {
+        Index index = indexes.get(indexId);
+        if (index == null) {
+            throw new RuntimeException("Index not found: " + indexId);
+        }
+        return index.search(key);
+    }
+}
+```
+
+### Client 
+```java 
+public class QueryExecutor {
+    private final IndexManager indexManager;
+    public QueryExecutor(IndexManager indexManager) {
+        this.indexManager = indexManager;
+    }
+    public void executeQuery() {
+        UUID indexId = UUID.fromString("...");
+        IndexKey key = new IndexKey("John");
+        List<RowId> rowIds = indexManager.searchRows(indexId, key);
+    }
+}
+```
+### 9.3 Code Example for Create B-Tree Index Successfully
+### Creator
+```java
+public abstract class IndexCreator {
+    public final Index create(CreateIndexRequest request) {
+        validate(request);
+        Index index = createIndex(request); 
+        initialize(index);
+        return index;
+    }
+    protected abstract Index createIndex(CreateIndexRequest request);
+    protected void validate(CreateIndexRequest request) {
+        
+    }
+    protected void initialize(Index index) {
+        
+    }
+}
+```
+### Concrete Creator
+```java
+public class BTreeIndexCreator extends IndexCreator {
+    @Override
+    protected Index createIndex(CreateIndexRequest request) {
+        return new BTreeIndex(request.indexId, request.name, request.tableId, request.columns, request.unique);
+    }
+}
+```
+
+### Product 
+```java
+public abstract class Index {
+    protected UUID indexId;
+    protected String name;
+    protected UUID tableId;
+    protected List<Column> columns;
+    protected boolean unique;
+
+    public Index(UUID indexId, String name, UUID tableId, List<Column> columns, boolean unique) {
+        this.indexId = indexId;
+        this.name = name;
+        this.tableId = tableId;
+        this.columns = columns;
+        this.unique = unique;
+    }
+    public UUID getId() {
+        return indexId;
+    }
+    public String getName() {
+        return name;
+    }
+    public List<Column> getColumns() {
+        return columns;
+    }
+    public abstract List<RowId> search(IndexKey key);
+    public abstract void insertKey(IndexKey key, RowId rowId);
+    public abstract void deleteKey(IndexKey key, RowId rowId);
+    public abstract void rebuild();
+}
+```
+
+### Concrete Product
+```java
+public class BTreeIndex extends Index {
+    private final BTreeMap<IndexKey, List<RowId>> btree;
+    private final int maxDegree; 
+
+    public BTreeIndex(UUID indexId, String name, UUID tableId, List<Column> columns, boolean unique) {
+        super(indexId, name, tableId, columns, unique);
+        this.btree = new BTreeMap<>();
+        this.maxDegree = 4; 
+    }
+
+    @Override
+    public List<RowId> search(IndexKey key) {
+        return null;
+    }
+
+    @Override
+    public void insertKey(IndexKey key, RowId rowId) {        
+    }
+
+    @Override
+    public void deleteKey(IndexKey key, RowId rowId) {       
+    }
+
+    @Override
+    public void rebuild() {
+    }
+}
+```
 # Query Processing feature mindmap
 ```mermaid
 flowchart LR

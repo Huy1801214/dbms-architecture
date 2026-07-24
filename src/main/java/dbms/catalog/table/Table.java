@@ -12,6 +12,16 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class Table extends DatabaseObject {
+    private static final java.util.Map<String, Table> allTables = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static Table getTableByName(String name) {
+        return name != null ? allTables.get(name) : null;
+    }
+
+    public static void clearAllTablesRegistry() {
+        allTables.clear();
+    }
+
     public java.util.UUID tableId;
     public String engine;
     public long rowCount;
@@ -36,6 +46,9 @@ public class Table extends DatabaseObject {
         } catch (IllegalArgumentException e) {
             this.tableId = java.util.UUID.randomUUID();
         }
+        if (name != null) {
+            allTables.put(name, this);
+        }
     }
 
     public void validate(Row row) {
@@ -51,7 +64,13 @@ public class Table extends DatabaseObject {
     }
 
     public void setName(String name) {
+        if (this.name != null) {
+            allTables.remove(this.name);
+        }
         this.name = name;
+        if (name != null) {
+            allTables.put(name, this);
+        }
     }
 
     public String getEngine() {
@@ -94,51 +113,28 @@ public class Table extends DatabaseObject {
         }
     }
 
+    public void removeIndex(UUID indexId) {
+    }
+
+    public Index findIndex(UUID indexId) {
+        return null;
+    }
+
+    public List<Index> listIndexes() {
+        return new ArrayList<>(indexes);
+    }
+
     public List<Index> getIndexes() {
         return indexes;
     }
 
     public void insert(Row row) {
-        if (row == null) return;
-        for (Row r : rows) {
-            if (row.rowId != null && row.rowId.equals(r.rowId)) {
-                throw new IllegalStateException("Duplicate row ID: " + row.rowId);
-            }
-        }
-        validateConstraints(row);
-        rows.add(row);
-        rowCount++;
     }
 
     public void update(String rowId, Row newRow) {
-        if (rowId == null || newRow == null) return;
-        int index = -1;
-        for (int i = 0; i < rows.size(); i++) {
-            if (rows.get(i).rowId != null && rows.get(i).rowId.equals(rowId)) {
-                index = i;
-                break;
-            }
-        }
-        if (index == -1) {
-            throw new IllegalStateException("Row not found: " + rowId);
-        }
-        validateConstraints(newRow);
-        rows.set(index, newRow);
     }
 
     public void delete(String rowId) {
-        if (rowId == null) return;
-        Row found = null;
-        for (Row r : rows) {
-            if (r.rowId != null && r.rowId.equals(rowId)) {
-                found = r;
-                break;
-            }
-        }
-        if (found != null) {
-            rows.remove(found);
-            rowCount--;
-        }
     }
 
     public void truncate() {
@@ -150,12 +146,6 @@ public class Table extends DatabaseObject {
     }
 
     public Row findRowById(String rowId) {
-        if (rowId == null) return null;
-        for (Row r : rows) {
-            if (r.rowId != null && r.rowId.equals(rowId)) {
-                return r;
-            }
-        }
         return null;
     }
 
@@ -168,79 +158,14 @@ public class Table extends DatabaseObject {
     }
 
     public boolean existsPrimaryKey(Object value) {
-        if (value == null) return false;
-        int pkIndex = 0;
-        for (Constraint c : constraints) {
-            if (c.getConstraintType() == dbms.catalog.constraint.ConstraintType.PRIMARY_KEY && c.getColumns() != null && !c.getColumns().isEmpty()) {
-                Column pkCol = c.getColumns().get(0);
-                for (int i = 0; i < columns.size(); i++) {
-                    if (columns.get(i).name.equals(pkCol.name)) {
-                        pkIndex = i;
-                        break;
-                    }
-                }
-            }
-        }
-        for (Row r : rows) {
-            if (r.values != null && pkIndex < r.values.size()) {
-                if (value.equals(r.values.get(pkIndex))) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 
     public boolean existsUniqueValue(String column, Object value) {
-        if (column == null || value == null) return false;
-        int colIndex = -1;
-        for (int i = 0; i < columns.size(); i++) {
-            if (columns.get(i).name.equalsIgnoreCase(column)) {
-                colIndex = i;
-                break;
-            }
-        }
-        if (colIndex == -1) {
-            for (Row r : rows) {
-                if (r.values != null) {
-                    for (Object v : r.values) {
-                        if (value.equals(v)) return true;
-                    }
-                }
-            }
-            return false;
-        }
-        for (Row r : rows) {
-            if (r.values != null && colIndex < r.values.size()) {
-                if (value.equals(r.values.get(colIndex))) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 
     public Row findRowByPrimaryKey(Object value) {
-        if (value == null) return null;
-        int pkIndex = 0;
-        for (Constraint c : constraints) {
-            if (c.getConstraintType() == dbms.catalog.constraint.ConstraintType.PRIMARY_KEY && c.getColumns() != null && !c.getColumns().isEmpty()) {
-                Column pkCol = c.getColumns().get(0);
-                for (int i = 0; i < columns.size(); i++) {
-                    if (columns.get(i).name.equals(pkCol.name)) {
-                        pkIndex = i;
-                        break;
-                    }
-                }
-            }
-        }
-        for (Row r : rows) {
-            if (r.values != null && pkIndex < r.values.size()) {
-                if (value.equals(r.values.get(pkIndex))) {
-                    return r;
-                }
-            }
-        }
         return null;
     }
 
@@ -269,4 +194,3 @@ public class Table extends DatabaseObject {
         }
     }
 }
-
