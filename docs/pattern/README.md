@@ -2577,11 +2577,120 @@ sequenceDiagram
     Test ->> Test: assertDoesNotThrow()
 ```
 
-### 7.3 Code Example
+### 7.3 Code Example for Template Method
+### AbstractCommand 
 ```java
-// TODO: Implement code example
+public interface TableDataCommand {
+    void execute(DataOperationContext context);
+}
+
+public abstract class AbstractTableDataCommand implements TableDataCommand {
+    @Override
+    public final void execute(DataOperationContext context) {
+
+    }
+    protected abstract void validateRequest(DataOperationContext context);
+    protected abstract void acquireLocks(DataOperationContext context);
+    protected abstract void writeAheadLog(DataOperationContext context);
+    protected abstract void modifyRow(DataOperationContext context);
+    protected abstract void updateIndexes(DataOperationContext context);
+    protected void validateConstraints(DataOperationContext context) {
+        
+    }
+    protected void afterExecution(DataOperationContext context) {
+    }
+    protected abstract Row getRow();
+}
+
+```
+### Concrete class 
+```java
+public class InsertRowCommand extends AbstractTableDataCommand {
+    private Row row;
+    public InsertRowCommand(Row row) {
+        this.row = row;
+    }
+    @Override
+    protected Row getRow() {
+        return row;
+    }
+    @Override
+    protected void validateRequest(DataOperationContext context) {
+        
+    }
+    @Override
+    protected void acquireLocks(DataOperationContext context) {
+    }
+    @Override
+    protected void writeAheadLog(DataOperationContext context) {
+    }
+    @Override
+    protected void modifyRow(DataOperationContext context) {
+        
+    }
+    @Override
+    protected void updateIndexes(DataOperationContext context) {
+        
+    }
+    @Override
+    protected void afterExecution(DataOperationContext context) {
+    }
+} 
 ```
 
+### 7.3 Code Example for Command Pattern 
+### Receiver
+```java
+public class Table {
+    private UUID tableId;
+    private long rowCount;
+    private Map<UUID, Row> storage = new HashMap<>();
+
+    public Table(UUID tableId) {
+        this.tableId = tableId;
+        this.rowCount = 0L;
+    }
+    
+    public void insertRow(Row row) {
+        
+    }
+    public Row findRow(UUID rowId) {
+        return null;
+    }
+    public long getRowCount() { return rowCount; }
+}
+```
+
+### Command 
+```java
+public interface TableDataCommand {
+    void execute(DataOperationContext context);
+}
+```
+
+### Concrete Command
+```java
+public class InsertRowCommand implements TableDataCommand {
+    private Row row;
+
+    public InsertRowCommand(Row row) {
+        this.row = row;
+    }
+    @Override
+    public void execute(DataOperationContext context) {
+        
+    }
+}
+```
+
+### Invoker
+```java
+public class QueryExecutor {
+    public void execute(TableDataCommand command, DataOperationContext context) {
+        
+    }
+}
+```
 ---
 
 # 8. Object Naming, Lookup, and Uniqueness Management
