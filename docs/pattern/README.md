@@ -2206,10 +2206,114 @@ sequenceDiagram
 ```
 
 ### 6.3 Code Example
+### Strategy
 ```java
-// TODO: Implement code example
+public abstract class Constraint {
+    protected UUID constraintId;
+    protected String constraintName;
+    protected ConstraintType constraintType;
+    protected UUID tableId;
+    protected List<Column> columns;
+    protected ConstraintStatus status;
+    protected boolean enabled;
+
+    public Constraint(UUID constraintId, String constraintName, ConstraintType constraintType, 
+                      UUID tableId, List<Column> columns) {
+        this.constraintId = constraintId;
+        this.constraintName = constraintName;
+        this.constraintType = constraintType;
+        this.tableId = tableId;
+        this.columns = new ArrayList<>(columns);
+        this.status = ConstraintStatus.ACTIVE;
+        this.enabled = true;
+    }
+
+    public String getConstraintName() { return constraintName; }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public abstract void validate(Row row, Table table);
+}
+```
+### Concrete Strategy 
+```java
+public class PrimaryKey extends Constraint {
+    public PrimaryKey(UUID constraintId, String constraintName, UUID tableId, Column column) {
+        super(constraintId, constraintName, ConstraintType.PRIMARY_KEY, tableId, Collections.singletonList(column));
+    }
+    @Override
+    public void validate(Row row, Table table) {
+       
+    }
+}
+
+public class UniqueConstraint extends Constraint {
+    public UniqueConstraint(UUID constraintId, String constraintName, UUID tableId, Column column) {
+        super(constraintId, constraintName, ConstraintType.UNIQUE, tableId, Collections.singletonList(column));
+    }
+    @Override
+    public void validate(Row row, Table table) {
+        
+    }
+}
+
+public class CheckConstraint extends Constraint {
+    private String expression;
+    public CheckConstraint(UUID constraintId, String constraintName, UUID tableId, Column column, String expression) {
+        super(constraintId, constraintName, ConstraintType.CHECK, tableId, Collections.singletonList(column));
+        this.expression = expression;
+    }
+    @Override
+    public void validate(Row row, Table table) {
+        
+    }
+}
+
+public class ForeignKey extends Constraint {
+    private Table referencedTable;
+    private Column referencedColumn;
+    public ForeignKey(UUID constraintId, String constraintName, UUID tableId, Column column,
+                      Table referencedTable, Column referencedColumn) {
+        super(constraintId, constraintName, ConstraintType.FOREIGN_KEY, tableId, Collections.singletonList(column));
+        this.referencedTable = referencedTable;
+        this.referencedColumn = referencedColumn;
+    }
+    @Override
+    public void validate(Row row, Table table) {
+        
+    }
+}
 ```
 
+### Context 
+```java
+public class Table {
+    private UUID tableId;
+    private String name;
+    private List<Column> columns = new ArrayList<>();
+    private List<Constraint> constraints = new ArrayList<>();
+    private List<Row> rows = new ArrayList<>();
+
+    public Table(UUID tableId, String name) {
+        this.tableId = tableId;
+        this.name = name;
+    }
+
+    public String getName() { return name; }
+    public List<Row> getRows() { return rows; }
+    public void addColumn(Column column) {
+        this.columns.add(column);
+    }
+    public void addConstraint(Constraint constraint) {
+        this.constraints.add(constraint);
+    }
+    public void insertRow(Row row) {
+        
+    }
+    public void validateConstraints(Row row) {
+        
+    }
+} 
+```
 ---
 
 # 7. Table Data and Row Operations
