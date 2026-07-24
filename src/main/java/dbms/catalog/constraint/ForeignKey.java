@@ -33,7 +33,8 @@ public class ForeignKey extends Constraint {
         this.enabled = true;
     }
 
-    public ForeignKey(String constraintName, List<Column> columns, UUID tableId, String referenceTable, String referenceColumns) {
+    public ForeignKey(String constraintName, List<Column> columns, UUID tableId, String referenceTable,
+            String referenceColumns) {
         this.constraintName = constraintName;
         this.columns = columns;
         this.constraintType = ConstraintType.FOREIGN_KEY;

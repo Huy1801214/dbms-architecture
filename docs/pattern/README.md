@@ -169,6 +169,25 @@ class DatabaseComponent {
     +getName() String
     +getOwner() String
     +getQualifiedName() String
+    +getLifecycleStatus() LifecycleStatus
+    +rename(newName : String) void
+    +drop(mode : DropMode) void
+    +getChildren() List~DatabaseComponent~
+}
+
+class LifecycleStatus {
+    <<enumeration>>
+
+    ACTIVE
+    DROPPING
+    DROPPED
+}
+
+class DropMode {
+    <<enumeration>>
+
+    RESTRICT
+    CASCADE
 }
 
 %% =====================================================
@@ -180,11 +199,13 @@ class Database {
     -name : String
     -owner : String
     -state : DatabaseState
+    -lifecycleStatus : LifecycleStatus
     -schemas : List~Schema~
 
     +open() void
     +close() void
     +rename(newName : String) void
+    +drop(mode : DropMode) void
     +completeOpening() void
     +failOpening() void
     +changeState(state : DatabaseState) void
@@ -199,6 +220,8 @@ class Database {
     +getName() String
     +getOwner() String
     +getQualifiedName() String
+    +getLifecycleStatus() LifecycleStatus
+    +getChildren() List~DatabaseComponent~
 }
 
 class DatabaseStatus {
@@ -269,6 +292,7 @@ class Schema {
     -schemaId : UUID
     -name : String
     -owner : String
+    -lifecycleStatus : LifecycleStatus
     -objects : List~SchemaObject~
     -factory : SchemaObjectFactory
 
@@ -289,6 +313,10 @@ class Schema {
     +getName() String
     +getOwner() String
     +getQualifiedName() String
+    +getLifecycleStatus() LifecycleStatus
+    +rename(newName : String) void
+    +drop(mode : DropMode) void
+    +getChildren() List~DatabaseComponent~
 }
 
 %% =====================================================
@@ -302,12 +330,16 @@ class SchemaObject {
     #name : String
     #owner : String
     #schemaId : UUID
+    #lifecycleStatus : LifecycleStatus
 
     +getId() UUID
     +getName() String
     +getOwner() String
     +getQualifiedName() String
+    +getLifecycleStatus() LifecycleStatus
     +rename(newName : String) void
+    +drop(mode : DropMode) void
+    +getChildren() List~DatabaseComponent~
     +accept(visitor : SchemaObjectVisitor)* void
 }
 
@@ -414,32 +446,29 @@ class Constraint {
     +columns : List~Column~
     +status : ConstraintStatus
     +enabled : Boolean
-    +validated : Boolean
-    +deferrable : Boolean
-    +initiallyDeferred : Boolean
 
-    +validate(row : Row, table : Table)* boolean
+    +validate(row : Row, table : Table)* void
 }
 
 class PrimaryKey {
-    +validate(row : Row, table : Table) boolean
+    +validate(row : Row, table : Table) void
 }
 
 class ForeignKey {
     -referencedTableId : UUID
     -referencedColumns : List~Column~
 
-    +validate(row : Row, table : Table) boolean
+    +validate(row : Row, table : Table) void
 }
 
 class UniqueConstraint {
-    +validate(row : Row, table : Table) boolean
+    +validate(row : Row, table : Table) void
 }
 
 class CheckConstraint {
     +expression : String
 
-    +validate(row : Row, table : Table) boolean
+    +validate(row : Row, table : Table) void
 }
 
 class ConstraintType {
@@ -450,25 +479,7 @@ class ConstraintStatus {
     <<enumeration>>
 }
 
-%% =====================================================
-%% CONSTRAINT FACTORY
-%% =====================================================
 
-class ConstraintFactory {
-    <<interface>>
-
-    +createPrimaryKey(request) PrimaryKey
-    +createForeignKey(request) ForeignKey
-    +createUnique(request) UniqueConstraint
-    +createCheck(request) CheckConstraint
-}
-
-class DefaultConstraintFactory {
-    +createPrimaryKey(request) PrimaryKey
-    +createForeignKey(request) ForeignKey
-    +createUnique(request) UniqueConstraint
-    +createCheck(request) CheckConstraint
-}
 
 %% =====================================================
 %% INDEXES
@@ -528,6 +539,8 @@ class Trigger {
 class TableBuilder {
     -tableId : UUID
     -name : String
+    -owner : String
+    -schemaId : UUID
     -engine : String
 
     -columns : List~Column~
@@ -536,7 +549,10 @@ class TableBuilder {
     -partitions : List~Partition~
     -triggers : List~Trigger~
 
+    +setTableId(tableId : UUID) TableBuilder
     +setName(name : String) TableBuilder
+    +setOwner(owner : String) TableBuilder
+    +setSchemaId(schemaId : UUID) TableBuilder
     +setEngine(engine : String) TableBuilder
     +addColumn(column : Column) TableBuilder
     +addConstraint(constraint : Constraint) TableBuilder
@@ -611,12 +627,82 @@ class ExportDDLVisitor {
 }
 
 %% =====================================================
+%% TEMPLATE METHOD & COMMAND PATTERN
+%% =====================================================
+
+class QueryExecutor {
+    +execute(command : TableDataCommand, context : DataOperationContext) void
+}
+
+class TableDataCommand {
+    <<interface>>
+
+    +execute(context : DataOperationContext) void
+}
+
+class AbstractTableDataCommand {
+    <<abstract>>
+
+    +execute(context : DataOperationContext) void
+
+    #validateRequest(context : DataOperationContext)* void
+    #acquireLocks(context : DataOperationContext)* void
+    #validateConstraints(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext)* void
+    #modifyRow(context : DataOperationContext)* void
+    #updateIndexes(context : DataOperationContext)* void
+    #afterExecution(context : DataOperationContext) void
+}
+
+class InsertRowCommand {
+    -row : Row
+
+    +InsertRowCommand(row : Row)
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext) void
+    #modifyRow(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+}
+
+class UpdateRowCommand {
+    -rowId : UUID
+    -newRow : Row
+
+    +UpdateRowCommand(rowId : UUID, newRow : Row)
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext) void
+    #modifyRow(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+}
+
+class DeleteRowCommand {
+    -rowId : UUID
+
+    +DeleteRowCommand(rowId : UUID)
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
+    #writeAheadLog(context : DataOperationContext) void
+    #modifyRow(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+}
+
+class DataOperationContext {
+    +table : Table
+    +transactionId : UUID
+}
+
+%% =====================================================
 %% COMPOSITE RELATIONSHIPS
 %% =====================================================
 
 DatabaseComponent <|.. Database
 DatabaseComponent <|.. Schema
 DatabaseComponent <|.. SchemaObject
+
+DatabaseComponent --> LifecycleStatus : has status
+DatabaseComponent --> DropMode : uses
 
 Database *--> "0..*" Schema : contains
 Schema *--> "0..*" SchemaObject : contains
@@ -668,12 +754,7 @@ Constraint --> Column
 
 ForeignKey --> Table : references
 
-ConstraintFactory <|.. DefaultConstraintFactory
 
-DefaultConstraintFactory ..> PrimaryKey : creates
-DefaultConstraintFactory ..> ForeignKey : creates
-DefaultConstraintFactory ..> UniqueConstraint : creates
-DefaultConstraintFactory ..> CheckConstraint : creates
 
 %% =====================================================
 %% INDEX RELATIONSHIPS
@@ -734,6 +815,21 @@ SchemaObjectVisitor ..> StoredProcedure : visits
 SchemaObjectVisitor ..> Sequence : visits
 
 %% =====================================================
+%% TEMPLATE METHOD & COMMAND RELATIONSHIPS
+%% =====================================================
+
+TableDataCommand <|.. AbstractTableDataCommand
+AbstractTableDataCommand <|-- InsertRowCommand
+AbstractTableDataCommand <|-- UpdateRowCommand
+AbstractTableDataCommand <|-- DeleteRowCommand
+
+QueryExecutor --> TableDataCommand : invokes
+AbstractTableDataCommand --> DataOperationContext : uses
+DataOperationContext --> Table : provides receiver
+InsertRowCommand *--> Row : contains
+UpdateRowCommand *--> Row : contains
+
+%% =====================================================
 %% STYLING AND THEMING
 %% =====================================================
 
@@ -771,8 +867,7 @@ style UniqueConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148
 style CheckConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style ConstraintType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style ConstraintStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
-style ConstraintFactory fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
-style DefaultConstraintFactory fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+
 
 %% Theme 6: Indexes (Amber/Yellow)
 style Index fill:#fff8e1,stroke:#ffb300,stroke-width:2px,color:#5d4037
@@ -798,6 +893,19 @@ style DefaultSchemaObjectIterator fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px,c
 %% Theme 11: Visitor Pattern (Rose)
 style SchemaObjectVisitor fill:#fce4ec,stroke:#e91e63,stroke-width:2px,color:#880e4f
 style ExportDDLVisitor fill:#fce4ec,stroke:#e91e63,stroke-width:1px,color:#880e4f
+
+%% Theme 12: Template Method & Command Pattern (Blue/Orange/Purple/Slate)
+style QueryExecutor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style TableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style AbstractTableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style InsertRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style UpdateRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style DeleteRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style DataOperationContext fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+%% Theme 13: Lifecycle status & Drop mode (Purple)
+style LifecycleStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style DropMode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 ```
 # 1. Database Lifecycle Management
 ## Using State Pattern

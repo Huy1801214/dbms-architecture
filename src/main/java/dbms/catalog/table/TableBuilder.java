@@ -9,14 +9,31 @@ import java.util.UUID;
 public class TableBuilder {
     private UUID tableId;
     private String name;
+    private String owner;
+    private UUID schemaId;
     private String engine;
 
     private List<Column> columns = new ArrayList<>();
     private List<Constraint> constraints = new ArrayList<>();
     private List<Index> indexes = new ArrayList<>();
 
+    public TableBuilder setTableId(UUID tableId) {
+        this.tableId = tableId;
+        return this;
+    }
+
     public TableBuilder setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public TableBuilder setOwner(String owner) {
+        this.owner = owner;
+        return this;
+    }
+
+    public TableBuilder setSchemaId(UUID schemaId) {
+        this.schemaId = schemaId;
         return this;
     }
 
@@ -52,6 +69,10 @@ public class TableBuilder {
     public Table build() {
         validate();
         Table table = new Table(tableId != null ? tableId.toString() : UUID.randomUUID().toString(), name, engine);
+        table.owner = owner;
+        if (schemaId != null) {
+            table.schemaId = schemaId.toString();
+        }
         for (Column col : columns) {
             table.addColumn(col);
         }
@@ -64,4 +85,3 @@ public class TableBuilder {
         return table;
     }
 }
-
