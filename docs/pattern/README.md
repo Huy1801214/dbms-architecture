@@ -1451,8 +1451,256 @@ sequenceDiagram
 ```
 
 ### 3.3 Code Example
+### Component
+```java 
+public interface DatabaseComponent {
+    UUID getId();
+    String getName();
+    String getOwner();
+    String getQualifiedName();
+    LifecycleStatus getLifecycleStatus();
+    void rename(String newName);
+    void drop(DropMode mode);
+    List<DatabaseComponent> getChildren();
+}
+```
+### Composite
 ```java
-// TODO: Implement code example
+public class Schema implements DatabaseComponent {
+    private UUID schemaId;
+    private String name;
+    private String owner;
+    private LifecycleStatus lifecycleStatus;
+    private List<SchemaObject> objects;
+
+    public Schema(UUID schemaId, String name, String owner) {
+        this.schemaId = schemaId;
+        this.name = name;
+        this.owner = owner;
+        this.lifecycleStatus = LifecycleStatus.ACTIVE;
+        this.objects = new ArrayList<>();
+    }
+    @Override
+    public UUID getId() {
+        return schemaId;
+    }
+    @Override
+    public String getName() {
+        return name;
+    }
+    @Override
+    public String getOwner() {
+        return owner;
+    }
+    @Override
+    public String getQualifiedName() {
+        return name;
+    }
+    @Override
+    public LifecycleStatus getLifecycleStatus() {
+        return lifecycleStatus;
+    }
+    public void addObject(SchemaObject object) {
+        
+    }
+    public void removeObject(UUID objectId) {
+        
+    }
+    @Override
+    public void rename(String newName) {
+        
+    }
+    @Override
+    public void drop(DropMode mode) {
+        
+    }
+    @Override
+    public List<DatabaseComponent> getChildren() {
+        return null;
+    }
+    private void dropChildren(DropMode mode) {
+        
+    }
+    private void markAsDropping() {
+        
+    }
+    private void markAsDropped() {
+        
+    }
+}
+
+public class Database implements DatabaseComponent {
+    private UUID databaseId;
+    private String name;
+    private String owner;
+    private LifecycleStatus lifecycleStatus;
+    private List<Schema> schemas;
+
+    public Database(UUID databaseId, String name, String owner) {
+        this.databaseId = databaseId;
+        this.name = name;
+        this.owner = owner;
+        this.lifecycleStatus = LifecycleStatus.ACTIVE;
+        this.schemas = new ArrayList<>();
+    }
+    @Override
+    public UUID getId() {
+        return databaseId;
+    }
+    @Override
+    public String getName() {
+        return name;
+    }
+    @Override
+    public String getOwner() {
+        return owner;
+    }
+    @Override
+    public String getQualifiedName() {
+        return name;
+    }
+    @Override
+    public LifecycleStatus getLifecycleStatus() {
+        return lifecycleStatus;
+    }
+    public void addSchema(Schema schema) {
+        
+    }
+    public void removeSchema(UUID schemaId) {
+        
+    }
+    @Override
+    public void rename(String newName) {
+        
+    }
+    @Override
+    public void drop(DropMode mode) {
+        
+    }
+    @Override
+    public List<DatabaseComponent> getChildren() {
+        return null;
+    }
+    private void dropChildren(DropMode mode) {
+        
+    }
+    private void markAsDropping() {
+        
+    }
+    private void markAsDropped() {
+        
+    }
+}
+
+```
+### Leaf
+```java
+public abstract class SchemaObject implements DatabaseComponent {
+    protected UUID objectId;
+    protected String name;
+    protected String owner;
+    protected UUID schemaId;
+    protected LifecycleStatus lifecycleStatus;
+
+    public SchemaObject(UUID objectId, String name, String owner, UUID schemaId) {
+        this.objectId = objectId;
+        this.name = name;
+        this.owner = owner;
+        this.schemaId = schemaId;
+        this.lifecycleStatus = LifecycleStatus.ACTIVE;
+    }
+    @Override
+    public UUID getId() {
+        return objectId;
+    }
+    @Override
+    public String getName() {
+        return name;
+    }
+    @Override
+    public String getOwner() {
+        return owner;
+    }
+    @Override
+    public LifecycleStatus getLifecycleStatus() {
+        return lifecycleStatus;
+    }
+    @Override
+    public void rename(String newName) {
+        
+    }
+    @Override
+    public void drop(DropMode mode) {
+        
+    }
+    @Override
+    public List<DatabaseComponent> getChildren() {
+        return null;
+    }
+    protected void markAsDropping() {
+        
+    }
+    protected void markAsDropped() {
+        
+    }
+}
+
+public class Table extends SchemaObject {
+    private String engine;
+    public Table(UUID objectId, String name, String owner, UUID schemaId, String engine) {
+        super(objectId, name, owner, schemaId);
+        this.engine = engine;
+    }
+    @Override
+    public String getQualifiedName() {
+        return name;
+    }
+    @Override
+    protected void releaseMetadata() {
+        
+    }
+}
+public class View extends SchemaObject {
+    private String queryDefinition;
+    public View(UUID objectId, String name, String owner, UUID schemaId, String queryDefinition) {
+        super(objectId, name, owner, schemaId);
+        this.queryDefinition = queryDefinition;
+    }
+    @Override
+    public String getQualifiedName() {
+        return name;
+    }
+    @Override
+    protected void releaseMetadata() {
+        
+    }
+}
+public class StoredProcedure extends SchemaObject {
+    public StoredProcedure(UUID objectId, String name, String owner, UUID schemaId) {
+        super(objectId, name, owner, schemaId);
+    }
+    @Override
+    public String getQualifiedName() {
+        return name;
+    }
+    @Override
+    protected void releaseMetadata() {
+        
+    }
+}
+public class Sequence extends SchemaObject {
+    public Sequence(UUID objectId, String name, String owner, UUID schemaId) {
+        super(objectId, name, owner, schemaId);
+    }
+    @Override
+    public String getQualifiedName() {
+        return name;
+    }
+    @Override
+    protected void releaseMetadata() {
+       
+    }
+}
 ```
 
 --- 
@@ -1958,10 +2206,114 @@ sequenceDiagram
 ```
 
 ### 6.3 Code Example
+### Strategy
 ```java
-// TODO: Implement code example
+public abstract class Constraint {
+    protected UUID constraintId;
+    protected String constraintName;
+    protected ConstraintType constraintType;
+    protected UUID tableId;
+    protected List<Column> columns;
+    protected ConstraintStatus status;
+    protected boolean enabled;
+
+    public Constraint(UUID constraintId, String constraintName, ConstraintType constraintType, 
+                      UUID tableId, List<Column> columns) {
+        this.constraintId = constraintId;
+        this.constraintName = constraintName;
+        this.constraintType = constraintType;
+        this.tableId = tableId;
+        this.columns = new ArrayList<>(columns);
+        this.status = ConstraintStatus.ACTIVE;
+        this.enabled = true;
+    }
+
+    public String getConstraintName() { return constraintName; }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public abstract void validate(Row row, Table table);
+}
+```
+### Concrete Strategy 
+```java
+public class PrimaryKey extends Constraint {
+    public PrimaryKey(UUID constraintId, String constraintName, UUID tableId, Column column) {
+        super(constraintId, constraintName, ConstraintType.PRIMARY_KEY, tableId, Collections.singletonList(column));
+    }
+    @Override
+    public void validate(Row row, Table table) {
+       
+    }
+}
+
+public class UniqueConstraint extends Constraint {
+    public UniqueConstraint(UUID constraintId, String constraintName, UUID tableId, Column column) {
+        super(constraintId, constraintName, ConstraintType.UNIQUE, tableId, Collections.singletonList(column));
+    }
+    @Override
+    public void validate(Row row, Table table) {
+        
+    }
+}
+
+public class CheckConstraint extends Constraint {
+    private String expression;
+    public CheckConstraint(UUID constraintId, String constraintName, UUID tableId, Column column, String expression) {
+        super(constraintId, constraintName, ConstraintType.CHECK, tableId, Collections.singletonList(column));
+        this.expression = expression;
+    }
+    @Override
+    public void validate(Row row, Table table) {
+        
+    }
+}
+
+public class ForeignKey extends Constraint {
+    private Table referencedTable;
+    private Column referencedColumn;
+    public ForeignKey(UUID constraintId, String constraintName, UUID tableId, Column column,
+                      Table referencedTable, Column referencedColumn) {
+        super(constraintId, constraintName, ConstraintType.FOREIGN_KEY, tableId, Collections.singletonList(column));
+        this.referencedTable = referencedTable;
+        this.referencedColumn = referencedColumn;
+    }
+    @Override
+    public void validate(Row row, Table table) {
+        
+    }
+}
 ```
 
+### Context 
+```java
+public class Table {
+    private UUID tableId;
+    private String name;
+    private List<Column> columns = new ArrayList<>();
+    private List<Constraint> constraints = new ArrayList<>();
+    private List<Row> rows = new ArrayList<>();
+
+    public Table(UUID tableId, String name) {
+        this.tableId = tableId;
+        this.name = name;
+    }
+
+    public String getName() { return name; }
+    public List<Row> getRows() { return rows; }
+    public void addColumn(Column column) {
+        this.columns.add(column);
+    }
+    public void addConstraint(Constraint constraint) {
+        this.constraints.add(constraint);
+    }
+    public void insertRow(Row row) {
+        
+    }
+    public void validateConstraints(Row row) {
+        
+    }
+} 
+```
 ---
 
 # 7. Table Data and Row Operations
@@ -2238,6 +2590,7 @@ sequenceDiagram
 --- 
 
 # Query Processing feature mindmap
+```mermaid
 flowchart LR
     %% =====================================================
     %% ROOT
@@ -2342,3 +2695,4 @@ flowchart LR
     classDef highStyle fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704,font-weight:bold
 
     classDef mediumStyle fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#664d03,font-weight:bold
+```
