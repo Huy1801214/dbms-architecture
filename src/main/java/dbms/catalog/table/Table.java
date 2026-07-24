@@ -2,12 +2,26 @@ package dbms.catalog.table;
 
 import dbms.catalog.base.DatabaseObject;
 import dbms.catalog.base.DatabaseObjectVisitor;
+import dbms.catalog.base.LifecycleStatus;
+import dbms.catalog.base.DropMode;
 import dbms.catalog.constraint.Constraint;
 import dbms.catalog.index.Index;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
 
 public class Table extends DatabaseObject {
+    private static final java.util.Map<String, Table> allTables = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static Table getTableByName(String name) {
+        return name != null ? allTables.get(name) : null;
+    }
+
+    public static void clearAllTablesRegistry() {
+        allTables.clear();
+    }
+
     public java.util.UUID tableId;
     public String engine;
     public long rowCount;
@@ -18,6 +32,7 @@ public class Table extends DatabaseObject {
     private List<Row> rows = new java.util.ArrayList<>();
 
     public Table() {
+        this.lifecycleStatus = LifecycleStatus.ACTIVE;
     }
 
     public Table(String tableId, String name, String engine) {
@@ -25,10 +40,14 @@ public class Table extends DatabaseObject {
         this.name = name;
         this.engine = engine;
         this.rowCount = 0;
+        this.lifecycleStatus = LifecycleStatus.ACTIVE;
         try {
             this.tableId = java.util.UUID.fromString(tableId);
         } catch (IllegalArgumentException e) {
             this.tableId = java.util.UUID.randomUUID();
+        }
+        if (name != null) {
+            allTables.put(name, this);
         }
     }
 
@@ -45,7 +64,13 @@ public class Table extends DatabaseObject {
     }
 
     public void setName(String name) {
+        if (this.name != null) {
+            allTables.remove(this.name);
+        }
         this.name = name;
+        if (name != null) {
+            allTables.put(name, this);
+        }
     }
 
     public String getEngine() {
@@ -77,12 +102,26 @@ public class Table extends DatabaseObject {
     }
 
     public void validateConstraints(Row row) {
+        for (Constraint constraint : constraints) {
+            constraint.validate(row, this);
+        }
     }
 
     public void addIndex(Index index) {
         if (index != null) {
             this.indexes.add(index);
         }
+    }
+
+    public void removeIndex(UUID indexId) {
+    }
+
+    public Index findIndex(UUID indexId) {
+        return null;
+    }
+
+    public List<Index> listIndexes() {
+        return new ArrayList<>(indexes);
     }
 
     public List<Index> getIndexes() {
@@ -99,6 +138,8 @@ public class Table extends DatabaseObject {
     }
 
     public void truncate() {
+        rows.clear();
+        rowCount = 0;
     }
 
     public void analyze() {
@@ -129,7 +170,7 @@ public class Table extends DatabaseObject {
     }
 
     public boolean existsReferencedRow(String column, Object value) {
-        return false;
+        return existsUniqueValue(column, value);
     }
 
     @Override
@@ -137,7 +178,8 @@ public class Table extends DatabaseObject {
     }
 
     @Override
-    public void drop() {
+    public void drop(DropMode mode) {
+        this.lifecycleStatus = LifecycleStatus.DROPPED;
     }
 
     @Override
@@ -147,5 +189,8 @@ public class Table extends DatabaseObject {
 
     @Override
     public void accept(DatabaseObjectVisitor visitor) {
+        if (visitor != null) {
+            visitor.visit(this);
+        }
     }
 }

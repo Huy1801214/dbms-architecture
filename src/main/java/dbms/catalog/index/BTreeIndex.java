@@ -1,22 +1,38 @@
 package dbms.catalog.index;
 
+import dbms.catalog.table.Column;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
+
+class BTreeMap<K, V> {
+}
 
 public class BTreeIndex extends Index {
-    @Override
-    public List<String> search(Object key) {
-        return null;
+    private final BTreeMap<IndexKey, List<RowId>> btree;
+    private final int maxDegree; 
+
+    public BTreeIndex(UUID indexId, String name, UUID tableId, List<Column> columns, boolean unique) {
+        super(indexId, name, tableId, columns, unique);
+        this.btree = new BTreeMap<>();
+        this.maxDegree = 4; 
     }
 
     @Override
-    public void insertKey(Object key, String rowId) {
+    public List<RowId> search(IndexKey key) {
+        return new ArrayList<>();
     }
 
     @Override
-    public void deleteKey(Object key, String rowId) {
+    public void insertKey(IndexKey key, RowId rowId) {        
+    }
+
+    @Override
+    public void deleteKey(IndexKey key, RowId rowId) {       
     }
 
     @Override
     public void rebuild() {
     }
 }
+
