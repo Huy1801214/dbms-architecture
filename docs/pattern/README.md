@@ -17,13 +17,13 @@ flowchart LR
     %% =====================================================
     %% HIGH-PRIORITY FEATURES
     %% =====================================================
-    H1["1. Database Lifecycle Management"]
+    H1["1. Database Operational State Management"]
     H1P["State"]
 
     H2["2. Schema Management"]
     H2P["None"]
 
-    H3["3. Database Object Hierarchy and Lifecycle"]
+    H3["3. Database Object Hierarchy and Structural Lifecycle"]
     H3P["Composite"]
 
     H4["4. Table Definition and Lifecycle"]
@@ -134,32 +134,13 @@ flowchart LR
 ```
 # Database Objects Feature and Design Pattern Analysis
 
-| Priority | Feature | Suitable Design Pattern | Usage | Justification / Rationale |
-|---:|---|---|---|---|
-| 1 | Database Lifecycle Management | State | Define a `DatabaseState` interface with implementations such as `OnlineState`, `OfflineState`, `OpeningState`, and `ClosingState`. The `Database` delegates state-dependent operations such as `open()`, `close()`, and `rename()` to its current state. | State is suitable when each database state has different behaviors and transition rules. If the lifecycle only requires a few simple conditions, a `DatabaseStatus` enum is sufficient and State would be unnecessary. |
-| 2 | Schema Management | None | The `Database` directly manages its `Schema` collection through methods such as `addSchema()`, `removeSchema()`, `findSchema()`, and `listSchemas()`. | `Schema` is currently a straightforward domain entity and container. Introducing a design pattern would add complexity without solving a meaningful variation or coupling problem. |
-| 3 | Database Object Hierarchy and Lifecycle Management | Composite | `DatabaseComponent` acts as the common component. `Database` and `Schema` act as composite containers, while `Table`, `View`, `StoredProcedure`, and `Sequence` act as leaf objects. `Schema` may use `DatabaseObjectFactory` to create schema objects. | Composite matches the hierarchical structure `Database → Schema → DatabaseObject`. Abstract Factory is only justified when the system supports multiple families of database objects, such as different SQL dialects, storage engines, or catalog implementations. |
-| 4 | Table Definition and Lifecycle Management | Builder | `TableBuilder` incrementally collects the table name, engine, columns, constraints, indexes, partitions, and triggers. Its `build()` method validates the complete configuration before creating a `Table`. | `Table` is a complex object containing multiple collections and consistency rules. Builder prevents telescoping constructors and ensures that an invalid or incomplete table cannot be created. |
-| 5 | Column Definition and Data Type Management | None | Create a `Column` directly through a constructor or static creation method with parameters such as `DataType`, length, precision, scale, nullability, and default value. | `Column` is a relatively simple value/domain object with no complex product family or interchangeable algorithm. Applying a GoF pattern would be unnecessary over-engineering. |
-| 6 | Constraint Definition and Data Integrity Validation | Strategy | `Table` maintains a collection of `Constraint` objects and calls `validate(row, table)` without knowing whether the concrete constraint is a `PrimaryKey`, `ForeignKey`, `UniqueConstraint`, or `CheckConstraint`. `ConstraintFactory` may create constraints from parsed SQL or configuration requests. | Each constraint implements a different validation algorithm, making Strategy appropriate. A factory is only necessary when constraints must be created dynamically from external input; otherwise, direct construction is sufficient. |
-| 7 | Table Data and Row Operations | Template Method; Command | Define an abstract `DataModificationOperation` with a standard execution flow: validate data, acquire locks, write WAL records, modify rows, update indexes, and release resources. Concrete operations such as `InsertOperation`, `UpdateOperation`, and `DeleteOperation` customize specific steps. DML requests may optionally be represented as command objects. | Template Method ensures that every data modification follows the same safe transactional workflow. Command is useful only when operations must be queued, schedule, passed as objects, or executed by an invoker. Transaction rollback should still rely on Transaction Management and WAL rather than only on `Command.undo()`. |
-| 8 | Object Naming, Lookup, and Uniqueness Management | Facade | Build a validation chain such as `NullNameValidator → FormatValidator → ReservedWordValidator → UniquenessValidator`. `CatalogManager` exposes a unified API for registering, finding, and removing database objects. | Chain of Responsibility separates independent naming rules and allows new validators to be added without modifying existing validators. Facade allows clients to access catalog operations without depending directly on `Database`, `Schema`, and internal catalog structures. |
-| 9 | Index Definition and Management | Strategy; Factory Method (Conditional) | Define a common index abstraction with operations such as `search()`, `insertKey()`, and `deleteKey()`. `BTreeIndex`, `HashIndex`, and `BitmapIndex` provide different implementations. Concrete index creators may be introduced when each index type has a significantly different construction process. | Index structures use different search and update algorithms, making Strategy appropriate. Factory Method is only justified when object construction varies through creator subclasses. A single `IndexFactory.create(type)` method containing a switch statement is a Simple Factory, not the GoF Factory Method pattern. |
-| 10 | View Management | None in the Current Design; Proxy (Conditional) | If clients must query a `View` exactly like a `Table`, introduce a `QueryableRelation` interface implemented by both classes. The `View` stores a query definition and delegates execution to `QueryExecutor` or its underlying tables. | The current `View` only stores `queryDefinition` and does not share a query interface with `Table`; therefore, it is not currently a Proxy. Proxy becomes appropriate only when transparent access to tables and views through the same abstraction is required. |
-| 11 | Stored Procedure Management | Command | Keep `StoredProcedure` as the catalog definition. Represent each invocation as a `ProcedureCallCommand` containing the procedure identifier, arguments, and execution context. `ProcedureExecutor` acts as the invoker. | A stored procedure call is an independent executable request with parameters, results, and error handling. Command separates procedure metadata from invocation and execution responsibilities. |
-| 12 | Sequence Management | None | Implement `Sequence.nextValue()` directly by incrementing the current value, checking the maximum value, and applying the cycle configuration. | The current sequence behavior is simple enough to express with clear conditional logic. State would only be justified if states such as active, exhausted, and cycling introduced substantially different behaviors and transition rules. |
-| 13 | Schema Object Listing and Traversal | Iterator | `Schema.iterator()` creates a `SchemaObjectIterator`. The iterator exposes `hasNext()` and `next()` for traversing database objects without exposing the collection used internally by `Schema`. | Iterator decouples traversal from the internal representation. `Schema` can later replace its `List` with another collection without changing client traversal code. |
-| 14 | Database Object Metadata and DDL Export | Visitor | `Table`, `View`, `StoredProcedure`, and `Sequence` implement `accept(visitor)`. `ExportDDLVisitor` provides a corresponding `visit()` operation for each database object type and generates its DDL representation. | DDL generation varies by object type but does not belong to the core responsibility of domain entities. Visitor allows new external operations, such as DDL export, documentation generation, or dependency collection, without adding those operations directly to every domain class. |
-| 15 | Trigger Management | Observer | The DML execution layer publishes events such as `BeforeInsert`, `AfterInsert`, `BeforeUpdate`, and `AfterDelete`. Registered `Trigger` objects receive matching events through a `TriggerDispatcher`. | Triggers are naturally event-driven. Observer decouples data modification operations from trigger actions. The dispatcher must still control execution order, error handling, and cancellation, especially for before-event triggers. |
-| 16 | Table Partition Management | Strategy | Define a `PartitionStrategy` interface with a method such as `locatePartition(row)`. Implementations such as `RangePartitionStrategy`, `ListPartitionStrategy`, and `HashPartitionStrategy` provide different row-routing algorithms. `PartitionManager` delegates partition selection to the configured strategy. | Partition-routing algorithms vary independently from the `Table` entity. Strategy removes large conditional blocks and allows new partitioning algorithms to be introduced without modifying `Table`. |
-
 # Database Objects class diagram 
 ```mermaid
 classDiagram
 direction TB
 
 %% =====================================================
-%% DATABASE COMPONENT HIERARCHY
+%% COMPOSITE COMPONENT
 %% =====================================================
 
 class DatabaseComponent {
@@ -170,10 +151,15 @@ class DatabaseComponent {
     +getOwner() String
     +getQualifiedName() String
     +getLifecycleStatus() LifecycleStatus
+
     +rename(newName : String) void
     +drop(mode : DropMode) void
     +getChildren() List~DatabaseComponent~
 }
+
+%% =====================================================
+%% STRUCTURAL LIFECYCLE TYPES
+%% =====================================================
 
 class LifecycleStatus {
     <<enumeration>>
@@ -191,7 +177,30 @@ class DropMode {
 }
 
 %% =====================================================
-%% DATABASE
+%% DATABASE MANAGER
+%% =====================================================
+
+class DatabaseManager {
+    -databasesById : Map~UUID, Database~
+    -databaseIdsByName : Map~String, UUID~
+
+    +createDatabase(request) Database
+    +dropDatabase(databaseId : UUID, mode : DropMode) void
+
+    +openDatabase(databaseId : UUID) void
+    +closeDatabase(databaseId : UUID) void
+    +renameDatabase(databaseId : UUID, newName : String) void
+
+    +findDatabaseById(databaseId : UUID) Database
+    +findDatabaseByName(name : String) Database
+    +listAllDatabases() List~Database~
+
+    -openDatabaseResources(database : Database) void
+    -closeDatabaseResources(database : Database) void
+}
+
+%% =====================================================
+%% DATABASE - STATE CONTEXT
 %% =====================================================
 
 class Database {
@@ -206,9 +215,6 @@ class Database {
     +close() void
     +rename(newName : String) void
     +drop(mode : DropMode) void
-    +completeOpening() void
-    +failOpening() void
-    +changeState(state : DatabaseState) void
     +getStatus() DatabaseStatus
 
     +addSchema(schema : Schema) void
@@ -222,19 +228,28 @@ class Database {
     +getQualifiedName() String
     +getLifecycleStatus() LifecycleStatus
     +getChildren() List~DatabaseComponent~
-}
 
-class DatabaseStatus {
-    <<enumeration>>
+    ~openingSucceeded() void
+    ~openingFailed() void
+    ~closingSucceeded() void
+    ~closingFailed() void
 
-    ONLINE
-    OFFLINE
-    OPENING
-    CLOSING
+    ~transitionTo(state : DatabaseState) void
+    ~updateName(newName : String) void
+    ~attachSchema(schema : Schema) void
+    ~detachSchema(schemaId : UUID) void
+    ~findSchemaInternal(name : String) Schema
+    ~listSchemasInternal() List~Schema~
+
+    -validateActive() void
+    -validateDrop(mode : DropMode) void
+    -dropChildren() void
+    -markAsDropping() void
+    -markAsDropped() void
 }
 
 %% =====================================================
-%% STATE PATTERN
+%% DATABASE STATE
 %% =====================================================
 
 class DatabaseState {
@@ -243,17 +258,37 @@ class DatabaseState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
     +openingSucceeded(database : Database) void
     +openingFailed(database : Database) void
+    +closingSucceeded(database : Database) void
+    +closingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
 }
+
+%% =====================================================
+%% CONCRETE DATABASE STATES
+%% =====================================================
 
 class OfflineState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
     +openingSucceeded(database : Database) void
     +openingFailed(database : Database) void
+    +closingSucceeded(database : Database) void
+    +closingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
 }
 
@@ -261,8 +296,16 @@ class OpeningState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
     +openingSucceeded(database : Database) void
     +openingFailed(database : Database) void
+    +closingSucceeded(database : Database) void
+    +closingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
 }
 
@@ -270,8 +313,16 @@ class OnlineState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
     +openingSucceeded(database : Database) void
     +openingFailed(database : Database) void
+    +closingSucceeded(database : Database) void
+    +closingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
 }
 
@@ -279,9 +330,26 @@ class ClosingState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
     +openingSucceeded(database : Database) void
     +openingFailed(database : Database) void
+    +closingSucceeded(database : Database) void
+    +closingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
+}
+
+class DatabaseStatus {
+    <<enumeration>>
+
+    OFFLINE
+    OPENING
+    ONLINE
+    CLOSING
 }
 
 %% =====================================================
@@ -290,37 +358,47 @@ class ClosingState {
 
 class Schema {
     -schemaId : UUID
+    -databaseId : UUID
     -name : String
     -owner : String
     -lifecycleStatus : LifecycleStatus
-    -objects : List~SchemaObject~
-    -factory : SchemaObjectFactory
+    -objectsById : Map~UUID, SchemaObject~
+    -objectIdsByName : Map~String, UUID~
 
     +addObject(object : SchemaObject) void
-    +removeObject(objectId : UUID) void
-    +findObject(name : String) SchemaObject
+    +dropObject(objectId : UUID, mode : DropMode) void
+
+    +findObjectById(objectId : UUID) SchemaObject
+    +findObjectByName(name : String) SchemaObject
     +listObjects() List~SchemaObject~
-
-    +createTable(request) Table
-    +createView(request) View
-    +createStoredProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
-
-    +iterator() SchemaObjectIterator
-    +accept(visitor : SchemaObjectVisitor) void
+    +containsObjectName(name : String) boolean
 
     +getId() UUID
+    +getDatabaseId() UUID
     +getName() String
     +getOwner() String
     +getQualifiedName() String
     +getLifecycleStatus() LifecycleStatus
+
     +rename(newName : String) void
     +drop(mode : DropMode) void
     +getChildren() List~DatabaseComponent~
+
+    ~removeObjectInternal(objectId : UUID) void
+
+    -validateActive() void
+    -validateDrop(mode : DropMode) void
+    -validateUniqueId(objectId : UUID) void
+    -validateUniqueName(name : String) void
+    -validateOwnership(object : SchemaObject) void
+    -normalizeName(name : String) String
+    -dropChildren() void
+    -markAsDropping() void
+    -markAsDropped() void
 }
 
 %% =====================================================
-%% ABSTRACT SCHEMA OBJECT
+%% COMMON SCHEMA OBJECT
 %% =====================================================
 
 class SchemaObject {
@@ -333,24 +411,27 @@ class SchemaObject {
     #lifecycleStatus : LifecycleStatus
 
     +getId() UUID
+    +getSchemaId() UUID
     +getName() String
     +getOwner() String
     +getQualifiedName() String
     +getLifecycleStatus() LifecycleStatus
+
     +rename(newName : String) void
     +drop(mode : DropMode) void
     +getChildren() List~DatabaseComponent~
-    +accept(visitor : SchemaObjectVisitor)* void
+
+    #validateActive() void
+    #markAsDropping() void
+    #markAsDropped() void
 }
 
 %% =====================================================
-%% CONCRETE SCHEMA OBJECTS
+%% TABLE
 %% =====================================================
 
 class Table {
-    +tableId : UUID
-    +engine : String
-    +rowCount : Long
+    -engine : String
 
     -columns : List~Column~
     -constraints : List~Constraint~
@@ -358,249 +439,34 @@ class Table {
     -partitions : List~Partition~
     -triggers : List~Trigger~
 
-    +insert(row : Row) void
-    +update(row : Row) void
-    +delete(rowId : UUID) void
-    +truncate() void
-    +analyze() void
+    ~Table(objectId : UUID, name : String, owner : String, schemaId : UUID, engine : String, columns, constraints, indexes, partitions, triggers)
 
-    +addColumn(column : Column) void
-    +removeColumn(columnId : UUID) void
+    +getEngine() String
     +getColumns() List~Column~
+    +getConstraints() List~Constraint~
+    +getIndexes() List~Index~
+    +getPartitions() List~Partition~
+    +getTriggers() List~Trigger~
 
-    +addConstraint(constraint : Constraint) void
-    +removeConstraint(constraintId : UUID) void
+    +addConstraint(constraint : Constraint, context : ConstraintDefinitionContext) void
+    +dropConstraint(constraintId : UUID) void
+    +findConstraintById(constraintId : UUID) Constraint
+    +findConstraintByName(name : String) Constraint
+    +validateConstraints(row : Row, context : ConstraintValidationContext) void
 
-    +addIndex(index : Index) void
-    +removeIndex(indexId : UUID) void
+    +addIndex(index : Index, context : IndexDefinitionContext) void
+    +dropIndex(indexId : UUID) void
+    +findIndexById(indexId : UUID) Index
+    +findIndexByName(name : String) Index
 
-    +accept(visitor : SchemaObjectVisitor) void
-}
+    +insertRow(row : Row) void
+    +findRow(rowId : UUID) Row
+    +updateRow(rowId : UUID, changes : RowChanges) Row
+    +deleteRow(rowId : UUID) Row
 
-class View {
-    +queryDefinition : String
-
-    +accept(visitor : SchemaObjectVisitor) void
-}
-
-class StoredProcedure {
-    +code : String
-
-    +execute() void
-    +accept(visitor : SchemaObjectVisitor) void
-}
-
-class Sequence {
-    +currentValue : Long
-    +incrementValue : Long
-    +minimumValue : Long
-    +maximumValue : Long
-    +cycle : Boolean
-
-    +nextValue() Long
-    +accept(visitor : SchemaObjectVisitor) void
-}
-
-%% =====================================================
-%% TABLE COMPONENTS AND TABLE DATA
-%% =====================================================
-
-class Column {
-    +columnId : UUID
-    +name : String
-    +dataType : DataType
-    +length : Integer
-    +precision : Integer
-    +scale : Integer
-    +nullable : Boolean
-    +defaultValue : Object
-    +identity : Boolean
-    +generated : Boolean
-    +status : ColumnStatus
-}
-
-class Row {
-    +rowId : UUID
-    +values : Map~UUID, Object~
-}
-
-class DataType {
-    <<enumeration>>
-}
-
-class ColumnStatus {
-    <<enumeration>>
-}
-
-%% =====================================================
-%% CONSTRAINTS
-%% =====================================================
-
-class Constraint {
-    <<abstract>>
-
-    +constraintId : UUID
-    +constraintName : String
-    +constraintType : ConstraintType
-    +tableId : UUID
-    +columns : List~Column~
-    +status : ConstraintStatus
-    +enabled : Boolean
-
-    +validate(row : Row, table : Table)* void
-}
-
-class PrimaryKey {
-    +validate(row : Row, table : Table) void
-}
-
-class ForeignKey {
-    -referencedTableId : UUID
-    -referencedColumns : List~Column~
-
-    +validate(row : Row, table : Table) void
-}
-
-class UniqueConstraint {
-    +validate(row : Row, table : Table) void
-}
-
-class CheckConstraint {
-    +expression : String
-
-    +validate(row : Row, table : Table) void
-}
-
-class ConstraintType {
-    <<enumeration>>
-}
-
-class ConstraintStatus {
-    <<enumeration>>
-}
-
-
-
-%% =====================================================
-%% INDEXES
-%% =====================================================
-
-class IndexManager {
-    -indexes : Map~UUID, Index~
-    -creators : Map~IndexType, IndexCreator~
-
-    +createIndex(request : CreateIndexRequest, table : Table) Index
-    +dropIndex(indexId : UUID, table : Table) void
-    +findIndex(indexId : UUID) Index
-    +listIndexes(tableId : UUID) List~Index~
-
-    +search(indexId : UUID, key : IndexKey) List~RowId~
-    +insertEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
-    +deleteEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
-    +rebuildIndex(indexId : UUID) void
-}
-
-class Index {
-    <<abstract>>
-
-    #indexId : UUID
-    #name : String
-    #tableId : UUID
-    #columns : List~Column~
-    #unique : Boolean
-
-    +getId() UUID
-    +getName() String
-    +getColumns() List~Column~
-
-    +search(key : IndexKey)* List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId)* void
-    +deleteKey(key : IndexKey, rowId : RowId)* void
-    +rebuild()* void
-}
-
-class BTreeIndex {
-    +search(key : IndexKey) List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId) void
-    +deleteKey(key : IndexKey, rowId : RowId) void
-    +rebuild() void
-}
-
-class HashIndex {
-    +search(key : IndexKey) List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId) void
-    +deleteKey(key : IndexKey, rowId : RowId) void
-    +rebuild() void
-}
-
-class BitmapIndex {
-    +search(key : IndexKey) List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId) void
-    +deleteKey(key : IndexKey, rowId : RowId) void
-    +rebuild() void
-}
-
-class IndexCreator {
-    <<abstract>>
-
-    +create(request : CreateIndexRequest) Index
-    #createIndex(request : CreateIndexRequest)* Index
-    #validate(request : CreateIndexRequest) void
-    #initialize(index : Index) void
-}
-
-class BTreeIndexCreator {
-    #createIndex(request : CreateIndexRequest) Index
-}
-
-class HashIndexCreator {
-    #createIndex(request : CreateIndexRequest) Index
-}
-
-class BitmapIndexCreator {
-    #createIndex(request : CreateIndexRequest) Index
-}
-
-class IndexKey {
-    +values : List~Object~
-}
-
-class RowId {
-    +pageId : UUID
-    +slotNumber : Integer
-}
-
-class CreateIndexRequest {
-    +name : String
-    +type : IndexType
-    +tableId : UUID
-    +columnIds : List~UUID~
-    +unique : Boolean
-}
-
-class IndexType {
-    <<enumeration>>
-
-    BTREE
-    HASH
-    BITMAP
-}
-
-%% =====================================================
-%% ADVANCED TABLE COMPONENTS
-%% =====================================================
-
-class Partition {
-    +partitionId : UUID
-    +partitionKey : String
-}
-
-class Trigger {
-    +triggerId : UUID
-    +name : String
-    +eventType : String
-
-    +fire() void
+    +insertIntoIndexes(row : Row, context : IndexOperationContext) void
+    +updateIndexes(oldRow : Row, newRow : Row, context : IndexOperationContext) void
+    +deleteFromIndexes(row : Row, context : IndexOperationContext) void
 }
 
 %% =====================================================
@@ -608,7 +474,7 @@ class Trigger {
 %% =====================================================
 
 class TableBuilder {
-    -tableId : UUID
+    -objectId : UUID
     -name : String
     -owner : String
     -schemaId : UUID
@@ -620,11 +486,12 @@ class TableBuilder {
     -partitions : List~Partition~
     -triggers : List~Trigger~
 
-    +setTableId(tableId : UUID) TableBuilder
+    +setObjectId(objectId : UUID) TableBuilder
     +setName(name : String) TableBuilder
     +setOwner(owner : String) TableBuilder
     +setSchemaId(schemaId : UUID) TableBuilder
     +setEngine(engine : String) TableBuilder
+
     +addColumn(column : Column) TableBuilder
     +addConstraint(constraint : Constraint) TableBuilder
     +addIndex(index : Index) TableBuilder
@@ -632,97 +499,345 @@ class TableBuilder {
     +addTrigger(trigger : Trigger) TableBuilder
 
     +build() Table
-    -validate() void
+
+    -validateRequiredFields() void
+    -validateColumns() void
+    -validateConstraints() void
+    -validateIndexes() void
+    -validatePartitions() void
+    -validateTriggers() void
 }
 
-%% =====================================================
-%% SCHEMA OBJECT FACTORY
-%% =====================================================
+class Column {
+    -columnId : UUID
+    -name : String
+    -dataType : DataType
+    -nullable : Boolean
+    -defaultValue : Object
 
-class SchemaObjectFactory {
+    +getId() UUID
+    +getName() String
+    +getDataType() DataType
+}
+
+class Constraint {
+    <<abstract>>
+
+    #constraintId : UUID
+    #constraintName : String
+    #constraintType : ConstraintType
+    #tableId : UUID
+    #columnIds : List~UUID~
+    #status : ConstraintStatus
+
+    +getId() UUID
+    +getName() String
+    +getType() ConstraintType
+    +getTableId() UUID
+    +getColumnIds() List~UUID~
+    +getStatus() ConstraintStatus
+
+    +enable() void
+    +disable() void
+    +markInvalid() void
+
+    +validateDefinition(context : ConstraintDefinitionContext)* void
+    +validate(row : Row, context : ConstraintValidationContext) void
+    #doValidate(row : Row, context : ConstraintValidationContext)* void
+}
+
+class PrimaryKey {
+    +validateDefinition(context : ConstraintDefinitionContext) void
+    #doValidate(row : Row, context : ConstraintValidationContext) void
+}
+
+class ForeignKey {
+    -referencedTableId : UUID
+    -referencedColumnIds : List~UUID~
+    -onDeleteAction : ReferentialAction
+    -onUpdateAction : ReferentialAction
+
+    +validateDefinition(context : ConstraintDefinitionContext) void
+    #doValidate(row : Row, context : ConstraintValidationContext) void
+}
+
+class UniqueConstraint {
+    +validateDefinition(context : ConstraintDefinitionContext) void
+    #doValidate(row : Row, context : ConstraintValidationContext) void
+}
+
+class CheckConstraint {
+    -expression : CheckExpression
+
+    +validateDefinition(context : ConstraintDefinitionContext) void
+    #doValidate(row : Row, context : ConstraintValidationContext) void
+}
+
+class ConstraintDefinitionContext {
+    -tableId : UUID
+    -columns : List~Column~
+    -existingConstraints : List~Constraint~
+
+    +hasColumn(columnId : UUID) boolean
+    +hasPrimaryKey() boolean
+    +hasConstraintName(name : String) boolean
+    +referencedTableExists(tableId : UUID) boolean
+    +referencedColumnExists(tableId : UUID, columnId : UUID) boolean
+    +areTypesCompatible(sourceColumnId : UUID, referencedColumnId : UUID) boolean
+}
+
+class ConstraintValidationContext {
+    -currentTableId : UUID
+    -transactionId : UUID
+
+    +exists(tableId : UUID, columnIds : List~UUID~, values : List~Object~) boolean
+    +isUnique(tableId : UUID, columnIds : List~UUID~, values : List~Object~) boolean
+}
+
+class CheckExpression {
     <<interface>>
 
-    +createTable(request) Table
-    +createView(request) View
-    +createStoredProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
+    +evaluate(row : Row) boolean
 }
 
-class DefaultSchemaObjectFactory {
-    +createTable(request) Table
-    +createView(request) View
-    +createStoredProcedure(request) StoredProcedure
-    +createSequence(request) Sequence
+class ConstraintType {
+    <<enumeration>>
+
+    PRIMARY_KEY
+    FOREIGN_KEY
+    UNIQUE
+    CHECK
+}
+
+class ConstraintStatus {
+    <<enumeration>>
+
+    ENABLED
+    DISABLED
+    INVALID
+}
+
+class ReferentialAction {
+    <<enumeration>>
+
+    NO_ACTION
+    RESTRICT
+    CASCADE
+    SET_NULL
+}
+
+class Row {
+    -rowId : UUID
+    -values : Map~UUID, Object~
+
+    +getId() UUID
+    +getValue(columnId : UUID) Object
+}
+
+class RowChanges {
+    -values : Map~UUID, Object~
+
+    +getValue(columnId : UUID) Object
+}
+
+class DataType {
+    <<enumeration>>
+}
+
+class Index {
+    -indexId : UUID
+    -name : String
+    -tableId : UUID
+    -columnIds : List~UUID~
+    -unique : Boolean
+    -status : IndexStatus
+    -accessMethod : IndexAccessMethod
+
+    +getId() UUID
+    +getName() String
+    +getTableId() UUID
+    +getColumnIds() List~UUID~
+    +getType() IndexType
+    +getStatus() IndexStatus
+    +isUnique() boolean
+
+    +validateDefinition(context : IndexDefinitionContext) void
+
+    +build(context : IndexOperationContext) void
+    +rebuild(context : IndexOperationContext) void
+    +enable() void
+    +disable() void
+    +markInvalid() void
+    +drop() void
+
+    +insertEntry(row : Row, context : IndexOperationContext) void
+    +updateEntry(oldRow : Row, newRow : Row, context : IndexOperationContext) void
+    +deleteEntry(row : Row, context : IndexOperationContext) void
+
+    +search(key : IndexKey) List~UUID~
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+
+    -extractKey(row : Row) IndexKey
+    -validateUniqueKey(key : IndexKey) void
+    -ensureActive() void
 }
 
 %% =====================================================
-%% ITERATOR PATTERN
+%% INDEX ACCESS METHOD - STRATEGY
 %% =====================================================
 
-class SchemaObjectIterator {
+class IndexAccessMethod {
     <<interface>>
 
-    +hasNext() boolean
-    +next() SchemaObject
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
+
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
 }
 
-class DefaultSchemaObjectIterator {
-    -objects : List~SchemaObject~
-    -currentIndex : int
+class BTreeIndexAccessMethod {
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
 
-    +hasNext() boolean
-    +next() SchemaObject
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+}
+
+class HashIndexAccessMethod {
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
+
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+}
+
+class BitmapIndexAccessMethod {
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
+
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
 }
 
 %% =====================================================
-%% VISITOR PATTERN
+%% INDEX DEFINITION AND OPERATION CONTEXTS
 %% =====================================================
 
-class SchemaObjectVisitor {
-    <<interface>>
+class IndexDefinitionContext {
+    -tableId : UUID
+    -columns : List~Column~
+    -existingIndexes : List~Index~
 
-    +visit(table : Table) void
-    +visit(view : View) void
-    +visit(procedure : StoredProcedure) void
-    +visit(sequence : Sequence) void
+    +hasColumn(columnId : UUID) boolean
+    +hasIndexName(name : String) boolean
+    +hasEquivalentIndex(columnIds : List~UUID~, type : IndexType) boolean
+    +supportsType(columnId : UUID, type : IndexType) boolean
 }
 
-class ExportDDLVisitor {
-    -result : StringBuilder
+class IndexOperationContext {
+    -tableId : UUID
+    -transactionId : UUID
 
-    +visit(table : Table) void
-    +visit(view : View) void
-    +visit(procedure : StoredProcedure) void
-    +visit(sequence : Sequence) void
-    +getResult() String
+    +getTableId() UUID
+    +getTransactionId() UUID
+    +scanRows() List~Row~
 }
 
 %% =====================================================
-%% TEMPLATE METHOD & COMMAND PATTERN
+%% INDEX SUPPORTING TYPES
 %% =====================================================
 
-class QueryExecutor {
-    +execute(command : TableDataCommand, context : DataOperationContext) void
+class IndexKey {
+    -values : List~Object~
+
+    +getValues() List~Object~
+}
+
+class IndexType {
+    <<enumeration>>
+
+    BTREE
+    HASH
+    BITMAP
+}
+
+class IndexStatus {
+    <<enumeration>>
+
+    BUILDING
+    ACTIVE
+    DISABLED
+    REBUILDING
+    INVALID
+    DROPPED
+}
+
+class Partition {
+    -partitionId : UUID
+    -name : String
+    -partitionColumnId : UUID
+
+    +getId() UUID
+    +getName() String
+    +getPartitionColumnId() UUID
+}
+
+class Trigger {
+    -triggerId : UUID
+    -name : String
+    -eventType : String
+    -body : String
+
+    +getId() UUID
+    +getName() String
+    +getEventType() String
+}
+
+%% =====================================================
+%% TABLE DATA COMMAND - COMMAND AND TEMPLATE METHOD
+%% =====================================================
+
+class TableDataCommandExecutor {
+    +execute(command : TableDataCommand, context : DataOperationContext) DataOperationResult
 }
 
 class TableDataCommand {
     <<interface>>
 
-    +execute(context : DataOperationContext) void
+    +execute(context : DataOperationContext) DataOperationResult
 }
 
 class AbstractTableDataCommand {
     <<abstract>>
 
-    +execute(context : DataOperationContext) void
+    +execute(context : DataOperationContext) DataOperationResult
 
-    #validateRequest(context : DataOperationContext)* void
-    #acquireLocks(context : DataOperationContext)* void
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
     #validateConstraints(context : DataOperationContext) void
-    #writeAheadLog(context : DataOperationContext)* void
+    #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext)* void
-    #updateIndexes(context : DataOperationContext)* void
-    #afterExecution(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+    #afterExecution(context : DataOperationContext) DataOperationResult
+    #onFailure(context : DataOperationContext, error : Exception) void
+    #releaseLocks(context : DataOperationContext) void
 }
 
 class InsertRowCommand {
@@ -730,7 +845,6 @@ class InsertRowCommand {
 
     +InsertRowCommand(row : Row)
     #validateRequest(context : DataOperationContext) void
-    #acquireLocks(context : DataOperationContext) void
     #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext) void
     #updateIndexes(context : DataOperationContext) void
@@ -738,11 +852,12 @@ class InsertRowCommand {
 
 class UpdateRowCommand {
     -rowId : UUID
-    -newRow : Row
+    -changes : RowChanges
+    -oldRow : Row
+    -updatedRow : Row
 
-    +UpdateRowCommand(rowId : UUID, newRow : Row)
+    +UpdateRowCommand(rowId : UUID, changes : RowChanges)
     #validateRequest(context : DataOperationContext) void
-    #acquireLocks(context : DataOperationContext) void
     #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext) void
     #updateIndexes(context : DataOperationContext) void
@@ -750,30 +865,127 @@ class UpdateRowCommand {
 
 class DeleteRowCommand {
     -rowId : UUID
+    -deletedRow : Row
 
     +DeleteRowCommand(rowId : UUID)
     #validateRequest(context : DataOperationContext) void
-    #acquireLocks(context : DataOperationContext) void
     #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext) void
     #updateIndexes(context : DataOperationContext) void
 }
 
 class DataOperationContext {
-    +table : Table
-    +transactionId : UUID
+    -table : Table
+    -transactionId : UUID
+    -indexOperationContext : IndexOperationContext
+
+    +getTable() Table
+    +getTransactionId() UUID
+    +getIndexOperationContext() IndexOperationContext
+}
+
+class DataOperationResult {
+    -affectedRowCount : Long
+    -generatedRowId : UUID
+    -successful : Boolean
+
+    +getAffectedRowCount() Long
+    +getGeneratedRowId() UUID
+    +isSuccessful() boolean
 }
 
 %% =====================================================
-%% COMPOSITE RELATIONSHIPS
+%% VIEW
+%% =====================================================
+
+class View {
+    -queryDefinition : String
+
+    +getQueryDefinition() String
+    +updateDefinition(query : String) void
+}
+
+%% =====================================================
+%% STORED PROCEDURE
+%% =====================================================
+
+class StoredProcedure {
+    -body : String
+    -parameters : List~ProcedureParameter~
+
+    +addParameter(parameter : ProcedureParameter) void
+    +removeParameter(name : String) void
+    +getParameters() List~ProcedureParameter~
+    +updateBody(body : String) void
+}
+
+class ProcedureParameter {
+    -name : String
+    -dataType : String
+    -mode : String
+    -position : Integer
+    -defaultValue : Object
+}
+
+%% =====================================================
+%% SEQUENCE
+%% =====================================================
+
+class Sequence {
+    -currentValue : Long
+    -incrementValue : Long
+    -minimumValue : Long
+    -maximumValue : Long
+    -cycle : Boolean
+
+    +nextValue() Long
+}
+
+%% =====================================================
+%% DATABASE MANAGEMENT RELATIONSHIPS
+%% =====================================================
+
+DatabaseManager --> Database : creates and coordinates
+DatabaseManager --> DropMode : selects
+
+%% =====================================================
+%% COMPOSITE AND STRUCTURAL LIFECYCLE RELATIONSHIPS
 %% =====================================================
 
 DatabaseComponent <|.. Database
 DatabaseComponent <|.. Schema
 DatabaseComponent <|.. SchemaObject
 
-DatabaseComponent --> LifecycleStatus : has status
+DatabaseComponent --> LifecycleStatus : exposes lifecycle
 DatabaseComponent --> DropMode : uses
+
+%% =====================================================
+%% DATABASE STATE RELATIONSHIPS
+%% =====================================================
+
+Database --> DatabaseState : delegates behavior
+DatabaseState --> DatabaseStatus : represents
+
+DatabaseState <|.. OfflineState
+DatabaseState <|.. OpeningState
+DatabaseState <|.. OnlineState
+DatabaseState <|.. ClosingState
+
+%% =====================================================
+%% VALID STATE TRANSITIONS
+%% =====================================================
+
+OfflineState ..> OpeningState : open
+OpeningState ..> OnlineState : openingSucceeded
+OpeningState ..> OfflineState : openingFailed
+
+OnlineState ..> ClosingState : close
+ClosingState ..> OfflineState : closingSucceeded
+ClosingState ..> OnlineState : closingFailed
+
+%% =====================================================
+%% DATABASE OBJECT HIERARCHY
+%% =====================================================
 
 Database *--> "0..*" Schema : contains
 Schema *--> "0..*" SchemaObject : contains
@@ -784,34 +996,56 @@ SchemaObject <|-- StoredProcedure
 SchemaObject <|-- Sequence
 
 %% =====================================================
-%% STATE RELATIONSHIPS
+%% TABLE COMPONENTS
 %% =====================================================
 
-Database --> DatabaseState : current state
+TableBuilder ..> Table : builds
 
-DatabaseState <|.. OfflineState
-DatabaseState <|.. OpeningState
-DatabaseState <|.. OnlineState
-DatabaseState <|.. ClosingState
-
-DatabaseState --> DatabaseStatus : represents
-
-%% =====================================================
-%% TABLE RELATIONSHIPS
-%% =====================================================
+TableBuilder --> "1..*" Column : collects
+TableBuilder --> "0..*" Constraint : collects
+TableBuilder --> "0..*" Index : collects
+TableBuilder --> "0..*" Partition : collects
+TableBuilder --> "0..*" Trigger : collects
 
 Table *--> "1..*" Column : defines
-Table --> "0..*" Row : logically contains
 Table *--> "0..*" Constraint : enforces
-Table *--> "0..*" Index : owns
+Table *--> "0..*" Index : owns and maintains
 Table *--> "0..*" Partition : partitions
 Table *--> "0..*" Trigger : registers
 
-Column --> DataType : uses
-Column --> ColumnStatus : has status
+Partition --> Column : uses partition key
 
 %% =====================================================
-%% CONSTRAINT RELATIONSHIPS
+%% INDEX DEFINITION AND MANAGEMENT - STRATEGY
+%% =====================================================
+
+Index *--> IndexAccessMethod : delegates operations
+
+IndexAccessMethod <|.. BTreeIndexAccessMethod
+IndexAccessMethod <|.. HashIndexAccessMethod
+IndexAccessMethod <|.. BitmapIndexAccessMethod
+
+Table ..> IndexDefinitionContext : validates index with
+Table ..> IndexOperationContext : supplies operation context
+
+Index ..> IndexDefinitionContext : validates definition with
+Index ..> IndexOperationContext : builds and maintains with
+
+Index --> IndexType : identifies
+Index --> IndexStatus : has lifecycle status
+Index --> "1..*" Column : indexes
+
+Index ..> Row : extracts key from
+Index ..> IndexKey : creates and searches
+
+IndexAccessMethod ..> IndexKey : organizes
+IndexAccessMethod ..> IndexOperationContext : builds from
+
+IndexDefinitionContext --> Column : resolves
+IndexDefinitionContext --> Index : checks existing
+
+%% =====================================================
+%% CONSTRAINT STRATEGY
 %% =====================================================
 
 Constraint <|-- PrimaryKey
@@ -819,118 +1053,71 @@ Constraint <|-- ForeignKey
 Constraint <|-- UniqueConstraint
 Constraint <|-- CheckConstraint
 
-Constraint --> ConstraintType
-Constraint --> ConstraintStatus
-Constraint --> Column
+Constraint --> ConstraintType : identifies
+Constraint --> ConstraintStatus : has status
+Constraint --> "1..*" Column : applies to
 
-ForeignKey --> Table : references
+Constraint ..> ConstraintDefinitionContext : validates definition with
+ConstraintDefinitionContext --> Column : resolves
+ConstraintDefinitionContext --> Constraint : checks existing
 
+Table ..> Row : validates and manages
+Table --> ConstraintValidationContext : supplies
 
+Constraint ..> Row : validates
+Constraint ..> ConstraintValidationContext : queries data through
 
-%% =====================================================
-%% INDEX RELATIONSHIPS
-%% =====================================================
+ForeignKey --> ReferentialAction : defines behavior
+ForeignKey ..> ConstraintValidationContext : checks referenced data
 
-Index <|-- BTreeIndex
-Index <|-- HashIndex
-Index <|-- BitmapIndex
+CheckConstraint *--> CheckExpression : owns
+CheckExpression ..> Row : evaluates
 
-IndexManager --> Index : selects and delegates
-Index --> IndexKey : uses
-Index --> RowId : maps to
-Index --> Column : indexes
+Column --> DataType : uses
 
-IndexCreator <|-- BTreeIndexCreator
-IndexCreator <|-- HashIndexCreator
-IndexCreator <|-- BitmapIndexCreator
-
-BTreeIndexCreator ..> BTreeIndex : creates
-HashIndexCreator ..> HashIndex : creates
-BitmapIndexCreator ..> BitmapIndex : creates
-
-IndexManager --> IndexCreator : selects creator
-IndexCreator --> CreateIndexRequest : receives
-CreateIndexRequest --> IndexType : specifies
+TableBuilder ..> ConstraintDefinitionContext : creates validation context
 
 %% =====================================================
-%% BUILDER RELATIONSHIPS
-%% =====================================================
-
-TableBuilder ..> Table : builds
-TableBuilder --> Column : collects
-TableBuilder --> Constraint : collects
-TableBuilder --> Index : collects
-TableBuilder --> Partition : collects
-TableBuilder --> Trigger : collects
-
-%% =====================================================
-%% SCHEMA OBJECT FACTORY RELATIONSHIPS
-%% =====================================================
-
-Schema --> SchemaObjectFactory : uses
-
-SchemaObjectFactory <|.. DefaultSchemaObjectFactory
-
-DefaultSchemaObjectFactory ..> Table : creates
-DefaultSchemaObjectFactory ..> View : creates
-DefaultSchemaObjectFactory ..> StoredProcedure : creates
-DefaultSchemaObjectFactory ..> Sequence : creates
-
-%% =====================================================
-%% ITERATOR RELATIONSHIPS
-%% =====================================================
-
-SchemaObjectIterator <|.. DefaultSchemaObjectIterator
-
-Schema ..> DefaultSchemaObjectIterator : creates
-DefaultSchemaObjectIterator --> SchemaObject : iterates
-
-%% =====================================================
-%% VISITOR RELATIONSHIPS
-%% =====================================================
-
-SchemaObjectVisitor <|.. ExportDDLVisitor
-
-Schema ..> SchemaObjectVisitor : accepts
-SchemaObject ..> SchemaObjectVisitor : accepts
-
-SchemaObjectVisitor ..> Table : visits
-SchemaObjectVisitor ..> View : visits
-SchemaObjectVisitor ..> StoredProcedure : visits
-SchemaObjectVisitor ..> Sequence : visits
-
-%% =====================================================
-%% TEMPLATE METHOD & COMMAND RELATIONSHIPS
+%% TABLE DATA COMMAND AND TEMPLATE METHOD
 %% =====================================================
 
 TableDataCommand <|.. AbstractTableDataCommand
+
 AbstractTableDataCommand <|-- InsertRowCommand
 AbstractTableDataCommand <|-- UpdateRowCommand
 AbstractTableDataCommand <|-- DeleteRowCommand
 
-QueryExecutor --> TableDataCommand : invokes
+TableDataCommandExecutor --> TableDataCommand : invokes
+
 AbstractTableDataCommand --> DataOperationContext : uses
+AbstractTableDataCommand ..> DataOperationResult : returns
+
 DataOperationContext --> Table : provides receiver
-InsertRowCommand *--> Row : contains
-UpdateRowCommand *--> Row : contains
+DataOperationContext --> IndexOperationContext : provides index context
+
+InsertRowCommand *--> Row : contains candidate row
+UpdateRowCommand *--> RowChanges : contains changes
+UpdateRowCommand --> Row : keeps old and updated rows
+DeleteRowCommand --> Row : keeps deleted row
+
+Table ..> RowChanges : applies
 
 %% =====================================================
-%% STYLING AND THEMING
+%% STORED PROCEDURE COMPONENTS
 %% =====================================================
 
-%% Theme 1: Composite Roots & Components (Gold & Blue)
+StoredProcedure *--> "0..*" ProcedureParameter : defines
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
 style DatabaseComponent fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style DatabaseManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Database fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
-%% Theme 2: Schema Object Hierarchy (Soft Green)
-style SchemaObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-
-%% Theme 3: State Pattern & Status (Red/Pink)
 style DatabaseState fill:#fde8e8,stroke:#e84a5f,stroke-width:2px,color:#9b1c1c
 style OfflineState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
 style OpeningState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
@@ -938,77 +1125,101 @@ style OnlineState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
 style ClosingState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
 style DatabaseStatus fill:#fde8e8,stroke:#e84a5f,stroke-width:2px,color:#9b1c1c
 
-%% Theme 4: Columns, Rows & Data Structure (Teal)
-style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
-style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
-style DataType fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
-style ColumnStatus fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style SchemaObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
-%% Theme 5: Constraint Validation (Purple)
+style Column fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style Index fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#664d03
+style Partition fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style Trigger fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+
+style TableBuilder fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e65100
+
+style IndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style BTreeIndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style HashIndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style BitmapIndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style IndexDefinitionContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style IndexOperationContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style IndexType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style IndexStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style IndexKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+
 style Constraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 style PrimaryKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style ForeignKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style UniqueConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style CheckConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
-style ConstraintType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
-style ConstraintStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 
+style ConstraintDefinitionContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style ConstraintValidationContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
-%% Theme 6: Indexes (Amber/Yellow)
-style Index fill:#fff8e1,stroke:#ffb300,stroke-width:2px,color:#5d4037
-style BTreeIndex fill:#fff8e1,stroke:#ffb300,stroke-width:1px,color:#5d4037
-style HashIndex fill:#fff8e1,stroke:#ffb300,stroke-width:1px,color:#5d4037
-style BitmapIndex fill:#fff8e1,stroke:#ffb300,stroke-width:1px,color:#5d4037
+style CheckExpression fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
-%% Theme 7: Advanced Table Features (Slate)
-style Partition fill:#eceff1,stroke:#607d8b,stroke-width:1px,color:#263238
-style Trigger fill:#eceff1,stroke:#607d8b,stroke-width:1px,color:#263238
+style TableDataCommandExecutor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
-%% Theme 8: Table Builder (Coral/Orange)
-style TableBuilder fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e65100
-
-%% Theme 9: Schema Object Factory (Mint Green)
-style SchemaObjectFactory fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
-style DefaultSchemaObjectFactory fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#1b5e20
-
-%% Theme 10: Iterator Pattern (Indigo)
-style SchemaObjectIterator fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,color:#1a237e
-style DefaultSchemaObjectIterator fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px,color:#1a237e
-
-%% Theme 11: Visitor Pattern (Rose)
-style SchemaObjectVisitor fill:#fce4ec,stroke:#e91e63,stroke-width:2px,color:#880e4f
-style ExportDDLVisitor fill:#fce4ec,stroke:#e91e63,stroke-width:1px,color:#880e4f
-
-%% Theme 12: Template Method & Command Pattern (Blue/Orange/Purple/Slate)
-style QueryExecutor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style TableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style AbstractTableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
 style InsertRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style UpdateRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style DeleteRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style DataOperationContext fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 
-%% Theme 13: Lifecycle status & Drop mode (Purple)
+style DataOperationContext fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style DataOperationResult fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style ConstraintType fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style ConstraintStatus fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style ReferentialAction fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+
+style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style RowChanges fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style DataType fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+
+style ProcedureParameter fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+
 style LifecycleStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 style DropMode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 ```
-# 1. Database Lifecycle Management
+# 1. Database Operational State Management
 ## Using State Pattern
 
 ### 1.1 Class Diagram
 ```mermaid
 classDiagram
-direction LR
+direction TB
+
+%% =====================================================
+%% Lifecycle Coordinator
+%% =====================================================
 
 class DatabaseManager {
-    -databases : Map~String, Database~
+    -databasesById : Map~UUID, Database~
+    -databaseIdsByName : Map~String, UUID~
 
     +createDatabase(request) Database
-    +dropDatabase(databaseId) void
-    +findDatabaseById(databaseId) Database
-    +findDatabaseByName(name) Database
+    +dropDatabase(databaseId : UUID) void
+
+    +openDatabase(databaseId : UUID) void
+    +closeDatabase(databaseId : UUID) void
+    +renameDatabase(databaseId : UUID, newName : String) void
+
+    +findDatabaseById(databaseId : UUID) Database
+    +findDatabaseByName(name : String) Database
     +listAllDatabases() List~Database~
+
+    -openDatabaseResources(database : Database) void
+    -closeDatabaseResources(database : Database) void
 }
+
+%% =====================================================
+%% Database Component
+%% =====================================================
 
 class DatabaseComponent {
     <<interface>>
@@ -1018,6 +1229,10 @@ class DatabaseComponent {
     +getOwner() String
     +getQualifiedName() String
 }
+
+%% =====================================================
+%% Context
+%% =====================================================
 
 class Database {
     -databaseId : UUID
@@ -1029,18 +1244,35 @@ class Database {
     +open() void
     +close() void
     +rename(newName : String) void
-    +changeState(state : DatabaseState) void
 
     +addSchema(schema : Schema) void
     +removeSchema(schemaId : UUID) void
     +findSchema(name : String) Schema
     +listSchemas() List~Schema~
 
+    +getStatus() DatabaseStatus
+
     +getId() UUID
     +getName() String
     +getOwner() String
     +getQualifiedName() String
+
+    ~openingSucceeded() void
+    ~openingFailed() void
+    ~closingSucceeded() void
+    ~closingFailed() void
+
+    ~transitionTo(state : DatabaseState) void
+    ~updateName(newName : String) void
+    ~attachSchema(schema : Schema) void
+    ~detachSchema(schemaId : UUID) void
+    ~findSchemaInternal(name : String) Schema
+    ~listSchemasInternal() List~Schema~
 }
+
+%% =====================================================
+%% State Interface
+%% =====================================================
 
 class DatabaseState {
     <<interface>>
@@ -1048,13 +1280,30 @@ class DatabaseState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
+    +openingSucceeded(database : Database) void
+    +openingFailed(database : Database) void
+    +closingSucceeded(database : Database) void
+    +closingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
 }
+
+%% =====================================================
+%% Concrete States
+%% =====================================================
 
 class OfflineState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
     +getStatus() DatabaseStatus
 }
 
@@ -1062,6 +1311,13 @@ class OpeningState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
+    +openingSucceeded(database : Database) void
+    +openingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
 }
 
@@ -1069,6 +1325,9 @@ class OnlineState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
     +getStatus() DatabaseStatus
 }
 
@@ -1076,36 +1335,74 @@ class ClosingState {
     +open(database : Database) void
     +close(database : Database) void
     +rename(database : Database, newName : String) void
+    +addSchema(database : Database, schema : Schema) void
+    +removeSchema(database : Database, schemaId : UUID) void
+    +ensureSchemaReadable(database : Database) void
+
+    +closingSucceeded(database : Database) void
+    +closingFailed(database : Database) void
+
     +getStatus() DatabaseStatus
 }
+
+%% =====================================================
+%% Status
+%% =====================================================
 
 class DatabaseStatus {
     <<enumeration>>
 
-    ONLINE
     OFFLINE
     OPENING
+    ONLINE
     CLOSING
 }
 
-class Schema
+%% =====================================================
+%% Schema
+%% =====================================================
 
-DatabaseManager --> Database : creates and manages
+class Schema {
+    -schemaId : UUID
+    -name : String
+    -owner : String
+}
+
+%% =====================================================
+%% Main Relationships
+%% =====================================================
+
+DatabaseManager --> Database : coordinates lifecycle
+
 DatabaseComponent <|.. Database
+Database *--> "0..*" Schema : contains
 
-Database --> DatabaseState : current state
+Database --> DatabaseState : delegates behavior
+DatabaseState --> DatabaseStatus : represents
+
 DatabaseState <|.. OfflineState
 DatabaseState <|.. OpeningState
 DatabaseState <|.. OnlineState
 DatabaseState <|.. ClosingState
 
-DatabaseState --> DatabaseStatus : represents
-Database *--> "0..*" Schema : contains
+%% =====================================================
+%% Valid State Transitions
+%% =====================================================
+
+OfflineState ..> OpeningState : open
+OpeningState ..> OnlineState : openingSucceeded
+OpeningState ..> OfflineState : openingFailed
+
+OnlineState ..> ClosingState : close
+ClosingState ..> OfflineState : closingSucceeded
+ClosingState ..> OnlineState : closingFailed
 
 %% =====================================================
 %% Styling
 %% =====================================================
+
 style DatabaseComponent fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
 style DatabaseManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Database fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Schema fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
@@ -1367,7 +1664,7 @@ public class DatabaseManager() {
 
 ---
 
-# 3. Database Object Hierarchy and Lifecycle Management
+# 3. Database Object Hierarchy and Structural Lifecycle
 ## Using Composite Pattern
 
 ### 3.1 Class Diagram
@@ -1380,7 +1677,8 @@ direction TB
 %% =====================================================
 
 class DatabaseManager {
-    -databases : Map~String, Database~
+    -databasesById : Map~UUID, Database~
+    -databaseIdsByName : Map~String, UUID~
 
     +createDatabase(request) Database
     +dropDatabase(databaseId : UUID, mode : DropMode) void
@@ -1410,7 +1708,7 @@ class DatabaseComponent {
 }
 
 %% =====================================================
-%% Lifecycle Types
+%% Structural Lifecycle Types
 %% =====================================================
 
 class LifecycleStatus {
@@ -1429,7 +1727,7 @@ class DropMode {
 }
 
 %% =====================================================
-%% Composite: Database
+%% Root Composite: Database
 %% =====================================================
 
 class Database {
@@ -1454,13 +1752,15 @@ class Database {
     +drop(mode : DropMode) void
     +getChildren() List~DatabaseComponent~
 
-    -dropChildren(mode : DropMode) void
+    -validateActive() void
+    -validateDrop(mode : DropMode) void
+    -dropChildren() void
     -markAsDropping() void
     -markAsDropped() void
 }
 
 %% =====================================================
-%% Composite: Schema
+%% Child Composite: Schema
 %% =====================================================
 
 class Schema {
@@ -1485,7 +1785,9 @@ class Schema {
     +drop(mode : DropMode) void
     +getChildren() List~DatabaseComponent~
 
-    -dropChildren(mode : DropMode) void
+    -validateActive() void
+    -validateDrop(mode : DropMode) void
+    -dropChildren() void
     -markAsDropping() void
     -markAsDropped() void
 }
@@ -1513,6 +1815,7 @@ class SchemaObject {
     +drop(mode : DropMode) void
     +getChildren() List~DatabaseComponent~
 
+    #validateActive() void
     #markAsDropping() void
     #markAsDropped() void
 }
@@ -1521,25 +1824,13 @@ class SchemaObject {
 %% Concrete Leaves
 %% =====================================================
 
-class Table {
-    +rename(newName : String) void
-    +drop(mode : DropMode) void
-}
+class Table
 
-class View {
-    +rename(newName : String) void
-    +drop(mode : DropMode) void
-}
+class View
 
-class StoredProcedure {
-    +rename(newName : String) void
-    +drop(mode : DropMode) void
-}
+class StoredProcedure
 
-class Sequence {
-    +rename(newName : String) void
-    +drop(mode : DropMode) void
-}
+class Sequence
 
 %% =====================================================
 %% Composite Implementation
@@ -1557,16 +1848,19 @@ SchemaObject <|-- Sequence
 Database *--> "0..*" Schema : contains
 Schema *--> "0..*" SchemaObject : contains
 
+%% =====================================================
+%% Root Lifecycle Management
+%% =====================================================
+
 DatabaseManager --> Database : manages root lifecycle
-
-%% =====================================================
-%% Lifecycle Relationships
-%% =====================================================
-
-DatabaseComponent --> LifecycleStatus : has lifecycle
-DatabaseComponent --> DropMode : uses
-
 DatabaseManager --> DropMode : selects
+
+%% =====================================================
+%% Structural Lifecycle Relationships
+%% =====================================================
+
+DatabaseComponent --> LifecycleStatus : exposes lifecycle
+DatabaseComponent --> DropMode : uses
 
 %% =====================================================
 %% Styling
@@ -1920,12 +2214,18 @@ class SchemaObject {
     #lifecycleStatus : LifecycleStatus
 
     +getId() UUID
+    +getSchemaId() UUID
     +getName() String
+    +getOwner() String
     +getQualifiedName() String
     +getLifecycleStatus() LifecycleStatus
 
     +rename(newName : String) void
     +drop(mode : DropMode) void
+
+    #validateActive() void
+    #markAsDropping() void
+    #markAsDropped() void
 }
 
 class LifecycleStatus {
@@ -1948,12 +2248,7 @@ class DropMode {
 %% =====================================================
 
 class Table {
-    -tableId : UUID
-    -name : String
-    -owner : String
-    -schemaId : UUID
     -engine : String
-    -rowCount : Long
 
     -columns : List~Column~
     -constraints : List~Constraint~
@@ -1961,14 +2256,14 @@ class Table {
     -partitions : List~Partition~
     -triggers : List~Trigger~
 
-    ~Table(tableId, name, owner, schemaId, engine, components)
+    ~Table(objectId : UUID, name : String, owner : String, schemaId : UUID, engine : String, columns, constraints, indexes, partitions, triggers)
 
+    +getEngine() String
     +getColumns() List~Column~
     +getConstraints() List~Constraint~
     +getIndexes() List~Index~
-
-    +rename(newName : String) void
-    +drop(mode : DropMode) void
+    +getPartitions() List~Partition~
+    +getTriggers() List~Trigger~
 }
 
 %% =====================================================
@@ -1976,7 +2271,7 @@ class Table {
 %% =====================================================
 
 class TableBuilder {
-    -tableId : UUID
+    -objectId : UUID
     -name : String
     -owner : String
     -schemaId : UUID
@@ -1988,7 +2283,7 @@ class TableBuilder {
     -partitions : List~Partition~
     -triggers : List~Trigger~
 
-    +setTableId(tableId : UUID) TableBuilder
+    +setObjectId(objectId : UUID) TableBuilder
     +setName(name : String) TableBuilder
     +setOwner(owner : String) TableBuilder
     +setSchemaId(schemaId : UUID) TableBuilder
@@ -2001,18 +2296,72 @@ class TableBuilder {
     +addTrigger(trigger : Trigger) TableBuilder
 
     +build() Table
-    -validate() void
+
+    -validateRequiredFields() void
+    -validateColumns() void
+    -validateConstraints() void
+    -validateIndexes() void
+    -validatePartitions() void
+    -validateTriggers() void
 }
 
 %% =====================================================
 %% Table Components
 %% =====================================================
 
-class Column
-class Constraint
-class Index
-class Partition
-class Trigger
+class Column {
+    -columnId : UUID
+    -name : String
+    -dataType : String
+    -nullable : Boolean
+    -defaultValue : Object
+
+    +getId() UUID
+    +getName() String
+    +getDataType() String
+}
+
+class Constraint {
+    -constraintId : UUID
+    -name : String
+    -columnIds : List~UUID~
+
+    +getId() UUID
+    +getName() String
+    +getColumnIds() List~UUID~
+}
+
+class Index {
+    -indexId : UUID
+    -name : String
+    -columnIds : List~UUID~
+    -unique : Boolean
+
+    +getId() UUID
+    +getName() String
+    +getColumnIds() List~UUID~
+}
+
+class Partition {
+    -partitionId : UUID
+    -name : String
+    -partitionColumnId : UUID
+
+    +getId() UUID
+    +getName() String
+    +getPartitionColumnId() UUID
+}
+
+class Trigger {
+    -triggerId : UUID
+    -name : String
+    -eventType : String
+    -body : String
+
+    +getId() UUID
+    +getName() String
+    +getEventType() String
+}
 
 %% =====================================================
 %% Inheritance and Lifecycle
@@ -2029,11 +2378,11 @@ SchemaObject --> DropMode : uses
 
 TableBuilder ..> Table : builds
 
-TableBuilder --> Column : collects
-TableBuilder --> Constraint : collects
-TableBuilder --> Index : collects
-TableBuilder --> Partition : collects
-TableBuilder --> Trigger : collects
+TableBuilder --> "1..*" Column : collects
+TableBuilder --> "0..*" Constraint : collects
+TableBuilder --> "0..*" Index : collects
+TableBuilder --> "0..*" Partition : collects
+TableBuilder --> "0..*" Trigger : collects
 
 %% =====================================================
 %% Product Composition
@@ -2046,8 +2395,17 @@ Table *--> "0..*" Partition : partitions
 Table *--> "0..*" Trigger : registers
 
 %% =====================================================
+%% Component References
+%% =====================================================
+
+Constraint --> "1..*" Column : applies to
+Index --> "1..*" Column : indexes
+Partition --> Column : uses partition key
+
+%% =====================================================
 %% Styling
 %% =====================================================
+
 style SchemaObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
@@ -2175,16 +2533,11 @@ direction TB
 %% =====================================================
 
 class Table {
-    +tableId : UUID
-    +engine : String
-    +rowCount : Long
-
-    -columns : List~Column~
     -constraints : List~Constraint~
 
     +addConstraint(constraint : Constraint) void
-    +removeConstraint(name : String) void
-    +validateConstraints(row : Row) void
+    +removeConstraint(constraintId : UUID) void
+    +validateConstraints(row : Row, context : ConstraintValidationContext) void
 }
 
 %% =====================================================
@@ -2192,17 +2545,11 @@ class Table {
 %% =====================================================
 
 class Constraint {
-    <<abstract>>
+    <<interface>>
 
-    +constraintId : UUID
-    +constraintName : String
-    +constraintType : ConstraintType
-    +tableId : UUID
-    +columns : List~Column~
-    +status : ConstraintStatus
-    +enabled : Boolean
-
-    +validate(row : Row, table : Table)* void
+    +getId() UUID
+    +getName() String
+    +validate(row : Row, context : ConstraintValidationContext) void
 }
 
 %% =====================================================
@@ -2210,74 +2557,64 @@ class Constraint {
 %% =====================================================
 
 class PrimaryKey {
-    +validate(row : Row, table : Table) void
-}
+    -constraintId : UUID
+    -name : String
+    -columnIds : List~UUID~
 
-class ForeignKey {
-    +referencedTable : Table
-    +referencedColumns : List~Column~
-
-    +validate(row : Row, table : Table) void
+    +getId() UUID
+    +getName() String
+    +validate(row : Row, context : ConstraintValidationContext) void
 }
 
 class UniqueConstraint {
-    +validate(row : Row, table : Table) void
+    -constraintId : UUID
+    -name : String
+    -columnIds : List~UUID~
+
+    +getId() UUID
+    +getName() String
+    +validate(row : Row, context : ConstraintValidationContext) void
+}
+
+class ForeignKey {
+    -constraintId : UUID
+    -name : String
+    -columnIds : List~UUID~
+    -referencedTableId : UUID
+    -referencedColumnIds : List~UUID~
+
+    +getId() UUID
+    +getName() String
+    +validate(row : Row, context : ConstraintValidationContext) void
 }
 
 class CheckConstraint {
-    +expression : String
+    -constraintId : UUID
+    -name : String
+    -expression : String
 
-    +validate(row : Row, table : Table) void
+    +getId() UUID
+    +getName() String
+    +validate(row : Row, context : ConstraintValidationContext) void
 }
 
 %% =====================================================
 %% Supporting Types
 %% =====================================================
 
-class ConstraintType {
-    <<enumeration>>
-
-    PRIMARY_KEY
-    FOREIGN_KEY
-    UNIQUE
-    CHECK
-}
-
-class ConstraintStatus {
-    <<enumeration>>
-
-    ACTIVE
-    DISABLED
-    INVALID
-}
-
-class Column {
-    +columnId : UUID
-    +name : String
-    +dataType : DataType
-    +nullable : Boolean
-}
-
 class Row {
-    +rowId : UUID
-    +values : Map~UUID, Object~
+    -rowId : UUID
+    -values : Map~UUID, Object~
+
+    +getValue(columnId : UUID) Object
 }
 
-class DataType {
-    <<enumeration>>
-}
+class ConstraintValidationContext {
+    -currentTableId : UUID
+    -transactionId : UUID
 
-%% =====================================================
-%% Table Builder
-%% =====================================================
-
-class TableBuilder {
-    -columns : List~Column~
-    -constraints : List~Constraint~
-
-    +addColumn(column : Column) TableBuilder
-    +addConstraint(constraint : Constraint) TableBuilder
-    +build() Table
+    +exists(tableId : UUID, columnIds : List~UUID~, values : List~Object~) boolean
+    +isUnique(tableId : UUID, columnIds : List~UUID~, values : List~Object~) boolean
 }
 
 %% =====================================================
@@ -2286,59 +2623,32 @@ class TableBuilder {
 
 Table *--> "0..*" Constraint : contains and executes
 
-Constraint <|-- PrimaryKey
-Constraint <|-- ForeignKey
-Constraint <|-- UniqueConstraint
-Constraint <|-- CheckConstraint
+Constraint <|.. PrimaryKey
+Constraint <|.. UniqueConstraint
+Constraint <|.. ForeignKey
+Constraint <|.. CheckConstraint
 
-%% =====================================================
-%% Table Structure and Data
-%% =====================================================
+Table ..> Row : validates
+Table --> ConstraintValidationContext : supplies
 
-Table *--> "1..*" Column : defines
-Table --> "0..*" Row : logically contains
-
-Column --> DataType : uses
-
-%% =====================================================
-%% Constraint Dependencies
-%% =====================================================
-
-Constraint --> ConstraintType : identifies
-Constraint --> ConstraintStatus : has status
-Constraint --> "1..*" Column : applies to
 Constraint ..> Row : validates
-Constraint ..> Table : receives context
-
-ForeignKey --> Table : references
-ForeignKey --> "1..*" Column : references columns
-
-%% =====================================================
-%% Builder Relationships
-%% =====================================================
-
-TableBuilder --> Column : collects
-TableBuilder --> Constraint : collects
-TableBuilder ..> Table : builds
+Constraint ..> ConstraintValidationContext : uses
 
 %% =====================================================
 %% Styling
 %% =====================================================
-style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
-style Constraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style Table fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style Constraint fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
 style PrimaryKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
-style ForeignKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style UniqueConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style ForeignKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style CheckConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
-style ConstraintType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
-style ConstraintStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 
-style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
-style DataType fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
-
-style TableBuilder fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e65100
+style ConstraintValidationContext fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 ```
 
 ### 6.2 Sequence Diagram shouldValidateRowUsingMultipleConstraint()
@@ -2517,52 +2827,37 @@ public class Table {
 classDiagram
 direction TB
 
-%% =====================================================
-%% Command Invoker
-%% =====================================================
-
-class QueryExecutor {
-    +execute(command : TableDataCommand, context : DataOperationContext) void
+class TableDataCommandExecutor {
+    +execute(command : TableDataCommand, context : DataOperationContext) DataOperationResult
 }
-
-%% =====================================================
-%% Command Pattern
-%% =====================================================
 
 class TableDataCommand {
     <<interface>>
 
-    +execute(context : DataOperationContext) void
+    +execute(context : DataOperationContext) DataOperationResult
 }
-
-%% =====================================================
-%% Template Method
-%% =====================================================
 
 class AbstractTableDataCommand {
     <<abstract>>
 
-    +execute(context : DataOperationContext) void
+    +execute(context : DataOperationContext) DataOperationResult
 
-    #validateRequest(context : DataOperationContext)* void
-    #acquireLocks(context : DataOperationContext)* void
+    #validateRequest(context : DataOperationContext) void
+    #acquireLocks(context : DataOperationContext) void
     #validateConstraints(context : DataOperationContext) void
-    #writeAheadLog(context : DataOperationContext)* void
+    #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext)* void
-    #updateIndexes(context : DataOperationContext)* void
-    #afterExecution(context : DataOperationContext) void
+    #updateIndexes(context : DataOperationContext) void
+    #afterExecution(context : DataOperationContext) DataOperationResult
+    #onFailure(context : DataOperationContext, error : Exception) void
+    #releaseLocks(context : DataOperationContext) void
 }
-
-%% =====================================================
-%% Concrete Commands
-%% =====================================================
 
 class InsertRowCommand {
     -row : Row
 
     +InsertRowCommand(row : Row)
     #validateRequest(context : DataOperationContext) void
-    #acquireLocks(context : DataOperationContext) void
     #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext) void
     #updateIndexes(context : DataOperationContext) void
@@ -2570,11 +2865,12 @@ class InsertRowCommand {
 
 class UpdateRowCommand {
     -rowId : UUID
-    -newRow : Row
+    -changes : RowChanges
+    -oldRow : Row
+    -updatedRow : Row
 
-    +UpdateRowCommand(rowId : UUID, newRow : Row)
+    +UpdateRowCommand(rowId : UUID, changes : RowChanges)
     #validateRequest(context : DataOperationContext) void
-    #acquireLocks(context : DataOperationContext) void
     #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext) void
     #updateIndexes(context : DataOperationContext) void
@@ -2582,47 +2878,54 @@ class UpdateRowCommand {
 
 class DeleteRowCommand {
     -rowId : UUID
+    -deletedRow : Row
 
     +DeleteRowCommand(rowId : UUID)
     #validateRequest(context : DataOperationContext) void
-    #acquireLocks(context : DataOperationContext) void
     #writeAheadLog(context : DataOperationContext) void
     #modifyRow(context : DataOperationContext) void
     #updateIndexes(context : DataOperationContext) void
 }
 
-%% =====================================================
-%% Execution Context
-%% =====================================================
-
 class DataOperationContext {
-    +table : Table
-    +transactionId : UUID
+    -table : Table
+    -transactionId : UUID
+
+    +getTable() Table
+    +getTransactionId() UUID
 }
 
-%% =====================================================
-%% Receiver and Data
-%% =====================================================
+class DataOperationResult {
+    -affectedRowCount : Long
+    -generatedRowId : UUID
+    -successful : Boolean
+}
 
 class Table {
-    +tableId : UUID
-    +rowCount : Long
+    -tableId : UUID
 
-    +validateConstraints(row : Row) void
+    +validateConstraints(row : Row, context : ConstraintValidationContext) void
+
     +insertRow(row : Row) void
-    +updateRow(rowId : UUID, row : Row) void
-    +deleteRow(rowId : UUID) void
-    +updateIndexes() void
+    +findRow(rowId : UUID) Row
+    +updateRow(rowId : UUID, changes : RowChanges) Row
+    +deleteRow(rowId : UUID) Row
+
+    +insertIntoIndexes(row : Row) void
+    +updateIndexes(oldRow : Row, newRow : Row) void
+    +deleteFromIndexes(row : Row) void
 }
 
 class Row {
-    +rowId : UUID
-    +values : Map~UUID, Object~
+    -rowId : UUID
+    -values : Map~UUID, Object~
 }
 
-%% =====================================================
-%% Command Relationships
-%% =====================================================
+class RowChanges {
+    -values : Map~UUID, Object~
+}
+
+class ConstraintValidationContext
 
 TableDataCommand <|.. AbstractTableDataCommand
 
@@ -2630,25 +2933,19 @@ AbstractTableDataCommand <|-- InsertRowCommand
 AbstractTableDataCommand <|-- UpdateRowCommand
 AbstractTableDataCommand <|-- DeleteRowCommand
 
-QueryExecutor --> TableDataCommand : invokes
+TableDataCommandExecutor --> TableDataCommand : invokes
 AbstractTableDataCommand --> DataOperationContext : uses
-
-%% =====================================================
-%% Receiver Relationships
-%% =====================================================
+AbstractTableDataCommand ..> DataOperationResult : returns
 
 DataOperationContext --> Table : provides receiver
 
 InsertRowCommand *--> Row : contains
-UpdateRowCommand *--> Row : contains
+UpdateRowCommand *--> RowChanges : contains
 
-Table --> "0..*" Row : logically manages
+Table ..> Row : manages logically
+Table ..> ConstraintValidationContext : validates with
 
-%% =====================================================
-%% Styling
-%% =====================================================
-
-style QueryExecutor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style TableDataCommandExecutor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
 style TableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 style AbstractTableDataCommand fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
@@ -2658,9 +2955,11 @@ style UpdateRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f513
 style DeleteRowCommand fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 
 style DataOperationContext fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style DataOperationResult fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 
 style Table fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
 style Row fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style RowChanges fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
 ```
 
 ### 7.2 Sequence Diagram shouldExecuteInsertRowCommand()
@@ -2669,7 +2968,7 @@ sequenceDiagram
     autonumber
 
     participant Test as TableDataCommandIntegrationTest
-    participant QE as queryExecutor : QueryExecutor
+    participant QE as tableDataCommandExecutor : TableDataCommandExecutor
     participant CMD as insertCommand : InsertRowCommand
     participant T as usersTable : Table
 
@@ -2684,7 +2983,7 @@ sequenceDiagram
     Test ->> QE: execute(insertCommand, context)
     activate QE
 
-    Note over QE,CMD: QueryExecutor does not know Insert implementation
+    Note over QE,CMD: TableDataCommandExecutor does not know Insert implementation
 
     QE ->> CMD: execute(context)
     activate CMD
@@ -2878,7 +3177,7 @@ public class InsertRowCommand implements TableDataCommand {
 
 ### Invoker
 ```java
-public class QueryExecutor {
+public class TableDataCommandExecutor {
     public void execute(TableDataCommand command, DataOperationContext context) {
         
     }
@@ -2892,7 +3191,7 @@ public class QueryExecutor {
 --- 
 
 # 9. Index Definition and Management
-## Using Strategy and Factory Method
+## Using Strategy Pattern
 
 ### 9.1 Class diagram
 ```mermaid
@@ -2900,140 +3199,160 @@ classDiagram
 direction TB
 
 %% =====================================================
-%% Context and Factory Client
-%% =====================================================
-
-class IndexManager {
-    -indexes : Map~UUID, Index~
-    -creators : Map~IndexType, IndexCreator~
-
-    +createIndex(request : CreateIndexRequest, table : Table) Index
-    +dropIndex(indexId : UUID, table : Table) void
-    +findIndex(indexId : UUID) Index
-    +listIndexes(tableId : UUID) List~Index~
-
-    +search(indexId : UUID, key : IndexKey) List~RowId~
-    +insertEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
-    +deleteEntry(indexId : UUID, key : IndexKey, rowId : RowId) void
-    +rebuildIndex(indexId : UUID) void
-}
-
-%% =====================================================
-%% Strategy and Product
-%% =====================================================
-
-class Index {
-    <<abstract>>
-
-    #indexId : UUID
-    #name : String
-    #tableId : UUID
-    #columns : List~Column~
-    #unique : Boolean
-
-    +getId() UUID
-    +getName() String
-    +getColumns() List~Column~
-
-    +search(key : IndexKey)* List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId)* void
-    +deleteKey(key : IndexKey, rowId : RowId)* void
-    +rebuild()* void
-}
-
-%% =====================================================
-%% Concrete Strategies and Products
-%% =====================================================
-
-class BTreeIndex {
-    +search(key : IndexKey) List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId) void
-    +deleteKey(key : IndexKey, rowId : RowId) void
-    +rebuild() void
-}
-
-class HashIndex {
-    +search(key : IndexKey) List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId) void
-    +deleteKey(key : IndexKey, rowId : RowId) void
-    +rebuild() void
-}
-
-class BitmapIndex {
-    +search(key : IndexKey) List~RowId~
-    +insertKey(key : IndexKey, rowId : RowId) void
-    +deleteKey(key : IndexKey, rowId : RowId) void
-    +rebuild() void
-}
-
-%% =====================================================
-%% Factory Method Creator
-%% =====================================================
-
-class IndexCreator {
-    <<abstract>>
-
-    +create(request : CreateIndexRequest) Index
-    #createIndex(request : CreateIndexRequest)* Index
-    #validate(request : CreateIndexRequest) void
-    #initialize(index : Index) void
-}
-
-%% =====================================================
-%% Concrete Creators
-%% =====================================================
-
-class BTreeIndexCreator {
-    #createIndex(request : CreateIndexRequest) Index
-}
-
-class HashIndexCreator {
-    #createIndex(request : CreateIndexRequest) Index
-}
-
-class BitmapIndexCreator {
-    #createIndex(request : CreateIndexRequest) Index
-}
-
-%% =====================================================
-%% Table and Table Builder
+%% TABLE - INDEX OWNER
 %% =====================================================
 
 class Table {
-    -tableId : UUID
-    -name : String
-    -columns : List~Column~
     -indexes : List~Index~
 
-    +addIndex(index : Index) void
-    +removeIndex(indexId : UUID) void
-    +findIndex(indexId : UUID) Index
+    +addIndex(index : Index, context : IndexDefinitionContext) void
+    +dropIndex(indexId : UUID) void
+
+    +findIndexById(indexId : UUID) Index
+    +findIndexByName(name : String) Index
     +listIndexes() List~Index~
-}
 
-class TableBuilder {
-    -indexes : List~Index~
-
-    +addIndex(index : Index) TableBuilder
-    +build() Table
+    +insertIntoIndexes(row : Row, context : IndexOperationContext) void
+    +updateIndexes(oldRow : Row, newRow : Row, context : IndexOperationContext) void
+    +deleteFromIndexes(row : Row, context : IndexOperationContext) void
 }
 
 %% =====================================================
-%% Supporting Domain Types
+%% STRATEGY CONTEXT AND INDEX DEFINITION
 %% =====================================================
 
-class Column {
-    +columnId : UUID
-    +name : String
-    +dataType : DataType
+class Index {
+    -indexId : UUID
+    -name : String
+    -tableId : UUID
+    -columnIds : List~UUID~
+    -unique : Boolean
+    -status : IndexStatus
+    -accessMethod : IndexAccessMethod
+
+    +getId() UUID
+    +getName() String
+    +getTableId() UUID
+    +getColumnIds() List~UUID~
+    +getType() IndexType
+    +getStatus() IndexStatus
+    +isUnique() boolean
+
+    +validateDefinition(context : IndexDefinitionContext) void
+
+    +build(context : IndexOperationContext) void
+    +rebuild(context : IndexOperationContext) void
+    +enable() void
+    +disable() void
+    +markInvalid() void
+    +drop() void
+
+    +insertEntry(row : Row, context : IndexOperationContext) void
+    +updateEntry(oldRow : Row, newRow : Row, context : IndexOperationContext) void
+    +deleteEntry(row : Row, context : IndexOperationContext) void
+
+    +search(key : IndexKey) List~UUID~
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+
+    -extractKey(row : Row) IndexKey
+    -validateUniqueKey(key : IndexKey) void
+    -ensureActive() void
 }
 
-class CreateIndexRequest {
-    +name : String
-    +type : IndexType
-    +tableId : UUID
-    +columnIds : List~UUID~
-    +unique : Boolean
+%% =====================================================
+%% STRATEGY
+%% =====================================================
+
+class IndexAccessMethod {
+    <<interface>>
+
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
+
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+}
+
+%% =====================================================
+%% CONCRETE STRATEGIES
+%% =====================================================
+
+class BTreeIndexAccessMethod {
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
+
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+}
+
+class HashIndexAccessMethod {
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
+
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+}
+
+class BitmapIndexAccessMethod {
+    +getType() IndexType
+    +build(context : IndexOperationContext) void
+
+    +insert(key : IndexKey, rowId : UUID) void
+    +delete(key : IndexKey, rowId : UUID) void
+
+    +search(key : IndexKey) List~UUID~
+    +supportsRangeSearch() boolean
+    +rangeSearch(fromKey : IndexKey, toKey : IndexKey) List~UUID~
+}
+
+%% =====================================================
+%% INDEX DEFINITION VALIDATION
+%% =====================================================
+
+class IndexDefinitionContext {
+    -tableId : UUID
+    -columns : List~Column~
+    -existingIndexes : List~Index~
+
+    +hasColumn(columnId : UUID) boolean
+    +hasIndexName(name : String) boolean
+    +hasEquivalentIndex(columnIds : List~UUID~, type : IndexType) boolean
+    +supportsType(columnId : UUID, type : IndexType) boolean
+}
+
+%% =====================================================
+%% INDEX OPERATION CONTEXT
+%% =====================================================
+
+class IndexOperationContext {
+    -tableId : UUID
+    -transactionId : UUID
+
+    +getTableId() UUID
+    +getTransactionId() UUID
+    +scanRows() List~Row~
+}
+
+%% =====================================================
+%% SUPPORTING DOMAIN TYPES
+%% =====================================================
+
+class IndexKey {
+    -values : List~Object~
+
+    +getValues() List~Object~
 }
 
 class IndexType {
@@ -3044,13 +3363,33 @@ class IndexType {
     BITMAP
 }
 
-class IndexKey {
-    +values : List~Object~
+class IndexStatus {
+    <<enumeration>>
+
+    BUILDING
+    ACTIVE
+    DISABLED
+    REBUILDING
+    INVALID
+    DROPPED
 }
 
-class RowId {
-    +pageId : UUID
-    +slotNumber : Integer
+class Column {
+    -columnId : UUID
+    -name : String
+    -dataType : DataType
+
+    +getId() UUID
+    +getName() String
+    +getDataType() DataType
+}
+
+class Row {
+    -rowId : UUID
+    -values : Map~UUID, Object~
+
+    +getId() UUID
+    +getValue(columnId : UUID) Object
 }
 
 class DataType {
@@ -3058,345 +3397,253 @@ class DataType {
 }
 
 %% =====================================================
-%% Strategy Relationships
+%% TABLE AND INDEX RELATIONSHIPS
 %% =====================================================
 
-Index <|-- BTreeIndex
-Index <|-- HashIndex
-Index <|-- BitmapIndex
+Table *--> "0..*" Index : owns and maintains
+Table *--> "1..*" Column : defines
 
-IndexManager --> Index : selects and delegates
-Index --> IndexKey : uses
-Index --> RowId : maps to
+Table ..> Row : handles data changes
+Table ..> IndexDefinitionContext : validates index with
+Table ..> IndexOperationContext : supplies operation context
+
+%% =====================================================
+%% STRATEGY RELATIONSHIPS
+%% =====================================================
+
+Index *--> IndexAccessMethod : delegates operations
+
+IndexAccessMethod <|.. BTreeIndexAccessMethod
+IndexAccessMethod <|.. HashIndexAccessMethod
+IndexAccessMethod <|.. BitmapIndexAccessMethod
+
+%% =====================================================
+%% DEFINITION AND OPERATION DEPENDENCIES
+%% =====================================================
+
+Index ..> IndexDefinitionContext : validates definition with
+Index ..> IndexOperationContext : builds and maintains with
+
+Index --> IndexType : identifies
+Index --> IndexStatus : has lifecycle status
 Index --> "1..*" Column : indexes
 
-%% =====================================================
-%% Factory Method Relationships
-%% =====================================================
+Index ..> Row : extracts key from
+Index ..> IndexKey : creates and searches
 
-IndexCreator <|-- BTreeIndexCreator
-IndexCreator <|-- HashIndexCreator
-IndexCreator <|-- BitmapIndexCreator
+IndexAccessMethod ..> IndexKey : organizes
+IndexAccessMethod ..> IndexOperationContext : builds from
 
-BTreeIndexCreator ..> BTreeIndex : creates
-HashIndexCreator ..> HashIndex : creates
-BitmapIndexCreator ..> BitmapIndex : creates
-
-IndexManager --> IndexCreator : selects creator
-IndexCreator --> CreateIndexRequest : receives
-CreateIndexRequest --> IndexType : specifies
-
-%% =====================================================
-%% Table Relationships
-%% =====================================================
-
-Table *--> "1..*" Column : defines
-Table *--> "0..*" Index : owns
-
-IndexManager --> Table : manages indexes for
-TableBuilder --> "0..*" Index : collects
-TableBuilder ..> Table : builds
+IndexDefinitionContext --> Column : resolves
+IndexDefinitionContext --> Index : checks existing
 
 Column --> DataType : uses
 
 %% =====================================================
-%% Styling
+%% STYLING
 %% =====================================================
 
-style IndexManager fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style Table fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style TableBuilder fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style Index fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#664d03
 
-style Index fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style BTreeIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style HashIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
-style BitmapIndex fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style IndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style BTreeIndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style HashIndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style BitmapIndexAccessMethod fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
 
-style IndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style BTreeIndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style HashIndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
-style BitmapIndexCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style IndexDefinitionContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style IndexOperationContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
-style Column fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
-style CreateIndexRequest fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
-style IndexType fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
-style IndexKey fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
-style RowId fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
-style DataType fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#263238
-```
+style IndexType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style IndexStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style IndexKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+
+style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+style DataType fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 
 ### 9.2 Sequence Diagram Search Rows Using Selected Index Strategy
 ```mermaid
 sequenceDiagram
     autonumber
 
-    box #e3f2fd Query Execution
+    box #e3f2fd Client
         participant Client as executor : QueryExecutor
     end
 
-    box #fff3e0 Strategy Context
-        participant Manager as indexManager : IndexManager
+    box #e8f5e9 Context
+        participant T as usersTable : Table
+        participant Index as index : Index
     end
 
-    box #e8f5e9 Concrete Strategy
-        participant Index as index : BTreeIndex<br/>(used as Index)
+    box #fff3e0 Strategy
+        participant Strategy as accessMethod : BTreeIndexAccessMethod
     end
 
-    Note over Client,Index: Search using the selected Index strategy
+    Note over Client,Strategy: Search rows using B-Tree index strategy
 
-    Client->>Manager: search(indexId, key)
-    activate Manager
+    Client->>T: findIndexById(indexId)
+    activate T
+    T-->>Client: index : Index
+    deactivate T
 
-    Manager->>Manager: findIndex(indexId)
-    Manager-->>Manager: index : Index
-
-    Note right of Manager: IndexManager only depends<br/>on the Index abstraction
-
-    Manager->>Index: search(key)
+    Client->>Index: search(key)
     activate Index
 
-    Index->>Index: traverseBTree(key)
-    Index-->>Manager: rowIds : List<RowId>
+    Note right of Index: Context delegates search<br/>to the concrete strategy
 
+    Index->>Strategy: search(key)
+    activate Strategy
+    Strategy->>Strategy: traverseBTree(key)
+    Strategy-->>Index: rowIds : List<UUID>
+    deactivate Strategy
+
+    Index-->>Client: rowIds : List<UUID>
     deactivate Index
-
-    Manager-->>Client: rowIds : List<RowId>
-    deactivate Manager
-```
-
-### 9.2 Sequence Diagram for Create B-Tree Index Successfully
-```mermaid
-sequenceDiagram
-    autonumber
-
-    box #e3f2fd Client
-        participant Client as DDLExecutor
-    end
-
-    box #e3f2fd Index Management
-        participant Manager as IndexManager
-        participant Table as Table
-    end
-
-    box #fff3e0 Factory Method
-        participant Creator as  BTreeIndexCreator 
-    end
-
-    box #e8f5e9 Concrete Product
-        participant Index as BTreeIndex 
-    end
-
-    Note over Client,Index: Create B-Tree Index Successfully
-
-    Client->>Manager: createIndex(request, table)
-    activate Manager
-
-    Manager->>Manager: selectCreator(request.type)
-    Manager-->>Manager: creator : IndexCreator
-
-    Manager->>Creator: create(request)
-    activate Creator
-
-    Creator->>Creator: validate(request)
-
-    Note right of Creator: createIndex() is the Factory Method
-
-    Creator->>Creator: createIndex(request)
-    Creator->>Index: new BTreeIndex(request)
-    activate Index
-
-    Index-->>Creator: index : BTreeIndex
-    deactivate Index
-
-    Creator->>Creator: initialize(index)
-
-    Creator->>Index: rebuild()
-    activate Index
-    Index->>Index: buildBTreeStructure()
-    Index-->>Creator: initialized
-    deactivate Index
-
-    Creator-->>Manager: index : Index
-    deactivate Creator
-
-    Manager->>Manager: indexes.put(index.getId(), index)
-
-    Manager->>Table: addIndex(index)
-    activate Table
-
-    Table->>Table: indexes.add(index)
-    Table-->>Manager: void
-
-    deactivate Table
-
-    Manager-->>Client: index : Index
-    deactivate Manager
 ```
 
 ### 9.3 Code Example for Search Rows Using Selected Index Strategy
 ### Strategy Interface
-```java 
-public abstract class Index {
-    protected UUID indexId;
-    protected String name;
-    protected UUID tableId;
-    protected List<Column> columns;
-    protected boolean unique;
-    public UUID getId() {
-        return indexId;
-    }
-    public String getName() {
-        return name;
-    }
-    public List<Column> getColumns() {
-        return columns;
-    }
-    public abstract List<RowId> search(IndexKey key);
-    public abstract void insertKey(IndexKey key, RowId rowId);
-    public abstract void deleteKey(IndexKey key, RowId rowId);
-    public abstract void rebuild();
+```java
+public interface IndexAccessMethod {
+    IndexType getType();
+    void build(IndexOperationContext context);
+    void insert(IndexKey key, UUID rowId);
+    void delete(IndexKey key, UUID rowId);
+    List<UUID> search(IndexKey key);
+    boolean supportsRangeSearch();
+    List<UUID> rangeSearch(IndexKey fromKey, IndexKey toKey);
 }
 ```
 
 ### Concrete Strategy
 ```java
-public class BTreeIndex extends Index {
+public class BTreeIndexAccessMethod implements IndexAccessMethod {
     @Override
-    public List<RowId> search(IndexKey key) {
-        return null;
+    public IndexType getType() {
+        return IndexType.BTREE;
     }
+
     @Override
-    public void insertKey(IndexKey key, RowId rowId) {
-        
+    public void build(IndexOperationContext context) {
+        System.out.println("Building BTree index structure...");
     }
+
     @Override
-    public void deleteKey(IndexKey key, RowId rowId) {
-        
+    public void insert(IndexKey key, UUID rowId) {
+        System.out.println("Inserting key into BTree: " + key.getValues());
     }
+
     @Override
-    public void rebuild() {
-        
+    public void delete(IndexKey key, UUID rowId) {
+        System.out.println("Deleting key from BTree: " + key.getValues());
+    }
+
+    @Override
+    public List<UUID> search(IndexKey key) {
+        System.out.println("Searching BTree for key: " + key.getValues());
+        return new ArrayList<>();
+    }
+
+    @Override
+    public boolean supportsRangeSearch() {
+        return true;
+    }
+
+    @Override
+    public List<UUID> rangeSearch(IndexKey fromKey, IndexKey toKey) {
+        System.out.println("Range searching BTree from: " + fromKey.getValues() + " to: " + toKey.getValues());
+        return new ArrayList<>();
     }
 }
 ```
 
-### Context 
+### Context (Index)
 ```java
-public class IndexManager {
-    private final Map<UUID, Index> indexes = new ConcurrentHashMap<>();
+public class Index {
+    private UUID indexId;
+    private String name;
+    private UUID tableId;
+    private List<UUID> columnIds;
+    private boolean unique;
+    private IndexStatus status;
+    private IndexAccessMethod accessMethod;
 
-    public List<RowId> searchRows(UUID indexId, IndexKey key) {
-        Index index = indexes.get(indexId);
-        if (index == null) {
-            throw new RuntimeException("Index not found: " + indexId);
-        }
-        return index.search(key);
-    }
-}
-```
-
-### Client 
-```java 
-public class QueryExecutor {
-    private final IndexManager indexManager;
-    public QueryExecutor(IndexManager indexManager) {
-        this.indexManager = indexManager;
-    }
-    public void executeQuery() {
-        UUID indexId = UUID.fromString("...");
-        IndexKey key = new IndexKey("John");
-        List<RowId> rowIds = indexManager.searchRows(indexId, key);
-    }
-}
-```
-### 9.3 Code Example for Create B-Tree Index Successfully
-### Creator
-```java
-public abstract class IndexCreator {
-    public final Index create(CreateIndexRequest request) {
-        validate(request);
-        Index index = createIndex(request); 
-        initialize(index);
-        return index;
-    }
-    protected abstract Index createIndex(CreateIndexRequest request);
-    protected void validate(CreateIndexRequest request) {
-        
-    }
-    protected void initialize(Index index) {
-        
-    }
-}
-```
-### Concrete Creator
-```java
-public class BTreeIndexCreator extends IndexCreator {
-    @Override
-    protected Index createIndex(CreateIndexRequest request) {
-        return new BTreeIndex(request.indexId, request.name, request.tableId, request.columns, request.unique);
-    }
-}
-```
-
-### Product 
-```java
-public abstract class Index {
-    protected UUID indexId;
-    protected String name;
-    protected UUID tableId;
-    protected List<Column> columns;
-    protected boolean unique;
-
-    public Index(UUID indexId, String name, UUID tableId, List<Column> columns, boolean unique) {
+    public Index(UUID indexId, String name, UUID tableId, List<UUID> columnIds, boolean unique, IndexAccessMethod accessMethod) {
         this.indexId = indexId;
         this.name = name;
         this.tableId = tableId;
-        this.columns = columns;
+        this.columnIds = columnIds;
         this.unique = unique;
-    }
-    public UUID getId() {
-        return indexId;
-    }
-    public String getName() {
-        return name;
-    }
-    public List<Column> getColumns() {
-        return columns;
-    }
-    public abstract List<RowId> search(IndexKey key);
-    public abstract void insertKey(IndexKey key, RowId rowId);
-    public abstract void deleteKey(IndexKey key, RowId rowId);
-    public abstract void rebuild();
-}
-```
-
-### Concrete Product
-```java
-public class BTreeIndex extends Index {
-    private final BTreeMap<IndexKey, List<RowId>> btree;
-    private final int maxDegree; 
-
-    public BTreeIndex(UUID indexId, String name, UUID tableId, List<Column> columns, boolean unique) {
-        super(indexId, name, tableId, columns, unique);
-        this.btree = new BTreeMap<>();
-        this.maxDegree = 4; 
+        this.status = IndexStatus.ACTIVE;
+        this.accessMethod = accessMethod;
     }
 
-    @Override
-    public List<RowId> search(IndexKey key) {
+    public UUID getId() { return indexId; }
+    public String getName() { return name; }
+    public UUID getTableId() { return tableId; }
+    public List<UUID> getColumnIds() { return columnIds; }
+    public boolean isUnique() { return unique; }
+    public IndexStatus getStatus() { return status; }
+
+    public List<UUID> search(IndexKey key) {
         return null;
     }
 
-    @Override
-    public void insertKey(IndexKey key, RowId rowId) {        
+    public void insertEntry(Row row, IndexOperationContext context) {
+
     }
 
-    @Override
-    public void deleteKey(IndexKey key, RowId rowId) {       
+    public void deleteEntry(Row row, IndexOperationContext context) {
+
     }
 
-    @Override
-    public void rebuild() {
+    private void ensureActive() {
+        
+    }
+
+    private IndexKey extractKey(Row row) {
+        return null;
+    }
+
+    private void validateUniqueKey(IndexKey key) {
+        
+    }
+}
+```
+
+### Table (Owner)
+```java
+public class Table {
+    private List<Index> indexes = new ArrayList<>();
+
+    public void addIndex(Index index, IndexDefinitionContext context) {
+        
+    }
+
+    public void dropIndex(UUID indexId) {
+       
+    }
+
+    public Index findIndexById(UUID indexId) {
+        return null;
+    }
+
+    public Index findIndexByName(String name) {
+        return null;
+    }
+
+    public List<Index> listIndexes() {
+        return new ArrayList<>(indexes);
+    }
+}
+```
+
+### Client (QueryExecutor)
+```java
+public class QueryExecutor {
+    public List<UUID> executeSearch(Table table, UUID indexId, IndexKey key) {
+        return null;
     }
 }
 ```

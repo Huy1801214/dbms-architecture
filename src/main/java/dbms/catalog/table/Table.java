@@ -6,6 +6,8 @@ import dbms.catalog.base.LifecycleStatus;
 import dbms.catalog.base.DropMode;
 import dbms.catalog.constraint.Constraint;
 import dbms.catalog.index.Index;
+import dbms.catalog.index.IndexDefinitionContext;
+import dbms.catalog.index.IndexOperationContext;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -13,13 +15,19 @@ import java.util.UUID;
 
 public class Table extends DatabaseObject {
     private static final java.util.Map<String, Table> allTables = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<java.util.UUID, Table> tablesById = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static Table getTableByName(String name) {
         return name != null ? allTables.get(name) : null;
     }
 
+    public static Table getTableById(java.util.UUID id) {
+        return id != null ? tablesById.get(id) : null;
+    }
+
     public static void clearAllTablesRegistry() {
         allTables.clear();
+        tablesById.clear();
     }
 
     public java.util.UUID tableId;
@@ -48,6 +56,9 @@ public class Table extends DatabaseObject {
         }
         if (name != null) {
             allTables.put(name, this);
+        }
+        if (this.tableId != null) {
+            tablesById.put(this.tableId, this);
         }
     }
 
@@ -113,10 +124,24 @@ public class Table extends DatabaseObject {
         }
     }
 
-    public void removeIndex(UUID indexId) {
+    public void addIndex(Index index, IndexDefinitionContext context) {
+        if (index != null) {
+            index.validateDefinition(context);
+            this.indexes.add(index);
+        }
     }
 
-    public Index findIndex(UUID indexId) {
+    public void dropIndex(UUID indexId) {
+        if (indexId == null)
+            return;
+        this.indexes.removeIf(idx -> indexId.equals(idx.getId()));
+    }
+
+    public Index findIndexById(UUID indexId) {
+        return null;
+    }
+
+    public Index findIndexByName(String name) {
         return null;
     }
 
@@ -126,6 +151,15 @@ public class Table extends DatabaseObject {
 
     public List<Index> getIndexes() {
         return indexes;
+    }
+
+    public void insertIntoIndexes(Row row, IndexOperationContext context) {
+    }
+
+    public void updateIndexes(Row oldRow, Row newRow, IndexOperationContext context) {
+    }
+
+    public void deleteFromIndexes(Row row, IndexOperationContext context) {
     }
 
     public void insert(Row row) {
