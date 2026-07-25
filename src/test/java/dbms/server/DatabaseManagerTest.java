@@ -14,7 +14,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldCreateDatabase() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         DatabaseCreateRequest request = new DatabaseCreateRequest("StudentDB", "admin");
         // Act
         Database database = manager.createDatabase(request);
@@ -26,7 +26,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldDropDatabase() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         Database database = manager.createDatabase("StudentDB", "admin");
         String databaseId = database.getDatabaseId();
         assertEquals(1, manager.listAllDatabases().size());
@@ -40,7 +40,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldRenameDatabase() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         Database database = manager.createDatabase("StudentDB", "admin");
         String databaseId = database.getDatabaseId();
         // Act
@@ -52,7 +52,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldGetDatabaseByName() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         Database database = manager.createDatabase("StudentDB", "admin");
         // Act
         Database foundDatabase = manager.findDatabaseByName("StudentDB");
@@ -64,7 +64,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldListAllDatabases() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
 
         manager.createDatabase("StudentDB", "admin");
         manager.createDatabase("SchoolDB", "admin");
@@ -83,7 +83,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldRejectDuplicateDatabaseName() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         manager.createDatabase("StudentDB", "admin");
 
         // Act + Assert
@@ -96,7 +96,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldRejectUnknownDatabase() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         String unknownId = "unknown-db-id";
 
         // Act + Assert
@@ -108,7 +108,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldIncreaseDatabaseCountAfterCreation() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         assertEquals(0, manager.listAllDatabases().size());
         // Act
         manager.createDatabase("StudentDB", "admin");
@@ -119,7 +119,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldDecreaseDatabaseCountAfterDrop() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         Database database = manager.createDatabase("StudentDB", "admin");
         String databaseId = database.getDatabaseId();
         assertEquals(1, manager.listAllDatabases().size());
@@ -134,7 +134,7 @@ public class DatabaseManagerTest {
     @Test
     public void shouldAssignUniqueDatabaseId() {
         // Arrange
-        DatabaseManager manager = new DatabaseManager();
+        DatabaseManager manager = DatabaseManager.getInstance();
         // Act
         Database database1 = manager.createDatabase("StudentDB", "admin");
         Database database2 = manager.createDatabase("SchoolDB", "admin");
