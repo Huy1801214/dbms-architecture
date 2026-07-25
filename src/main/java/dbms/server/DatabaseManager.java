@@ -12,7 +12,16 @@ import java.util.UUID;
 public class DatabaseManager {
     private Map<String, Database> databases = new HashMap<>();
 
-    public DatabaseManager() {
+    private static DatabaseManager instance;
+
+    private DatabaseManager() {
+    }
+
+    public static DatabaseManager getInstance() {
+        if (instance == null) {
+            instance = new DatabaseManager();
+        }
+        return instance;
     }
 
     public Database createDatabase(String name, String owner) {
@@ -20,50 +29,27 @@ public class DatabaseManager {
     }
 
     public Database createDatabase(DatabaseCreateRequest request) {
-        if (request == null || request.getName() == null) return null;
-        if (findDatabaseByName(request.getName()) != null) {
-            throw new IllegalStateException("Duplicate database name: " + request.getName());
-        }
-        Database db = new Database(UUID.randomUUID().toString(), request.getName(), request.getOwner(), DatabaseStatus.ONLINE, LocalDateTime.now());
-        databases.put(db.getDatabaseId(), db);
-        return db;
+        return null;
     }
 
     public void dropDatabase(String databaseId) {
-        Database database = findDatabaseById(databaseId);
-        if (database == null) {
-            throw new IllegalStateException("Database not found: " + databaseId);
-        }
-        database.validateDropOperation();
-        unregisterDatabase(databaseId);
+
     }
 
     public Database findDatabaseById(String databaseId) {
-        return databases.get(databaseId);
+        return null;
     }
 
     public Database findDatabaseByName(String databaseName) {
-        if (databaseName == null) return null;
-        for (Database db : databases.values()) {
-            if (databaseName.equalsIgnoreCase(db.getName())) {
-                return db;
-            }
-        }
         return null;
     }
 
     public List<Database> listAllDatabases() {
-        return new ArrayList<>(databases.values());
+        return null;
     }
 
     public void renameDatabase(String databaseId, String name) {
-        Database db = findDatabaseById(databaseId);
-        if (db != null) {
-            db.rename(name);
-        }
+
     }
 
-    private void unregisterDatabase(String databaseId) {
-        databases.remove(databaseId);
-    }
 }

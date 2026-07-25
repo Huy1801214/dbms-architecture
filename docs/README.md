@@ -167,7 +167,9 @@ class DatabaseServer{
 }
 
 class DatabaseManager{
+    -instance : DatabaseManager$
     -databases : Map~String, Database~
+    +getInstance() DatabaseManager$
     +createDatabase(request) Database
     +dropDatabase(databaseId)
     +findDatabaseById(databaseId) Database

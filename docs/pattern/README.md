@@ -18,7 +18,7 @@ flowchart LR
     %% HIGH-PRIORITY FEATURES
     %% =====================================================
     H1["1. Database Operational State Management"]
-    H1P["State"]
+    H1P["State, Singleton"]
 
     H2["2. Schema Management"]
     H2P["None"]
@@ -181,9 +181,11 @@ class DropMode {
 %% =====================================================
 
 class DatabaseManager {
+    -instance : DatabaseManager$
     -databasesById : Map~UUID, Database~
     -databaseIdsByName : Map~String, UUID~
 
+    +getInstance() DatabaseManager$
     +createDatabase(request) Database
     +dropDatabase(databaseId : UUID, mode : DropMode) void
 
@@ -1187,7 +1189,7 @@ style LifecycleStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 style DropMode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 ```
 # 1. Database Operational State Management
-## Using State Pattern
+## Using State, Singleton Pattern
 
 ### 1.1 Class Diagram
 ```mermaid
@@ -1199,9 +1201,11 @@ direction TB
 %% =====================================================
 
 class DatabaseManager {
+    -instance : DatabaseManager$
     -databasesById : Map~UUID, Database~
     -databaseIdsByName : Map~String, UUID~
 
+    +getInstance() DatabaseManager$
     +createDatabase(request) Database
     +dropDatabase(databaseId : UUID) void
 
@@ -1484,7 +1488,36 @@ sequenceDiagram
     end
 ```
 
-### 1.3 Code Example
+### 1.3 Sequence Diagram for shouldReturnSameInstanceOnMultipleCalls()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant A as Client A
+    participant B as Client B
+    participant DM as "DatabaseManager (Class)"
+
+    Note over A,B: 1. First invocation (Lazy Initialization)
+    A ->> DM: getInstance()
+    activate DM
+    DM ->> DM: Check if instance == null (true)
+    create participant INST as "instance : DatabaseManager"
+    DM ->> INST: new DatabaseManager()
+    Note over INST: Private Constructor executed
+    DM -->> A: Return created instance
+    deactivate DM
+
+    Note over A,B: 2. Subsequent invocation (Reuse cached instance)
+    B ->> DM: getInstance()
+    activate DM
+    DM ->> DM: Check if instance == null (false)
+    DM -->> B: Return cached instance
+    deactivate DM
+
+    Note over A,B: Result: Both Client A and Client B reference the exact same instance
+```
+
+### 1.4 Code Example for State Pattern 
 
 #### State Interface and Enum State
 ```java
@@ -1659,6 +1692,52 @@ public class DatabaseManager() {
 
 ---
 
+### 1.5 Code Example for Singleton Pattern
+
+#### Singleton Class
+```java
+package dbms.server;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import dbms.common.entities.Database;
+
+public class DatabaseManager {
+    private static volatile DatabaseManager instance;
+    private final Map<UUID, Database> databasesById = new HashMap<>();
+    private final Map<String, UUID> databaseIdsByName = new HashMap<>();
+
+    private DatabaseManager() {
+    }
+
+    public static DatabaseManager getInstance() {
+        if (instance == null) {
+            instance = new DatabaseManager();
+        }
+        return instance;
+    }
+}
+```
+
+#### Client Code
+```java
+package dbms.server;
+
+// Client A
+DatabaseManager manager1 = DatabaseManager.getInstance();
+Database db1 = manager1.createDatabase("StudentDB", "admin");
+
+// Client B
+DatabaseManager manager2 = DatabaseManager.getInstance();
+Database db2 = manager2.createDatabase("SchoolDB", "admin");
+
+// Verify both clients reference the same instance
+System.out.println(manager1 == manager2);  // true
+System.out.println(db1.getDatabaseId() != db2.getDatabaseId());  // true (different databases)
+```
+
+---
 # 2. Schema Management
 ## Standard Domain Entity (No Pattern)
 
