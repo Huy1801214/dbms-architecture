@@ -9,6 +9,8 @@ import dbms.catalog.index.Index;
 import dbms.catalog.index.IndexDefinitionContext;
 import dbms.catalog.index.IndexOperationContext;
 
+import dbms.storage.StorageBackend;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -33,6 +35,7 @@ public class Table extends DatabaseObject {
     public java.util.UUID tableId;
     public String engine;
     public long rowCount;
+    private StorageBackend storageBackend;
 
     private List<Column> columns = new java.util.ArrayList<>();
     private List<Constraint> constraints = new java.util.ArrayList<>();
@@ -90,6 +93,14 @@ public class Table extends DatabaseObject {
 
     public long getRowCount() {
         return rowCount;
+    }
+
+    public StorageBackend getStorageBackend() {
+        return storageBackend;
+    }
+
+    public void setStorageBackend(StorageBackend storageBackend) {
+        this.storageBackend = storageBackend;
     }
 
     public void addColumn(Column column) {
@@ -163,12 +174,52 @@ public class Table extends DatabaseObject {
     }
 
     public void insert(Row row) {
+        if (row == null || row.rowId == null) {
+            return;
+        }
+        for (Row r : rows) {
+            if (row.rowId.equals(r.rowId)) {
+                throw new IllegalStateException("Duplicate row ID: " + row.rowId);
+            }
+        }
+        rows.add(row);
+        rowCount = rows.size();
+        if (storageBackend != null) {
+            byte[] data = serializeRow(row);
+            storageBackend.writeRecord(data);
+        }
+    }
+
+    private byte[] serializeRow(Row row) {
+        if (row.rowId == null) {
+            return new byte[0];
+        }
+        return row.rowId.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     public void update(String rowId, Row newRow) {
+        if (rowId == null || newRow == null) {
+            return;
+        }
+        boolean found = false;
+        for (int i = 0; i < rows.size(); i++) {
+            if (rowId.equals(rows.get(i).rowId)) {
+                rows.set(i, newRow);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw new IllegalStateException("Row not found for update: " + rowId);
+        }
     }
 
     public void delete(String rowId) {
+        if (rowId == null) {
+            return;
+        }
+        rows.removeIf(r -> rowId.equals(r.rowId));
+        rowCount = rows.size();
     }
 
     public void truncate() {
@@ -180,6 +231,14 @@ public class Table extends DatabaseObject {
     }
 
     public Row findRowById(String rowId) {
+        if (rowId == null) {
+            return null;
+        }
+        for (Row r : rows) {
+            if (rowId.equals(r.rowId)) {
+                return r;
+            }
+        }
         return null;
     }
 
