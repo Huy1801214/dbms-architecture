@@ -36,7 +36,7 @@ flowchart LR
     H6P["Strategy"]
 
     H7["7. Table Data and Row Operations"]
-    H7P["Template Method + Command"]
+    H7P["Template Method + Command + Bridge"]
 
     H8["8. Object Naming, Lookup and Uniqueness"]
     H8P["None"]
@@ -434,6 +434,7 @@ class SchemaObject {
 
 class Table {
     -engine : String
+    -storageBackend : StorageBackend
 
     -columns : List~Column~
     -constraints : List~Constraint~
@@ -897,6 +898,26 @@ class DataOperationResult {
 }
 
 %% =====================================================
+%% STORAGE BACKEND
+%% =====================================================
+
+class StorageBackend {
+    <<interface>>
+    +writeRecord(data : byte[]) void
+    +readRecord(id : UUID) byte[]
+}
+
+class RowStorageBackend {
+    +writeRecord(data : byte[]) void
+    +readRecord(id : UUID) byte[]
+}
+
+class ColumnStorageBackend {
+    +writeRecord(data : byte[]) void
+    +readRecord(id : UUID) byte[]
+}
+
+%% =====================================================
 %% VIEW
 %% =====================================================
 
@@ -1104,6 +1125,10 @@ DeleteRowCommand --> Row : keeps deleted row
 
 Table ..> RowChanges : applies
 
+Table --> StorageBackend : delegates physical operations (Bridge)
+StorageBackend <|.. RowStorageBackend
+StorageBackend <|.. ColumnStorageBackend
+
 %% =====================================================
 %% STORED PROCEDURE COMPONENTS
 %% =====================================================
@@ -1187,6 +1212,10 @@ style ProcedureParameter fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a1
 
 style LifecycleStatus fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 style DropMode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style StorageBackend fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
+style RowStorageBackend fill:#e0f2f1,stroke:#00695c,stroke-width:1px,color:#004d40
+style ColumnStorageBackend fill:#e0f2f1,stroke:#00695c,stroke-width:1px,color:#004d40
 ```
 # 1. Database Operational State Management
 ## Using State, Singleton Pattern
@@ -2899,7 +2928,7 @@ public class Table {
 ---
 
 # 7. Table Data and Row Operations
-## Using Template Method & Command Pattern
+## Using Template Method, Command & Bridge Pattern
 
 ### 7.1 Class Diagram
 ```mermaid
@@ -2982,6 +3011,7 @@ class DataOperationResult {
 
 class Table {
     -tableId : UUID
+    -storageBackend : StorageBackend
 
     +validateConstraints(row : Row, context : ConstraintValidationContext) void
 
@@ -2993,6 +3023,22 @@ class Table {
     +insertIntoIndexes(row : Row) void
     +updateIndexes(oldRow : Row, newRow : Row) void
     +deleteFromIndexes(row : Row) void
+}
+
+class StorageBackend {
+    <<interface>>
+    +writeRecord(data : byte[]) void
+    +readRecord(id : UUID) byte[]
+}
+
+class RowStorageBackend {
+    +writeRecord(data : byte[]) void
+    +readRecord(id : UUID) byte[]
+}
+
+class ColumnStorageBackend {
+    +writeRecord(data : byte[]) void
+    +readRecord(id : UUID) byte[]
 }
 
 class Row {
@@ -3022,7 +3068,11 @@ InsertRowCommand *--> Row : contains
 UpdateRowCommand *--> RowChanges : contains
 
 Table ..> Row : manages logically
+Table --> StorageBackend : delegates physical operations (Bridge)
 Table ..> ConstraintValidationContext : validates with
+
+StorageBackend <|.. RowStorageBackend
+StorageBackend <|.. ColumnStorageBackend
 
 style TableDataCommandExecutor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 
@@ -3039,6 +3089,41 @@ style DataOperationResult fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a
 style Table fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
 style Row fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
 style RowChanges fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+
+style StorageBackend fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
+style RowStorageBackend fill:#e0f2f1,stroke:#00695c,stroke-width:1px,color:#004d40
+style ColumnStorageBackend fill:#e0f2f1,stroke:#00695c,stroke-width:1px,color:#004d40
+```
+
+### 7.2 Sequence Diagram shouldInsertRowUsingBridgedStorageBackend()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Test as TableDataIntegrationTest
+    participant T as usersTable : Table
+    participant SB as storageBackend : RowStorageBackend
+
+    Note over Test,SB: The Abstraction (Table) is bridged with the Implementor (RowStorageBackend)
+
+    Test ->> T: insertRow(row)
+    activate T
+
+    T ->> T: validateConstraints(row)
+    Note over T: Logical Layer executes constraint validation
+
+    T ->> T: serializeRowToBytes(row)
+    Note over T: Serialize Row object into binary byte array
+
+    Note over T,SB: Bridge: Abstraction delegates physical write to Implementor
+    T ->> SB: writeRecord(data)
+    activate SB
+    Note over SB: Write binary data to disk pages (Physical row-oriented I/O)
+    SB -->> T: write completed
+    deactivate SB
+
+    T -->> Test: insert completed
+    deactivate T
 ```
 
 ### 7.2 Sequence Diagram shouldExecuteInsertRowCommand()
@@ -3262,6 +3347,87 @@ public class TableDataCommandExecutor {
     }
 }
 ```
+
+### 7.4 Code Example for Bridge Pattern
+
+#### Implementation 
+```java
+public interface StorageBackend {
+    void writeRecord(byte[] data);
+    byte[] readRecord(UUID id);
+}
+```
+
+#### Concrete Implementation
+```java
+public class RowStorageBackend implements StorageBackend {
+    @Override
+    public void writeRecord(byte[] data) {
+    }
+
+    @Override
+    public byte[] readRecord(UUID id) {
+        return null;
+    }
+}
+
+public class ColumnStorageBackend implements StorageBackend {
+    @Override
+    public void writeRecord(byte[] data) {
+    }
+
+    @Override
+    public byte[] readRecord(UUID id) {
+        return null;
+    }
+}
+```
+
+#### Abstraction 
+```java
+public class Table {
+    protected UUID tableId;
+    protected String name;
+    protected StorageBackend storageBackend; 
+
+    public Table(UUID tableId, String name, StorageBackend storageBackend) {
+        this.tableId = tableId;
+        this.name = name;
+        this.storageBackend = storageBackend;
+    }
+
+    public void insertRow(Row row) {
+    }
+
+    private byte[] serializeRow(Row row) {
+        return null;
+    }
+}
+```
+
+#### Client / Demo Code
+```java
+package dbms;
+
+import java.util.UUID;
+import dbms.catalog.table.*;
+import dbms.storage.*;
+
+public class BridgePatternDemo {
+    public static void main(String[] args) {
+        Row row = new Row();
+
+        StorageBackend rowBackend = new RowStorageBackend();
+        Table usersTableRowStore = new Table(UUID.randomUUID(), "users", rowBackend);
+        usersTableRowStore.insertRow(row); 
+
+        StorageBackend colBackend = new ColumnStorageBackend();
+        Table usersTableColStore = new Table(UUID.randomUUID(), "users", colBackend);
+        usersTableColStore.insertRow(row);
+    }
+}
+```
+
 ---
 
 # 8. Object Naming, Lookup, and Uniqueness Management
