@@ -3999,3 +3999,111 @@ flowchart LR
 
     classDef mediumStyle fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#664d03,font-weight:bold
 ```
+
+---
+
+# Query Processing Feature and Design Pattern Analysis
+
+## 8. Query Execution Coordination (Query Compilation)
+### Using Facade Pattern
+
+#### 8.1 Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+class QueryCompiler {
+    -parser : SqlParser
+    -binder : Binder
+    -optimizer : QueryOptimizer
+    -physicalPlanner : PhysicalPlanner
+
+    +compile(sqlText : String) PhysicalPlan
+}
+
+class SqlParser {
+    +parse(sqlText : String) AST
+}
+
+class Binder {
+    -catalog : Catalog
+    +bind(ast : AST) LogicalPlan
+}
+
+class QueryOptimizer {
+    +optimize(logicalPlan : LogicalPlan) LogicalPlan
+}
+
+class PhysicalPlanner {
+    +build(logicalPlan : LogicalPlan) PhysicalPlan
+}
+
+class AST
+class LogicalPlan
+class PhysicalPlan
+
+QueryCompiler --> SqlParser : uses
+QueryCompiler --> Binder : uses
+QueryCompiler --> QueryOptimizer : uses
+QueryCompiler --> PhysicalPlanner : uses
+
+SqlParser ..> AST : produces
+Binder ..> AST : consumes
+Binder ..> LogicalPlan : produces
+QueryOptimizer ..> LogicalPlan : optimizes
+PhysicalPlanner ..> LogicalPlan : consumes
+PhysicalPlanner ..> PhysicalPlan : produces
+
+QueryCompiler ..> PhysicalPlan : compiles into
+
+style QueryCompiler fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style SqlParser fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style Binder fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style QueryOptimizer fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style PhysicalPlanner fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style AST fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style LogicalPlan fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style PhysicalPlan fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+```
+
+#### 8.2 Sequence Diagram `shouldCompileQuery()`
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Client as QueryExecutor
+    participant QC as compiler : QueryCompiler
+    participant P as parser : SqlParser
+    participant B as binder : Binder
+    participant O as optimizer : QueryOptimizer
+    participant PP as physicalPlanner : PhysicalPlanner
+
+    Client ->> QC: compile("SELECT * FROM users")
+    activate QC
+
+    QC ->> P: parse("SELECT * FROM users")
+    activate P
+    P -->> QC: ast : AST
+    deactivate P
+
+    QC ->> B: bind(ast)
+    activate B
+    Note over B: Binds table & column names to catalog metadata
+    B -->> QC: logicalPlan : LogicalPlan
+    deactivate B
+
+    QC ->> O: optimize(logicalPlan)
+    activate O
+    Note over O: Applies heuristic & cost-based rewrite rules
+    O -->> QC: optimizedPlan : LogicalPlan
+    deactivate O
+
+    QC ->> PP: build(optimizedPlan)
+    activate PP
+    PP -->> QC: physicalPlan : PhysicalPlan
+    deactivate PP
+
+    QC -->> Client: physicalPlan
+    deactivate QC
+```
