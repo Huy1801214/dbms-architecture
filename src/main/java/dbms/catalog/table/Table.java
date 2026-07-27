@@ -42,6 +42,7 @@ public class Table extends DatabaseObject {
     private List<Constraint> constraints = new java.util.ArrayList<>();
     private List<Index> indexes = new java.util.ArrayList<>();
     private List<Row> rows = new java.util.ArrayList<>();
+    private List<TableEventListener> triggers = new java.util.ArrayList<>();
 
     private void initializeValidationChain() {
         this.validationChain = new NullabilityValidator();
@@ -185,10 +186,31 @@ public class Table extends DatabaseObject {
     public void deleteFromIndexes(Row row, IndexOperationContext context) {
     }
 
+    public void registerTrigger(TableEventListener listener) {
+        if (listener != null && !triggers.contains(listener)) {
+            triggers.add(listener);
+        }
+    }
+
+    public void unregisterTrigger(TableEventListener listener) {
+        triggers.remove(listener);
+    }
+
+    public void notifyTriggers(TableEvent event) {
+        for (TableEventListener listener : triggers) {
+            listener.onEvent(event, this);
+        }
+    }
+
+    public List<TableEventListener> getTriggers() {
+        return triggers;
+    }
+
     public void insert(Row row) {
         if (row == null || row.rowId == null) {
             return;
         }
+        notifyTriggers(new TableEvent(TriggerEventType.INSERT, TriggerTime.BEFORE, null, row));
         for (Row r : rows) {
             if (row.rowId.equals(r.rowId)) {
                 throw new IllegalStateException("Duplicate row ID: " + row.rowId);
@@ -200,6 +222,7 @@ public class Table extends DatabaseObject {
             byte[] data = serializeRow(row);
             storageBackend.writeRecord(data);
         }
+        notifyTriggers(new TableEvent(TriggerEventType.INSERT, TriggerTime.AFTER, null, row));
     }
 
     private byte[] serializeRow(Row row) {
