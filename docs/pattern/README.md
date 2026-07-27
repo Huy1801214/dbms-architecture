@@ -471,6 +471,10 @@ class Table {
     +insertIntoIndexes(row : Row, context : IndexOperationContext) void
     +updateIndexes(oldRow : Row, newRow : Row, context : IndexOperationContext) void
     +deleteFromIndexes(row : Row, context : IndexOperationContext) void
+
+    +registerTrigger(listener : TableEventListener) void
+    +unregisterTrigger(listener : TableEventListener) void
+    +notifyTriggers(event : TableEvent) void
 }
 
 class TableMetadataProxy {
@@ -938,6 +942,52 @@ class ForeignKeyValidator {
 }
 
 %% =====================================================
+%% TRIGGER MANAGEMENT - OBSERVER PATTERN
+%% =====================================================
+
+class TriggerEventType {
+    <<enumeration>>
+    INSERT
+    UPDATE
+    DELETE
+}
+
+class TriggerTime {
+    <<enumeration>>
+    BEFORE
+    AFTER
+}
+
+class TableEvent {
+    -eventType : TriggerEventType
+    -triggerTime : TriggerTime
+    -oldRow : Row
+    -newRow : Row
+
+    +TableEvent(eventType : TriggerEventType, triggerTime : TriggerTime, oldRow : Row, newRow : Row)
+    +getEventType() TriggerEventType
+    +getTriggerTime() TriggerTime
+    +getOldRow() Row
+    +getNewRow() Row
+}
+
+class TableEventListener {
+    <<interface>>
+    +onEvent(event : TableEvent, table : Table) void
+}
+
+class Trigger {
+    -triggerName : String
+    -eventType : TriggerEventType
+    -triggerTime : TriggerTime
+    -actionBody : String
+
+    +Trigger(name : String, eventType : TriggerEventType, time : TriggerTime, actionBody : String)
+    +onEvent(event : TableEvent, table : Table) void
+    -executeAction(event : TableEvent, table : Table) void
+}
+
+%% =====================================================
 %% STORAGE BACKEND
 %% =====================================================
 
@@ -1148,6 +1198,12 @@ RowValidationHandler <|-- NullabilityValidator
 RowValidationHandler <|-- UniqueValidator
 RowValidationHandler <|-- ForeignKeyValidator
 
+TableEventListener <|.. Trigger
+Table *--> "0..*" TableEventListener : maintains observers
+
+Table ..> TableEvent : creates and emits
+TableEventListener ..> TableEvent : receives and processes
+
 %% =====================================================
 %% TABLE DATA COMMAND AND TEMPLATE METHOD
 %% =====================================================
@@ -1239,6 +1295,12 @@ style RowValidationHandler fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e
 style NullabilityValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
 style UniqueValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
 style ForeignKeyValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
+
+style TableEventListener fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style Trigger fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style TableEvent fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style TriggerEventType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style TriggerTime fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 
 style CheckExpression fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
@@ -4325,6 +4387,224 @@ public class QueryExecutor {
     }
 }
 ```
+
+# 15. Trigger Management
+## Using Observer Pattern
+
+### 15.1 Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% Enumerations
+%% =====================================================
+
+class TriggerEventType {
+    <<enumeration>>
+    INSERT
+    UPDATE
+    DELETE
+}
+
+class TriggerTime {
+    <<enumeration>>
+    BEFORE
+    AFTER
+}
+
+%% =====================================================
+%% Event Data (State / Payload)
+%% =====================================================
+
+class TableEvent {
+    -eventType : TriggerEventType
+    -triggerTime : TriggerTime
+    -oldRow : Row
+    -newRow : Row
+
+    +TableEvent(eventType : TriggerEventType, triggerTime : TriggerTime, oldRow : Row, newRow : Row)
+    +getEventType() TriggerEventType
+    +getTriggerTime() TriggerTime
+    +getOldRow() Row
+    +getNewRow() Row
+}
+
+%% =====================================================
+%% Observer Interface & Concrete Observer
+%% =====================================================
+
+class TableEventListener {
+    <<interface>>
+    +onEvent(event : TableEvent, table : Table) void
+}
+
+class Trigger {
+    -triggerName : String
+    -eventType : TriggerEventType
+    -triggerTime : TriggerTime
+    -actionBody : String
+
+    +Trigger(name : String, eventType : TriggerEventType, time : TriggerTime, actionBody : String)
+    +onEvent(event : TableEvent, table : Table) void
+    -executeAction(event : TableEvent, table : Table) void
+}
+
+%% =====================================================
+%% Subject (Observable)
+%% =====================================================
+
+class Table {
+    -triggers : List~TableEventListener~
+
+    +registerTrigger(listener : TableEventListener) void
+    +unregisterTrigger(listener : TableEventListener) void
+    +notifyTriggers(event : TableEvent) void
+    +insertRow(row : Row) void
+}
+
+%% =====================================================
+%% Supporting Domain Classes
+%% =====================================================
+
+class Row {
+    -rowId : UUID
+    -values : List~Object~
+
+    +getRowId() UUID
+}
+
+%% =====================================================
+%% Observer Relationships
+%% =====================================================
+
+TableEventListener <|.. Trigger
+Table *--> "0..*" TableEventListener : maintains observers
+
+Table ..> TableEvent : creates and emits
+TableEventListener ..> TableEvent : receives and processes
+TableEventListener ..> Table : references target
+
+%% =====================================================
+%% Styling
+%% =====================================================
+
+style Table fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style TableEventListener fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style Trigger fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style TableEvent fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style TriggerEventType fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style TriggerTime fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+
+style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+```
+
+### 15.2 Sequence Diagram shouldNotifyTriggersOnRowInsertion()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Client as TableDataExecutor
+    participant T as usersTable : Table
+    participant TR as auditTrigger : Trigger (TableEventListener)
+
+    Note over Client,TR: 1. Setup Observer registration
+    Client ->> T: registerTrigger(auditTrigger)
+    T ->> T: triggers.add(auditTrigger)
+    T -->> Client: registered
+
+    Note over Client,TR: 2. Triggering DML action (INSERT)
+    Client ->> T: insertRow(row)
+    activate T
+
+    Note over T,TR: Observer Phase A: Emit BEFORE INSERT event
+    T ->> T: notifyTriggers(BEFORE INSERT event)
+    T ->> TR: onEvent(BEFORE INSERT event, usersTable)
+    activate TR
+    TR ->> TR: check eventType & triggerTime
+    TR -->> T: before action done
+    deactivate TR
+
+    Note over T: Data Operation: Write row to table RAM / Storage
+    T ->> T: store row logically
+
+    Note over T,TR: Observer Phase B: Emit AFTER INSERT event
+    T ->> T: notifyTriggers(AFTER INSERT event)
+    T ->> TR: onEvent(AFTER INSERT event, usersTable)
+    activate TR
+    TR ->> TR: check eventType & triggerTime
+    TR ->> TR: executeAction() (e.g., write to audit log)
+    TR -->> T: after action done
+    deactivate TR
+
+    T -->> Client: insertion completed
+    deactivate T
+```
+
+### 15.3 Code Example
+#### Subscriber
+```java
+public interface TableEventListener() {
+    void onEvent(TableEvent event, Table table);
+}
+```
+
+#### SubscriberA
+```java
+public class Trigger() {
+    private String triggerName;
+    private TriggerEventType eventType;
+    private TriggerTime triggerTime;
+    private String actionBody;
+
+    public Trigger(String name, TriggerEventType eventType, TriggerTime time, String actionBody) {
+        this.triggerName = name;
+        this.eventType = eventType;
+        this.triggerTime = time;
+        this.actionBody = actionBody;
+    }
+
+    @Override
+    public void onEvent(TableEvent event, Table table) {
+        if (event.getEventType() == this.eventType && event.getTriggerTime() == this.triggerTime) {
+            executeAction(event, table);
+        }
+    }
+
+    private void executeAction(TableEvent event, Table table) {
+        
+    }
+}
+```
+
+#### Publisher
+
+```java
+public class Table() {
+    private List<TableEventListener> triggers;
+
+    public Table() {
+        triggers = new ArrayList<>();
+    }
+
+    public void registerTrigger(TableEventListener listener) {
+        triggers.add(listener);
+    }
+
+    public void unregisterTrigger(TableEventListener listener) {
+        triggers.remove(listener);
+    }
+
+    public void notifyTriggers(TableEvent event) {
+        for (TableEventListener listener : triggers) {
+            listener.onEvent(event, this);
+        }
+    }
+}
+```
+---
 # Query Processing feature mindmap
 ```mermaid
 flowchart LR

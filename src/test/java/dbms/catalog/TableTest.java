@@ -197,4 +197,28 @@ public class TableTest {
                 IllegalArgumentException.class,
                 () -> table.validateConstraints(row));
     }
+
+    @Test
+    public void shouldNotifyRegisteredTriggersOnRowInsert() {
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        java.util.concurrent.atomic.AtomicInteger executedCount = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        Trigger auditTrigger = new Trigger("trg_audit", TriggerEventType.INSERT, TriggerTime.AFTER, "log audit") {
+            @Override
+            public void onEvent(TableEvent event, Table t) {
+                if (event != null && event.getEventType() == TriggerEventType.INSERT && event.getTriggerTime() == TriggerTime.AFTER) {
+                    executedCount.incrementAndGet();
+                }
+            }
+        };
+
+        table.registerTrigger(auditTrigger);
+
+        Row row = new Row();
+        row.rowId = "row-100";
+        row.values = new java.util.ArrayList<>();
+        table.insert(row);
+
+        assertEquals(1, executedCount.get());
+    }
 }
