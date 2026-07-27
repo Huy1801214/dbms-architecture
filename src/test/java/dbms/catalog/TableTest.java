@@ -168,4 +168,33 @@ public class TableTest {
         Table table = new Table("tbl-001", "users", "InnoDB");
         assertEquals("InnoDB", table.getEngine());
     }
+
+    @Test
+    public void shouldLazyLoadColumnsOnFirstAccess() {
+        java.util.UUID tableId = java.util.UUID.randomUUID();
+        MetadataLoader loader = new MetadataLoader();
+        Table proxyTable = new TableMetadataProxy(tableId, "lazy_users", "InnoDB", loader);
+
+        java.util.List<Column> cols = proxyTable.getColumns();
+
+        assertNotNull(cols);
+        assertEquals(2, cols.size());
+        assertEquals("id", cols.get(0).name);
+    }
+
+    @Test
+    public void shouldFailValidationWhenColumnIsNullAndNotNullable() {
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        Column col1 = new Column("id", DataType.INT, false);
+        table.addColumn(col1);
+
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = new java.util.ArrayList<>();
+        row.values.add(null);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> table.validateConstraints(row));
+    }
 }

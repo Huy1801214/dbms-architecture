@@ -36,14 +36,22 @@ public class Table extends DatabaseObject {
     public String engine;
     public long rowCount;
     private StorageBackend storageBackend;
+    private RowValidationHandler validationChain;
 
     private List<Column> columns = new java.util.ArrayList<>();
     private List<Constraint> constraints = new java.util.ArrayList<>();
     private List<Index> indexes = new java.util.ArrayList<>();
     private List<Row> rows = new java.util.ArrayList<>();
 
+    private void initializeValidationChain() {
+        this.validationChain = new NullabilityValidator();
+        this.validationChain.setNext(new UniqueValidator())
+                .setNext(new ForeignKeyValidator());
+    }
+
     public Table() {
         this.lifecycleStatus = LifecycleStatus.ACTIVE;
+        initializeValidationChain();
     }
 
     public Table(String tableId, String name, String engine) {
@@ -63,6 +71,7 @@ public class Table extends DatabaseObject {
         if (this.tableId != null) {
             tablesById.put(this.tableId, this);
         }
+        initializeValidationChain();
     }
 
     public void validate(Row row) {
@@ -124,6 +133,9 @@ public class Table extends DatabaseObject {
     }
 
     public void validateConstraints(Row row) {
+        if (validationChain != null) {
+            validationChain.validate(row, this);
+        }
         for (Constraint constraint : constraints) {
             constraint.validate(row, this);
         }
