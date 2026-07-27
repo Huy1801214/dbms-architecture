@@ -168,4 +168,17 @@ public class TableTest {
         Table table = new Table("tbl-001", "users", "InnoDB");
         assertEquals("InnoDB", table.getEngine());
     }
+
+    @Test
+    public void shouldLazyLoadColumnsOnFirstAccess() {
+        java.util.UUID tableId = java.util.UUID.randomUUID();
+        MetadataLoader loader = new MetadataLoader();
+        Table proxyTable = new TableMetadataProxy(tableId, "lazy_users", "InnoDB", loader);
+
+        java.util.List<Column> cols = proxyTable.getColumns();
+
+        assertNotNull(cols);
+        assertEquals(2, cols.size());
+        assertEquals("id", cols.get(0).name);
+    }
 }

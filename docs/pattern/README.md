@@ -27,7 +27,7 @@ flowchart LR
     H3P["Composite"]
 
     H4["4. Table Definition and Lifecycle"]
-    H4P["Builder"]
+    H4P["Builder + Proxy"]
 
     H5["5. Column Definition and Data Type Management"]
     H5P["None"]
@@ -470,6 +470,19 @@ class Table {
     +insertIntoIndexes(row : Row, context : IndexOperationContext) void
     +updateIndexes(oldRow : Row, newRow : Row, context : IndexOperationContext) void
     +deleteFromIndexes(row : Row, context : IndexOperationContext) void
+}
+
+class TableMetadataProxy {
+    -isLoaded : Boolean
+    -metadataLoader : MetadataLoader
+
+    +TableMetadataProxy(objectId : UUID, name : String, owner : String, schemaId : UUID)
+    +getColumns() List~Column~
+    +getConstraints() List~Constraint~
+    +getIndexes() List~Index~
+    +getPartitions() List~Partition~
+    +getTriggers() List~Trigger~
+    -lazyLoad() void
 }
 
 %% =====================================================
@@ -1014,6 +1027,7 @@ Database *--> "0..*" Schema : contains
 Schema *--> "0..*" SchemaObject : contains
 
 SchemaObject <|-- Table
+Table <|-- TableMetadataProxy
 SchemaObject <|-- View
 SchemaObject <|-- StoredProcedure
 SchemaObject <|-- Sequence
@@ -1154,6 +1168,7 @@ style DatabaseStatus fill:#fde8e8,stroke:#e84a5f,stroke-width:2px,color:#9b1c1c
 
 style SchemaObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style TableMetadataProxy fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 style View fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style StoredProcedure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Sequence fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
@@ -2301,7 +2316,7 @@ public class Sequence extends SchemaObject {
 --- 
 
 # 4. Table Definition and Lifecycle Management
-## Using Builder Pattern
+## Using Builder & Proxy Pattern
 
 ### 4.1 Class Diagram
 ```mermaid
@@ -2352,7 +2367,7 @@ class DropMode {
 }
 
 %% =====================================================
-%% Product
+%% Product (Subject)
 %% =====================================================
 
 class Table {
@@ -2372,6 +2387,23 @@ class Table {
     +getIndexes() List~Index~
     +getPartitions() List~Partition~
     +getTriggers() List~Trigger~
+}
+
+%% =====================================================
+%% Proxy Product (Virtual Proxy via Inheritance)
+%% =====================================================
+
+class TableMetadataProxy {
+    -isLoaded : Boolean
+    -metadataLoader : MetadataLoader
+
+    +TableMetadataProxy(objectId : UUID, name : String, owner : String, schemaId : UUID)
+    +getColumns() List~Column~
+    +getConstraints() List~Constraint~
+    +getIndexes() List~Index~
+    +getPartitions() List~Partition~
+    +getTriggers() List~Trigger~
+    -lazyLoad() void
 }
 
 %% =====================================================
@@ -2476,6 +2508,7 @@ class Trigger {
 %% =====================================================
 
 SchemaObject <|-- Table
+Table <|-- TableMetadataProxy
 
 SchemaObject --> LifecycleStatus : has
 SchemaObject --> DropMode : uses
@@ -2516,6 +2549,7 @@ Partition --> Column : uses partition key
 
 style SchemaObject fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style TableMetadataProxy fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
 
 style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 style Constraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
@@ -2616,9 +2650,195 @@ sequenceDiagram
     Test ->> Test: assertEquals(1, table.getConstraints().size())
 ```
 
+### 4.2 Sequence Diagram shouldLazyLoadColumnsOnFirstAccess()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Client as TableMetadataTest
+    participant P as proxy : TableMetadataProxy
+    participant L as loader : MetadataLoader
+
+    Note over Client,L: Case A: First access triggers disk read (Lazy Loading)
+    Client ->> P: getColumns()
+    activate P
+
+    P ->> P: check if columns list is empty (isLoaded == false)
+    P ->> P: lazyLoad()
+    activate P
+    
+    P ->> L: loadColumns(tableId)
+    activate L
+    Note over L: Disk I/O: read column definitions from catalog metadata file
+    L -->> P: columnsList : List~Column~
+    deactivate L
+    
+    P ->> P: populate columns field and set isLoaded = true
+    deactivate P
+
+    P -->> Client: columnsList
+    deactivate P
+
+    Note over Client,L: Case B: Subsequent access returns cached columns instantly
+    Client ->> P: getColumns()
+    activate P
+    P ->> P: check if columns list is empty (isLoaded == true)
+    P -->> Client: columnsList
+    deactivate P
+```
+
 ### 4.3 Code Example
+
 ```java
-// TODO: Implement code example
+import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
+
+// =====================================================
+// Table Components
+// =====================================================
+public class Column {
+    public final String name;
+    public final String dataType;
+    public final boolean nullable;
+
+    public Column(String name, String dataType, boolean nullable) {
+        this.name = name;
+        this.dataType = dataType;
+        this.nullable = nullable;
+    }
+}
+
+public class Constraint {
+    public final String name;
+    public final Column column;
+
+    public Constraint(String name, Column column) {
+        this.name = name;
+        this.column = column;
+    }
+}
+
+// =====================================================
+// Subject: Table Class (Concrete Class)
+// =====================================================
+public class Table {
+    protected final UUID tableId;
+    protected final String name;
+    protected final String owner;
+    protected final UUID schemaId;
+    protected final String engine;
+    protected final List<Column> columns;
+    protected final List<Constraint> constraints;
+
+    public Table(UUID tableId, String name, String owner, UUID schemaId, String engine,
+                 List<Column> columns, List<Constraint> constraints) {
+        this.tableId = tableId;
+        this.name = name;
+        this.owner = owner;
+        this.schemaId = schemaId;
+        this.engine = engine;
+        this.columns = columns;
+        this.constraints = constraints;
+    }
+
+    public UUID getTableId() { return tableId; }
+    public String getName() { return name; }
+    public String getOwner() { return owner; }
+    public String getEngine() { return engine; }
+    public List<Column> getColumns() { return columns; }
+    public List<Constraint> getConstraints() { return constraints; }
+}
+
+// =====================================================
+// Builder: TableBuilder Class
+// =====================================================
+public class TableBuilder {
+    private UUID tableId;
+    private String name;
+    private String owner;
+    private UUID schemaId;
+    private String engine;
+    private final List<Column> columns = new ArrayList<>();
+    private final List<Constraint> constraints = new ArrayList<>();
+
+    public TableBuilder setTableId(UUID tableId) {
+        this.tableId = tableId;
+        return this;
+    }
+    public TableBuilder setName(String name) {
+        this.name = name;
+        return this;
+    }
+    public TableBuilder setOwner(String owner) {
+        this.owner = owner;
+        return this;
+    }
+    public TableBuilder setSchemaId(UUID schemaId) {
+        this.schemaId = schemaId;
+        return this;
+    }
+    public TableBuilder setEngine(String engine) {
+        this.engine = engine;
+        return this;
+    }
+    public TableBuilder addColumn(Column column) {
+        this.columns.add(column);
+        return this;
+    }
+    public TableBuilder addConstraint(Constraint constraint) {
+        this.constraints.add(constraint);
+        return this;
+    }
+
+    public Table build() {
+        validate();
+        return new Table(tableId, name, owner, schemaId, engine, columns, constraints);
+    }
+
+    private void validate() {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalStateException("Table name cannot be empty");
+        }
+        if (columns.isEmpty()) {
+            throw new IllegalStateException("Table must have at least one column");
+        }
+    }
+}   
+
+// =====================================================
+// Virtual Proxy
+// =====================================================
+public class MetadataLoader {
+    public List<Column> loadColumns(UUID tableId) {
+        System.out.println("Disk I/O: Reading column metadata for table ID: " + tableId);
+        List<Column> columns = new ArrayList<>();
+        columns.add(new Column("id", "INTEGER", false));
+        columns.add(new Column("name", "VARCHAR", true));
+        return columns;
+    }
+}
+
+public class TableMetadataProxy extends Table {
+    private boolean isLoaded = false;
+    private final MetadataLoader metadataLoader;
+
+    public TableMetadataProxy(UUID tableId, String name, String owner, UUID schemaId, MetadataLoader loader) {
+        super(tableId, name, owner, schemaId, "InnoDB", new ArrayList<>(), new ArrayList<>());
+        this.metadataLoader = loader;
+    }
+
+    @Override
+    public List<Column> getColumns() {
+        lazyLoad();
+        return super.getColumns();
+    }
+
+    private synchronized void lazyLoad() {
+        return null;
+    }
+}
+
 ```
 
 --- 
@@ -4106,4 +4326,61 @@ sequenceDiagram
 
     QC -->> Client: physicalPlan
     deactivate QC
+```
+
+### Code Example 
+#### Subsystems
+```java
+public class SqlParser() {
+    public AST parse(String sqlText) {
+        return null;   
+    }
+}
+
+public class Binder() {
+    private Catalog catalog;
+
+    public LogicalPlan bind(AST ast) {
+        return null;
+    }
+}
+
+public class QueryOptimizer() {
+    public LogicalPlan optimize(LogicalPlan logicalPlan) {
+        return null;
+    }
+}
+
+public class PhysicalPlanner() {
+    public PhysicalPlan build(LogicalPlan logicalPlan) {
+        return null;
+    }
+}
+```
+#### Facade
+```java
+public class QueryCompier() {
+    private SqlParser parser;
+    private Binder binder;
+    private QueryOptimizer optimizer;
+    private PhysicalPlanner physicalPlanner;
+
+    public PhysicalPlan compile(String sqlText) {
+        AST ast = parser.parse(sqlText);
+        LogicalPlan logicalPlan = binder.bind(ast);
+        LogicalPlan optimizedPlan = optimizer.optimize(logicalPlan);
+        PhysicalPlan physicalPlan = physicalPlanner.build(optimizedPlan);
+        return physicalPlan;
+    }
+} 
+```
+#### Client
+```java
+public class QueryExecutor {
+    public PhysicalPlan execute(String sqlText) {
+        QueryCompier compier = new QueryCompier();
+        PhysicalPlan physicalPlan = compier.compile(sqlText);
+        return physicalPlan;
+    }
+} 
 ```
