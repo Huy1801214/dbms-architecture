@@ -181,4 +181,20 @@ public class TableTest {
         assertEquals(2, cols.size());
         assertEquals("id", cols.get(0).name);
     }
+
+    @Test
+    public void shouldFailValidationWhenColumnIsNullAndNotNullable() {
+        Table table = new Table("tbl-001", "users", "InnoDB");
+        Column col1 = new Column("id", DataType.INT, false);
+        table.addColumn(col1);
+
+        Row row = new Row();
+        row.rowId = "row-001";
+        row.values = new java.util.ArrayList<>();
+        row.values.add(null);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> table.validateConstraints(row));
+    }
 }

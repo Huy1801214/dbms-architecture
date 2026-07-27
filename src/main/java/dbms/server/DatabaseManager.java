@@ -49,7 +49,6 @@ public class DatabaseManager {
     }
 
     public void renameDatabase(String databaseId, String name) {
-
     }
 
 }

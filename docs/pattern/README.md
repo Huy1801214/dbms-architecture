@@ -33,7 +33,7 @@ flowchart LR
     H5P["None"]
 
     H6["6. Constraint Definition and Validation"]
-    H6P["Strategy"]
+    H6P["Strategy + Chain of Responsibility"]
 
     H7["7. Table Data and Row Operations"]
     H7P["Template Method + Command + Bridge"]
@@ -435,6 +435,7 @@ class SchemaObject {
 class Table {
     -engine : String
     -storageBackend : StorageBackend
+    -validationChain : RowValidationHandler
 
     -columns : List~Column~
     -constraints : List~Constraint~
@@ -911,6 +912,32 @@ class DataOperationResult {
 }
 
 %% =====================================================
+%% CONSTRAINT VALIDATION CHAIN - COR
+%% =====================================================
+
+class RowValidationHandler {
+    <<abstract>>
+    -next : RowValidationHandler
+
+    +setNext(next : RowValidationHandler) RowValidationHandler
+    +validate(row : Row, table : Table) void
+    #check(row : Row, table : Table)* void
+    #checkNext(row : Row, table : Table) void
+}
+
+class NullabilityValidator {
+    #check(row : Row, table : Table) void
+}
+
+class UniqueValidator {
+    #check(row : Row, table : Table) void
+}
+
+class ForeignKeyValidator {
+    #check(row : Row, table : Table) void
+}
+
+%% =====================================================
 %% STORAGE BACKEND
 %% =====================================================
 
@@ -1114,6 +1141,13 @@ Column --> DataType : uses
 
 TableBuilder ..> ConstraintDefinitionContext : creates validation context
 
+Table --> RowValidationHandler : delegates row validation
+RowValidationHandler --> RowValidationHandler : next link (1 to 1)
+
+RowValidationHandler <|-- NullabilityValidator
+RowValidationHandler <|-- UniqueValidator
+RowValidationHandler <|-- ForeignKeyValidator
+
 %% =====================================================
 %% TABLE DATA COMMAND AND TEMPLATE METHOD
 %% =====================================================
@@ -1199,7 +1233,12 @@ style UniqueConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148
 style CheckConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 
 style ConstraintDefinitionContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
-style ConstraintValidationContext fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style ConstraintValidationContext fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+
+style RowValidationHandler fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e65100
+style NullabilityValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
+style UniqueValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
+style ForeignKeyValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
 
 style CheckExpression fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
 
@@ -2849,7 +2888,7 @@ public class TableMetadataProxy extends Table {
 ---
 
 # 6. Constraint Definition and Data Integrity Validation
-## Using Strategy Pattern
+## Using Strategy & Chain of Responsibility Pattern
 
 ### 6.1 Class Diagram
 ```mermaid
@@ -2862,6 +2901,7 @@ direction TB
 
 class Table {
     -constraints : List~Constraint~
+    -validationChain : RowValidationHandler
 
     +addConstraint(constraint : Constraint) void
     +removeConstraint(constraintId : UUID) void
@@ -2927,6 +2967,32 @@ class CheckConstraint {
 }
 
 %% =====================================================
+%% Chain of Responsibility (Validation Pipeline)
+%% =====================================================
+
+class RowValidationHandler {
+    <<abstract>>
+    -next : RowValidationHandler
+
+    +setNext(next : RowValidationHandler) RowValidationHandler
+    +validate(row : Row, table : Table) void
+    #check(row : Row, table : Table)* void
+    #checkNext(row : Row, table : Table) void
+}
+
+class NullabilityValidator {
+    #check(row : Row, table : Table) void
+}
+
+class UniqueValidator {
+    #check(row : Row, table : Table) void
+}
+
+class ForeignKeyValidator {
+    #check(row : Row, table : Table) void
+}
+
+%% =====================================================
 %% Supporting Types
 %% =====================================================
 
@@ -2963,6 +3029,17 @@ Constraint ..> Row : validates
 Constraint ..> ConstraintValidationContext : uses
 
 %% =====================================================
+%% Chain of Responsibility Relationships
+%% =====================================================
+
+Table --> RowValidationHandler : delegates row validation
+RowValidationHandler --> RowValidationHandler : next link (1 to 1)
+
+RowValidationHandler <|-- NullabilityValidator
+RowValidationHandler <|-- UniqueValidator
+RowValidationHandler <|-- ForeignKeyValidator
+
+%% =====================================================
 %% Styling
 %% =====================================================
 
@@ -2974,6 +3051,11 @@ style PrimaryKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style UniqueConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style ForeignKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style CheckConstraint fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+
+style RowValidationHandler fill:#ffe0b2,stroke:#f57c00,stroke-width:2px,color:#e65100
+style NullabilityValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
+style UniqueValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
+style ForeignKeyValidator fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:#e65100
 
 style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 style ConstraintValidationContext fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
@@ -3034,6 +3116,137 @@ sequenceDiagram
     deactivate T
 
     Test ->> Test: assertDoesNotThrow()
+```
+
+### Code Example for Chain of Responsibility Pattern
+#### Base Handler 
+```java 
+package com.example.dbms.validation; 
+
+public abstract class RowValidationHandler {
+    private RowValidationHandler next;
+    
+    public RowValidationHandler setNext(RowValidationHandler next) {
+        this.next = next;
+        return next;
+    }
+    
+    public void validate(Row row, Table table) {
+        check(row, table);     
+        checkNext(row, table);  
+    }
+    
+    protected abstract void check(Row row, Table table);
+    
+    protected void checkNext(Row row, Table table) {
+        if (next != null) {
+            next.validate(row, table);
+        }
+    }
+}
+```
+
+#### Concrete Handler 
+```java 
+public class NullabilityValidator extends RowValidationHandler {
+    
+    @Override
+    protected void check(Row row, Table table) {
+        checkNext(row, table);
+    }
+}
+
+public class UniqueValidator extends RowValidationHandler {
+    
+    @Override
+    protected void check(Row row, Table table) {
+        checkNext(row, table);
+    }
+}
+
+public class ForeignKeyValidator extends RowValidationHandler {
+    
+    @Override
+    protected void check(Row row, Table table) {
+        checkNext(row, table);
+    }
+}
+```
+
+#### Client 
+```java
+public class TableDataExecutor {
+    
+    public void insert(Table table, Row row) {
+        RowValidationHandler nullabilityValidator = new NullabilityValidator();
+        RowValidationHandler uniqueValidator = new UniqueValidator();
+        RowValidationHandler foreignKeyValidator = new ForeignKeyValidator();
+        
+        nullabilityValidator.setNext(uniqueValidator).setNext(foreignKeyValidator);
+        
+        nullabilityValidator.validate(row, table);
+    }
+}
+```
+
+
+### 6.2 Sequence Diagram shouldPipelineConstraintValidationBeforeInsert()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Client as TableDataExecutor
+    participant T as usersTable : Table
+    participant N as nullability : NullabilityValidator
+    participant U as unique : UniqueValidator
+    participant FK as foreignKey : ForeignKeyValidator
+
+    Note over Client,FK: Setup validation pipeline chain (Nullability -> Unique -> ForeignKey)
+
+    Client ->> T: insert(row)
+    activate T
+
+    T ->> N: validate(row, usersTable)
+    activate N
+
+    N ->> N: check(row, usersTable)
+    Note over N: Check non-nullable columns have values on RAM (Cheap check)
+
+    N ->> N: checkNext(row, usersTable)
+    activate N
+    
+    N ->> U: validate(row, usersTable)
+    activate U
+    
+    U ->> U: check(row, usersTable)
+    Note over U: Query index to check value uniqueness (Expensive check)
+    
+    U ->> U: checkNext(row, usersTable)
+    activate U
+    
+    U ->> FK: validate(row, usersTable)
+    activate FK
+    
+    FK ->> FK: check(row, usersTable)
+    Note over FK: Query parent table to check foreign key existence (Very expensive check)
+    
+    FK ->> FK: checkNext(row, usersTable)
+    Note over FK: No next handler in chain (reaches end)
+    
+    FK -->> U: validation passed
+    deactivate FK
+    
+    deactivate U
+    U -->> N: validation passed
+    deactivate U
+    
+    deactivate N
+    N -->> T: validation passed
+    deactivate N
+
+    T ->> T: saveToDisk(row)
+    T -->> Client: insert completed
+    deactivate T
 ```
 
 ### 6.3 Code Example
