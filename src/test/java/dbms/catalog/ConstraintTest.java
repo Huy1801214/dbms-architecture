@@ -1,12 +1,22 @@
 package dbms.catalog;
 
+import dbms.catalog.constraint.entity.CheckConstraint;
+import dbms.catalog.constraint.entity.ForeignKey;
+import dbms.catalog.constraint.entity.PrimaryKey;
+import dbms.catalog.constraint.entity.UniqueConstraint;
+import dbms.catalog.constraint.enums.ConstraintStatus;
+import dbms.catalog.constraint.enums.ConstraintType;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.entity.Row;
+import dbms.catalog.table.entity.Table;
+import dbms.catalog.table.enums.DataType;
+
 import org.junit.jupiter.api.Test;
 
-import dbms.catalog.constraint.*;
-import dbms.catalog.table.Column;
-import dbms.catalog.table.DataType;
-import dbms.catalog.table.Row;
-import dbms.catalog.table.Table;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.enums.DataType;
+import dbms.catalog.table.entity.Row;
+import dbms.catalog.table.entity.Table;
 
 import java.util.List;
 import java.util.UUID;
@@ -43,7 +53,7 @@ public class ConstraintTest {
         // Arrange
         Column idCol = new Column("id", DataType.INT, false);
         PrimaryKey primaryKey = new PrimaryKey("pk_id", List.of(idCol), UUID.randomUUID());
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         table.addColumn(idCol);
         table.addConstraint(primaryKey);
         Row row = new Row();
@@ -59,7 +69,7 @@ public class ConstraintTest {
         // Arrange
         Column idCol = new Column("id", DataType.INT, false);
         PrimaryKey primaryKey = new PrimaryKey("pk_id", List.of(idCol), UUID.randomUUID());
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         table.addColumn(idCol);
         table.addConstraint(primaryKey);
         Row row1 = new Row();
@@ -80,7 +90,7 @@ public class ConstraintTest {
         // Arrange
         Column userIdCol = new Column("user_id", DataType.INT, false);
         ForeignKey foreignKey = new ForeignKey("fk_user", List.of(userIdCol), UUID.randomUUID(), "users", "id");
-        Table table = new Table("tbl-002", "orders", "InnoDB");
+        Table table = Table.builder().setName("orders").setEngine("InnoDB").build();
         table.addColumn(userIdCol);
         table.addConstraint(foreignKey);
         Row childRow = new Row();
@@ -97,12 +107,12 @@ public class ConstraintTest {
         Table.clearAllTablesRegistry();
         Column userIdCol = new Column("user_id", DataType.INT, false);
         ForeignKey foreignKey = new ForeignKey("fk_user", List.of(userIdCol), UUID.randomUUID(), "users", "id");
-        Table table = new Table("tbl-002", "orders", "InnoDB");
+        Table table = Table.builder().setName("orders").setEngine("InnoDB").build();
         table.addColumn(userIdCol);
         table.addConstraint(foreignKey);
         
         // Also construct parent table "users" with id primary key
-        Table parentTable = new Table("tbl-001", "users", "InnoDB");
+        Table parentTable = Table.builder().setName("users").setEngine("InnoDB").build();
         Column parentIdCol = new Column("id", DataType.INT, false);
         parentTable.addColumn(parentIdCol);
         PrimaryKey parentPk = new PrimaryKey("pk_id", List.of(parentIdCol), UUID.randomUUID());
@@ -126,7 +136,7 @@ public class ConstraintTest {
         // Arrange
         Column emailCol = new Column("email", DataType.VARCHAR, true);
         UniqueConstraint uniqueConstraint = new UniqueConstraint("uq_email", List.of(emailCol), UUID.randomUUID());
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         table.addColumn(emailCol);
         table.addConstraint(uniqueConstraint);
         Row row = new Row();
@@ -142,7 +152,7 @@ public class ConstraintTest {
         // Arrange
         Column emailCol = new Column("email", DataType.VARCHAR, true);
         UniqueConstraint uniqueConstraint = new UniqueConstraint("uq_email", List.of(emailCol), UUID.randomUUID());
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         table.addColumn(emailCol);
         table.addConstraint(uniqueConstraint);
         
@@ -164,7 +174,7 @@ public class ConstraintTest {
         // Arrange
         Column ageCol = new Column("age", DataType.INT, true);
         CheckConstraint checkConstraint = new CheckConstraint("chk_age", List.of(ageCol), UUID.randomUUID(), "age >= 18");
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         table.addColumn(ageCol);
         table.addConstraint(checkConstraint);
         Row row = new Row();
@@ -180,7 +190,7 @@ public class ConstraintTest {
         // Arrange
         Column ageCol = new Column("age", DataType.INT, true);
         CheckConstraint checkConstraint = new CheckConstraint("chk_age", List.of(ageCol), UUID.randomUUID(), "age >= 18");
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         table.addColumn(ageCol);
         table.addConstraint(checkConstraint);
         Row row = new Row();

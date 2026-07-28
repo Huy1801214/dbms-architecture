@@ -1190,6 +1190,8 @@ CheckExpression ..> Row : evaluates
 Column --> DataType : uses
 
 TableBuilder ..> ConstraintDefinitionContext : creates validation context
+Table +-- TableBuilder : static inner class
+Table ..> RowSerializer : delegates binary serialization
 
 Table --> RowValidationHandler : delegates row validation
 RowValidationHandler --> RowValidationHandler : next link (1 to 1)
@@ -2563,12 +2565,19 @@ class Trigger {
     +getEventType() String
 }
 
+class RowSerializer {
+    +serializeRow(row : Row)$ byte[]
+    +deserializeRow(data : byte[])$ Row
+}
+
 %% =====================================================
 %% Inheritance and Lifecycle
 %% =====================================================
 
 SchemaObject <|-- Table
 Table <|-- TableMetadataProxy
+Table +-- TableBuilder : static inner class
+Table ..> RowSerializer : delegates serialization
 
 SchemaObject --> LifecycleStatus : has
 SchemaObject --> DropMode : uses

@@ -1,6 +1,16 @@
 package dbms.catalog;
 
-import dbms.catalog.table.*;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.entity.Row;
+import dbms.catalog.table.entity.Table;
+import dbms.catalog.table.entity.TableEvent;
+import dbms.catalog.table.entity.Trigger;
+import dbms.catalog.table.enums.DataType;
+import dbms.catalog.table.enums.TriggerEventType;
+import dbms.catalog.table.enums.TriggerTime;
+import dbms.catalog.table.service.MetadataLoader;
+import dbms.catalog.table.service.TableMetadataProxy;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,7 +19,7 @@ public class TableTest {
     @Test
     public void shouldInsertRow() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row row = new Row();
         row.rowId = "row-001";
         row.values = java.util.Arrays.asList("John", 30);
@@ -24,7 +34,7 @@ public class TableTest {
     @Test
     public void shouldUpdateRow() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row originalRow = new Row();
         originalRow.rowId = "row-001";
         originalRow.values = java.util.Arrays.asList("John", 30);
@@ -46,7 +56,7 @@ public class TableTest {
     @Test
     public void shouldDeleteRow() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row row = new Row();
         row.rowId = "row-001";
         row.values = java.util.Arrays.asList("John", 30);
@@ -62,7 +72,7 @@ public class TableTest {
     @Test
     public void shouldTruncateTable() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row row1 = new Row();
         row1.rowId = "row-001";
         row1.values = java.util.Arrays.asList("John", 30);
@@ -82,7 +92,7 @@ public class TableTest {
     @Test
     public void shouldFindRowById() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row row = new Row();
         row.rowId = "row-001";
         row.values = java.util.Arrays.asList("John", 30);
@@ -99,7 +109,7 @@ public class TableTest {
     @Test
     public void shouldListAllRows() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row row1 = new Row();
         row1.rowId = "row-001";
         row1.values = java.util.Arrays.asList("John", 30);
@@ -120,7 +130,7 @@ public class TableTest {
     @Test
     public void shouldRejectDuplicateRow() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row row = new Row();
         row.rowId = "row-001";
         row.values = java.util.Arrays.asList("John", 30);
@@ -139,7 +149,7 @@ public class TableTest {
     @Test
     public void shouldRejectUnknownRow() {
         // Arrange
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Row newRow = new Row();
         newRow.rowId = "row-999";
         newRow.values = java.util.Arrays.asList("Unknown", 99);
@@ -152,7 +162,7 @@ public class TableTest {
 
     @Test
     public void shouldAddAndGetColumns() {
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Column col1 = new Column("id", DataType.INT, false);
         Column col2 = new Column("name", DataType.VARCHAR, true);
 
@@ -165,7 +175,7 @@ public class TableTest {
 
     @Test
     public void shouldReturnEngine() {
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         assertEquals("InnoDB", table.getEngine());
     }
 
@@ -184,7 +194,7 @@ public class TableTest {
 
     @Test
     public void shouldFailValidationWhenColumnIsNullAndNotNullable() {
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         Column col1 = new Column("id", DataType.INT, false);
         table.addColumn(col1);
 
@@ -200,7 +210,7 @@ public class TableTest {
 
     @Test
     public void shouldNotifyRegisteredTriggersOnRowInsert() {
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         java.util.concurrent.atomic.AtomicInteger executedCount = new java.util.concurrent.atomic.AtomicInteger(0);
 
         Trigger auditTrigger = new Trigger("trg_audit", TriggerEventType.INSERT, TriggerTime.AFTER, "log audit") {

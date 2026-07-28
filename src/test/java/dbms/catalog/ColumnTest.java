@@ -1,10 +1,14 @@
 package dbms.catalog;
 
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.enums.ColumnStatus;
+import dbms.catalog.table.enums.DataType;
+
 import org.junit.jupiter.api.Test;
 
-import dbms.catalog.table.Column;
-import dbms.catalog.table.ColumnStatus;
-import dbms.catalog.table.DataType;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.enums.ColumnStatus;
+import dbms.catalog.table.enums.DataType;
 
 import static org.junit.jupiter.api.Assertions.*;
 
