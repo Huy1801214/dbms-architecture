@@ -116,12 +116,13 @@ public class Schema implements DatabaseComponent {
         if (findTableByName(request.name) != null) {
             throw new IllegalStateException("Table already exists: " + request.name);
         }
-        Table table = new Table(java.util.UUID.randomUUID().toString(), request.name, request.engine);
+        Table.TableBuilder builder = Table.builder().setName(request.name).setEngine(request.engine);
         if (request.columns != null) {
             for (Column col : request.columns) {
-                table.addColumn(col);
+                builder.addColumn(col);
             }
         }
+        Table table = builder.build();
         tables.add(table);
         objects.add(table);
         return table;
@@ -269,7 +270,7 @@ public class Schema implements DatabaseComponent {
     public void renameTable(String oldName, String newName) {
         Table t = findTableByName(oldName);
         if (t != null)
-            t.setName(newName);
+            t.rename(newName);
     }
 
     public void createView(View view) {

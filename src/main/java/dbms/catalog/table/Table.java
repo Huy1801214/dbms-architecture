@@ -7,8 +7,6 @@ import dbms.catalog.base.DropMode;
 import dbms.catalog.constraint.Constraint;
 import dbms.catalog.index.Index;
 import dbms.catalog.index.IndexDefinitionContext;
-import dbms.catalog.index.IndexOperationContext;
-
 import dbms.storage.StorageBackend;
 
 import java.util.List;
@@ -16,33 +14,16 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class Table extends DatabaseObject {
-    private static final java.util.Map<String, Table> allTables = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.Map<java.util.UUID, Table> tablesById = new java.util.concurrent.ConcurrentHashMap<>();
-
-    public static Table getTableByName(String name) {
-        return name != null ? allTables.get(name) : null;
-    }
-
-    public static Table getTableById(java.util.UUID id) {
-        return id != null ? tablesById.get(id) : null;
-    }
-
-    public static void clearAllTablesRegistry() {
-        allTables.clear();
-        tablesById.clear();
-    }
-
-    public java.util.UUID tableId;
-    public String engine;
-    public long rowCount;
+    protected UUID tableId;
+    protected String engine;
+    protected long rowCount;
     private StorageBackend storageBackend;
     private RowValidationHandler validationChain;
-
-    private List<Column> columns = new java.util.ArrayList<>();
-    private List<Constraint> constraints = new java.util.ArrayList<>();
-    private List<Index> indexes = new java.util.ArrayList<>();
-    private List<Row> rows = new java.util.ArrayList<>();
-    private List<TableEventListener> triggers = new java.util.ArrayList<>();
+    private final List<Column> columns = new ArrayList<>();
+    private final List<Constraint> constraints = new ArrayList<>();
+    private final List<Index> indexes = new ArrayList<>();
+    private final List<Row> rows = new ArrayList<>();
+    private final List<TableEventListener> triggers = new ArrayList<>();
 
     private void initializeValidationChain() {
         this.validationChain = new NullabilityValidator();
@@ -62,17 +43,33 @@ public class Table extends DatabaseObject {
         this.rowCount = 0;
         this.lifecycleStatus = LifecycleStatus.ACTIVE;
         try {
-            this.tableId = java.util.UUID.fromString(tableId);
+            this.tableId = UUID.fromString(tableId);
         } catch (IllegalArgumentException e) {
-            this.tableId = java.util.UUID.randomUUID();
-        }
-        if (name != null) {
-            allTables.put(name, this);
-        }
-        if (this.tableId != null) {
-            tablesById.put(this.tableId, this);
+            this.tableId = UUID.randomUUID();
         }
         initializeValidationChain();
+    }
+
+    protected Table(TableBuilder builder) {
+        this.tableId = builder.tableId != null ? builder.tableId : UUID.randomUUID();
+        this.objectId = builder.objectId != null ? builder.objectId : this.tableId.toString();
+        this.name = builder.name;
+        this.owner = builder.owner;
+        this.schemaId = builder.schemaId != null ? builder.schemaId.toString() : null;
+        this.engine = builder.engine != null ? builder.engine : "InnoDB";
+        this.storageBackend = builder.storageBackend;
+        this.columns.addAll(builder.columns);
+        this.constraints.addAll(builder.constraints);
+        this.indexes.addAll(builder.indexes);
+        this.lifecycleStatus = LifecycleStatus.ACTIVE;
+        initializeValidationChain();
+    }
+
+    public static TableBuilder builder() {
+        return new TableBuilder();
+    }
+
+    public static void clearAllTablesRegistry() {
     }
 
     public void validate(Row row) {
@@ -87,16 +84,6 @@ public class Table extends DatabaseObject {
         return name;
     }
 
-    public void setName(String name) {
-        if (this.name != null) {
-            allTables.remove(this.name);
-        }
-        this.name = name;
-        if (name != null) {
-            allTables.put(name, this);
-        }
-    }
-
     public String getEngine() {
         return engine;
     }
@@ -107,10 +94,6 @@ public class Table extends DatabaseObject {
 
     public StorageBackend getStorageBackend() {
         return storageBackend;
-    }
-
-    public void setStorageBackend(StorageBackend storageBackend) {
-        this.storageBackend = storageBackend;
     }
 
     public void addColumn(Column column) {
@@ -161,29 +144,8 @@ public class Table extends DatabaseObject {
         this.indexes.removeIf(idx -> indexId.equals(idx.getId()));
     }
 
-    public Index findIndexById(UUID indexId) {
-        return null;
-    }
-
-    public Index findIndexByName(String name) {
-        return null;
-    }
-
-    public List<Index> listIndexes() {
-        return new ArrayList<>(indexes);
-    }
-
     public List<Index> getIndexes() {
         return indexes;
-    }
-
-    public void insertIntoIndexes(Row row, IndexOperationContext context) {
-    }
-
-    public void updateIndexes(Row oldRow, Row newRow, IndexOperationContext context) {
-    }
-
-    public void deleteFromIndexes(Row row, IndexOperationContext context) {
     }
 
     public void registerTrigger(TableEventListener listener) {
@@ -219,17 +181,10 @@ public class Table extends DatabaseObject {
         rows.add(row);
         rowCount = rows.size();
         if (storageBackend != null) {
-            byte[] data = serializeRow(row);
+            byte[] data = RowSerializer.serializeRow(row);
             storageBackend.writeRecord(data);
         }
         notifyTriggers(new TableEvent(TriggerEventType.INSERT, TriggerTime.AFTER, null, row));
-    }
-
-    private byte[] serializeRow(Row row) {
-        if (row.rowId == null) {
-            return new byte[0];
-        }
-        return row.rowId.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     public void update(String rowId, Row newRow) {
@@ -262,13 +217,9 @@ public class Table extends DatabaseObject {
         rowCount = 0;
     }
 
-    public void analyze() {
-    }
-
     public Row findRowById(String rowId) {
-        if (rowId == null) {
+        if (rowId == null)
             return null;
-        }
         for (Row r : rows) {
             if (rowId.equals(r.rowId)) {
                 return r;
@@ -277,28 +228,12 @@ public class Table extends DatabaseObject {
         return null;
     }
 
-    public List<Row> listAllRows() {
-        return new java.util.ArrayList<>(rows);
-    }
-
     public List<Row> getRows() {
-        return listAllRows();
+        return new ArrayList<>(rows);
     }
 
-    public boolean existsPrimaryKey(Object value) {
-        return false;
-    }
-
-    public boolean existsUniqueValue(String column, Object value) {
-        return false;
-    }
-
-    public Row findRowByPrimaryKey(Object value) {
-        return null;
-    }
-
-    public boolean existsReferencedRow(String column, Object value) {
-        return existsUniqueValue(column, value);
+    public List<Row> listAllRows() {
+        return getRows();
     }
 
     @Override
@@ -319,6 +254,97 @@ public class Table extends DatabaseObject {
     public void accept(DatabaseObjectVisitor visitor) {
         if (visitor != null) {
             visitor.visit(this);
+        }
+    }
+
+    public static class TableBuilder {
+        protected UUID tableId = UUID.randomUUID();
+        protected String objectId;
+        protected String name;
+        protected String owner;
+        protected UUID schemaId;
+        protected String engine = "InnoDB";
+        protected StorageBackend storageBackend;
+
+        protected final List<Column> columns = new ArrayList<>();
+        protected final List<Constraint> constraints = new ArrayList<>();
+        protected final List<Index> indexes = new ArrayList<>();
+
+        public TableBuilder setTableId(String tableId) {
+            if (tableId != null) {
+                this.objectId = tableId;
+                try {
+                    this.tableId = UUID.fromString(tableId);
+                } catch (IllegalArgumentException e) {
+                    // non-UUID string ID
+                }
+            }
+            return this;
+        }
+
+        public TableBuilder setTableId(UUID tableId) {
+            if (tableId != null) {
+                this.tableId = tableId;
+                this.objectId = tableId.toString();
+            }
+            return this;
+        }
+
+        public TableBuilder setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public TableBuilder setOwner(String owner) {
+            this.owner = owner;
+            return this;
+        }
+
+        public TableBuilder setSchemaId(UUID schemaId) {
+            this.schemaId = schemaId;
+            return this;
+        }
+
+        public TableBuilder setEngine(String engine) {
+            this.engine = engine;
+            return this;
+        }
+
+        public TableBuilder setStorageBackend(StorageBackend storageBackend) {
+            this.storageBackend = storageBackend;
+            return this;
+        }
+
+        public TableBuilder addColumn(Column column) {
+            if (column != null) {
+                this.columns.add(column);
+            }
+            return this;
+        }
+
+        public TableBuilder addConstraint(Constraint constraint) {
+            if (constraint != null) {
+                this.constraints.add(constraint);
+            }
+            return this;
+        }
+
+        public TableBuilder addIndex(Index index) {
+            if (index != null) {
+                this.indexes.add(index);
+            }
+            return this;
+        }
+
+        private void validate() {
+            if (name == null || name.trim().isEmpty()) {
+                throw new IllegalStateException("Table name cannot be empty");
+            }
+        }
+
+        public Table build() {
+            validate();
+            return new Table(this);
         }
     }
 }

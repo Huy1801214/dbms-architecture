@@ -13,8 +13,9 @@ import java.util.UUID;
 public class DefaultDatabaseObjectFactory implements DatabaseObjectFactory {
     @Override
     public Table createTable(TableCreateRequest request) {
-        String id = request != null && request.name != null ? request.name : UUID.randomUUID().toString();
-        return new Table(id, request != null ? request.name : null, request != null ? request.engine : null);
+        String name = request != null && request.name != null ? request.name : "unnamed";
+        String engine = request != null && request.engine != null ? request.engine : "InnoDB";
+        return Table.builder().setName(name).setEngine(engine).build();
     }
 
     @Override

@@ -8,7 +8,7 @@ public class TableMetadataProxy extends Table {
     private final MetadataLoader metadataLoader;
 
     public TableMetadataProxy(UUID tableId, String name, String engine, MetadataLoader loader) {
-        super(tableId != null ? tableId.toString() : null, name, engine);
+        super(Table.builder().setTableId(tableId).setName(name != null ? name : "unnamed").setEngine(engine));
         this.metadataLoader = loader;
     }
 

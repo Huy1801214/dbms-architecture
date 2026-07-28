@@ -41,7 +41,7 @@ public class SchemaTest {
         schema.name = "StudentSchema";
         schema.owner = "admin";
 
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setTableId("tbl-001").setName("users").setEngine("InnoDB").build();
         schema.createTable(table);
 
         // Act
@@ -59,7 +59,7 @@ public class SchemaTest {
         schema.name = "StudentSchema";
         schema.owner = "admin";
 
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setTableId("tbl-001").setName("users").setEngine("InnoDB").build();
         schema.createTable(table);
 
         // Act
@@ -78,7 +78,7 @@ public class SchemaTest {
         schema.schemaId = "schema-001";
         schema.name = "StudentSchema";
         schema.owner = "admin";
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         schema.createTable(table);
 
         // Act
@@ -96,8 +96,8 @@ public class SchemaTest {
         schema.schemaId = "schema-001";
         schema.name = "StudentSchema";
         schema.owner = "admin";
-        Table table1 = new Table("tbl-001", "users", "InnoDB");
-        Table table2 = new Table("tbl-002", "orders", "InnoDB");
+        Table table1 = Table.builder().setName("users").setEngine("InnoDB").build();
+        Table table2 = Table.builder().setName("orders").setEngine("InnoDB").build();
         schema.createTable(table1);
         schema.createTable(table2);
 
@@ -116,10 +116,10 @@ public class SchemaTest {
         schema.schemaId = "schema-001";
         schema.name = "StudentSchema";
         schema.owner = "admin";
-        Table table = new Table("tbl-001", "users", "InnoDB");
+        Table table = Table.builder().setName("users").setEngine("InnoDB").build();
         schema.createTable(table);
 
-        Table duplicateTable = new Table("tbl-002", "users", "InnoDB");
+        Table duplicateTable = Table.builder().setName("users").setEngine("InnoDB").build();
 
         // Act + Assert
         assertThrows(
