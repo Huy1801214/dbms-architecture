@@ -1817,21 +1817,55 @@ public class Database {
 }
 ```
 
-#### Client 
+#### Client (DatabaseManager & Usage Demo)
 ```java
-public class DatabaseManager() {
-    private Map<UUID, Database> databases = new HashMap<>();
-    private StorageEngine storageEngine;
-    private CatalogManager catalogManager;
+public class DatabaseManager {
+    private final Map<UUID, Database> databases = new HashMap<>();
 
-    public DatabaseManager(StorageEngine storageEngine, CatalogManager catalogManager) {
-        this.storageEngine = storageEngine;
-        this.catalogManager = catalogManager;
+    public Database createDatabase(String name, String owner) {
+        Database db = new Database(name, owner);
+        databases.put(db.getDatabaseId(), db);
+        return db;
     }
 
-    public Database openDatabase(UUID databaseId) {
-        return null;
-    }   
+    public void openDatabase(UUID databaseId) {
+        Database database = databases.get(databaseId);
+        database.open();
+    }
+
+    public void closeDatabase(UUID databaseId) {
+        Database database = databases.get(databaseId);
+        database.close();
+    }
+
+    public void renameDatabase(UUID databaseId, String newName) {
+        Database database = databases.get(databaseId);
+        database.rename(newName);
+    }
+}
+
+public class DatabaseStateDemo {
+    public static void main(String[] args) {
+        DatabaseManager manager = new DatabaseManager();
+        Database db = manager.createDatabase("SalesDB", "admin");
+
+        System.out.println("Initial Status: " + db.getStatus()); // OFFLINE
+
+        // 1. Open Database: Triggers OfflineState -> OpeningState -> OnlineState
+        manager.openDatabase(db.getDatabaseId());
+        System.out.println("Status after open(): " + db.getStatus()); // ONLINE
+
+        // 2. Duplicate open attempt while ONLINE: Rejected by OnlineState
+        try {
+            manager.openDatabase(db.getDatabaseId());
+        } catch (IllegalStateException e) {
+            System.out.println("Rejected duplicate open(): " + e.getMessage());
+        }
+
+        // 3. Close Database: Triggers OnlineState -> ClosingState -> OfflineState
+        manager.closeDatabase(db.getDatabaseId());
+        System.out.println("Status after close(): " + db.getStatus()); // OFFLINE
+    }
 }
 ```
 
@@ -2162,254 +2196,179 @@ sequenceDiagram
 ```
 
 ### 3.3 Code Example
-### Component
+
+#### 1. Component Interface
 ```java 
+public enum LifecycleStatus {
+    ACTIVE, DROPPING, DROPPED
+}
+
+public enum DropMode {
+    RESTRICT, CASCADE
+}
+
 public interface DatabaseComponent {
     UUID getId();
     String getName();
-    String getOwner();
-    String getQualifiedName();
     LifecycleStatus getLifecycleStatus();
-    void rename(String newName);
     void drop(DropMode mode);
     List<DatabaseComponent> getChildren();
 }
 ```
-### Composite
-```java
-public class Schema implements DatabaseComponent {
-    private UUID schemaId;
-    private String name;
-    private String owner;
-    private LifecycleStatus lifecycleStatus;
-    private List<SchemaObject> objects;
 
-    public Schema(UUID schemaId, String name, String owner) {
-        this.schemaId = schemaId;
-        this.name = name;
-        this.owner = owner;
-        this.lifecycleStatus = LifecycleStatus.ACTIVE;
-        this.objects = new ArrayList<>();
-    }
-    @Override
-    public UUID getId() {
-        return schemaId;
-    }
-    @Override
-    public String getName() {
-        return name;
-    }
-    @Override
-    public String getOwner() {
-        return owner;
-    }
-    @Override
-    public String getQualifiedName() {
-        return name;
-    }
-    @Override
-    public LifecycleStatus getLifecycleStatus() {
-        return lifecycleStatus;
-    }
-    public void addObject(SchemaObject object) {
-        
-    }
-    public void removeObject(UUID objectId) {
-        
-    }
-    @Override
-    public void rename(String newName) {
-        
-    }
-    @Override
-    public void drop(DropMode mode) {
-        
-    }
-    @Override
-    public List<DatabaseComponent> getChildren() {
-        return null;
-    }
-    private void dropChildren(DropMode mode) {
-        
-    }
-    private void markAsDropping() {
-        
-    }
-    private void markAsDropped() {
-        
-    }
-}
-
-public class Database implements DatabaseComponent {
-    private UUID databaseId;
-    private String name;
-    private String owner;
-    private LifecycleStatus lifecycleStatus;
-    private List<Schema> schemas;
-
-    public Database(UUID databaseId, String name, String owner) {
-        this.databaseId = databaseId;
-        this.name = name;
-        this.owner = owner;
-        this.lifecycleStatus = LifecycleStatus.ACTIVE;
-        this.schemas = new ArrayList<>();
-    }
-    @Override
-    public UUID getId() {
-        return databaseId;
-    }
-    @Override
-    public String getName() {
-        return name;
-    }
-    @Override
-    public String getOwner() {
-        return owner;
-    }
-    @Override
-    public String getQualifiedName() {
-        return name;
-    }
-    @Override
-    public LifecycleStatus getLifecycleStatus() {
-        return lifecycleStatus;
-    }
-    public void addSchema(Schema schema) {
-        
-    }
-    public void removeSchema(UUID schemaId) {
-        
-    }
-    @Override
-    public void rename(String newName) {
-        
-    }
-    @Override
-    public void drop(DropMode mode) {
-        
-    }
-    @Override
-    public List<DatabaseComponent> getChildren() {
-        return null;
-    }
-    private void dropChildren(DropMode mode) {
-        
-    }
-    private void markAsDropping() {
-        
-    }
-    private void markAsDropped() {
-        
-    }
-}
-
-```
-### Leaf
+#### 2. Abstract Leaf (SchemaObject Base Class)
 ```java
 public abstract class SchemaObject implements DatabaseComponent {
     protected UUID objectId;
     protected String name;
-    protected String owner;
-    protected UUID schemaId;
-    protected LifecycleStatus lifecycleStatus;
+    protected LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
-    public SchemaObject(UUID objectId, String name, String owner, UUID schemaId) {
+    public SchemaObject(UUID objectId, String name) {
         this.objectId = objectId;
         this.name = name;
-        this.owner = owner;
-        this.schemaId = schemaId;
-        this.lifecycleStatus = LifecycleStatus.ACTIVE;
     }
+
     @Override
-    public UUID getId() {
-        return objectId;
-    }
+    public UUID getId() { return objectId; }
+
     @Override
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
+
     @Override
-    public String getOwner() {
-        return owner;
-    }
-    @Override
-    public LifecycleStatus getLifecycleStatus() {
-        return lifecycleStatus;
-    }
-    @Override
-    public void rename(String newName) {
-        
-    }
-    @Override
-    public void drop(DropMode mode) {
-        
-    }
+    public LifecycleStatus getLifecycleStatus() { return lifecycleStatus; }
+
     @Override
     public List<DatabaseComponent> getChildren() {
-        return null;
+        return Collections.emptyList(); 
     }
-    protected void markAsDropping() {
-        
+
+    @Override
+    public void drop(DropMode mode) {
+        this.lifecycleStatus = LifecycleStatus.DROPPING;
+        releaseMetadata();
+        this.lifecycleStatus = LifecycleStatus.DROPPED;
     }
-    protected void markAsDropped() {
-        
+
+    protected abstract void releaseMetadata();
+}
+```
+
+#### 3. Concrete Leaf (Table)
+```java
+public class Table extends SchemaObject {
+    public Table(UUID objectId, String name) {
+        super(objectId, name);
+    }
+
+    @Override
+    protected void releaseMetadata() {
+        System.out.println("Table '" + name + "': Metadata released and storage resources unmapped.");
+    }
+}
+```
+
+#### 4. Composite Classes (Schema & Database)
+```java
+public class Schema implements DatabaseComponent {
+    private final UUID schemaId;
+    private final String name;
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
+    private final List<SchemaObject> objects = new ArrayList<>();
+
+    public Schema(UUID schemaId, String name) {
+        this.schemaId = schemaId;
+        this.name = name;
+    }
+
+    public void addObject(SchemaObject object) {
+        objects.add(object);
+    }
+
+    @Override
+    public UUID getId() { return schemaId; }
+    @Override
+    public String getName() { return name; }
+    @Override
+    public LifecycleStatus getLifecycleStatus() { return lifecycleStatus; }
+
+    @Override
+    public List<DatabaseComponent> getChildren() {
+        return new ArrayList<>(objects);
+    }
+
+    @Override
+    public void drop(DropMode mode) {
+        this.lifecycleStatus = LifecycleStatus.DROPPING;
+        if (mode == DropMode.CASCADE) {
+            for (DatabaseComponent child : getChildren()) {
+                child.drop(mode);
+            }
+            objects.clear();
+        }
+        this.lifecycleStatus = LifecycleStatus.DROPPED;
     }
 }
 
-public class Table extends SchemaObject {
-    private String engine;
-    public Table(UUID objectId, String name, String owner, UUID schemaId, String engine) {
-        super(objectId, name, owner, schemaId);
-        this.engine = engine;
+public class Database implements DatabaseComponent {
+    private final UUID databaseId;
+    private final String name;
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
+    private final List<Schema> schemas = new ArrayList<>();
+
+    public Database(UUID databaseId, String name) {
+        this.databaseId = databaseId;
+        this.name = name;
     }
-    @Override
-    public String getQualifiedName() {
-        return name;
+
+    public void addSchema(Schema schema) {
+        schemas.add(schema);
     }
+
     @Override
-    protected void releaseMetadata() {
-        
+    public UUID getId() { return databaseId; }
+    @Override
+    public String getName() { return name; }
+    @Override
+    public LifecycleStatus getLifecycleStatus() { return lifecycleStatus; }
+
+    @Override
+    public List<DatabaseComponent> getChildren() {
+        return new ArrayList<>(schemas);
+    }
+
+    @Override
+    public void drop(DropMode mode) {
+        this.lifecycleStatus = LifecycleStatus.DROPPING;
+        if (mode == DropMode.CASCADE) {
+            // Composite Pattern Core: Vòng lặp for duyệt đệ quy qua tất cả các nút con (getChildren())
+            for (DatabaseComponent child : getChildren()) {
+                child.drop(mode);
+            }
+            schemas.clear();
+        }
+        this.lifecycleStatus = LifecycleStatus.DROPPED;
     }
 }
-public class View extends SchemaObject {
-    private String queryDefinition;
-    public View(UUID objectId, String name, String owner, UUID schemaId, String queryDefinition) {
-        super(objectId, name, owner, schemaId);
-        this.queryDefinition = queryDefinition;
-    }
-    @Override
-    public String getQualifiedName() {
-        return name;
-    }
-    @Override
-    protected void releaseMetadata() {
-        
-    }
-}
-public class StoredProcedure extends SchemaObject {
-    public StoredProcedure(UUID objectId, String name, String owner, UUID schemaId) {
-        super(objectId, name, owner, schemaId);
-    }
-    @Override
-    public String getQualifiedName() {
-        return name;
-    }
-    @Override
-    protected void releaseMetadata() {
-        
-    }
-}
-public class Sequence extends SchemaObject {
-    public Sequence(UUID objectId, String name, String owner, UUID schemaId) {
-        super(objectId, name, owner, schemaId);
-    }
-    @Override
-    public String getQualifiedName() {
-        return name;
-    }
-    @Override
-    protected void releaseMetadata() {
-       
+```
+
+#### 5. Usage Demo
+```java
+public class CompositeCascadeDropDemo {
+    public static void main(String[] args) {
+        Database db = new Database(UUID.randomUUID(), "SalesDB");
+        Schema schema = new Schema(UUID.randomUUID(), "public");
+        Table table = new Table(UUID.randomUUID(), "orders");
+
+        schema.addObject(table);
+        db.addSchema(schema);
+
+        System.out.println("DB Status before drop: " + db.getLifecycleStatus()); // ACTIVE
+        System.out.println("Table Status before drop: " + table.getLifecycleStatus()); // ACTIVE
+
+        db.drop(DropMode.CASCADE);
+
+        System.out.println("DB Status after drop: " + db.getLifecycleStatus()); // DROPPED
+        System.out.println("Table Status after drop: " + table.getLifecycleStatus()); // DROPPED
     }
 }
 ```
@@ -2821,26 +2780,25 @@ public class Constraint {
 }
 
 // =====================================================
-// Subject: Table Class (Concrete Class)
+// Product
 // =====================================================
 public class Table {
-    protected final UUID tableId;
-    protected final String name;
-    protected final String owner;
-    protected final UUID schemaId;
-    protected final String engine;
-    protected final List<Column> columns;
-    protected final List<Constraint> constraints;
+    private final UUID tableId;
+    private final String name;
+    private final String owner;
+    private final UUID schemaId;
+    private final String engine;
+    private final List<Column> columns;
+    private final List<Constraint> constraints;
 
-    public Table(UUID tableId, String name, String owner, UUID schemaId, String engine,
-                 List<Column> columns, List<Constraint> constraints) {
-        this.tableId = tableId;
-        this.name = name;
-        this.owner = owner;
-        this.schemaId = schemaId;
-        this.engine = engine;
-        this.columns = columns;
-        this.constraints = constraints;
+    private Table(TableBuilder builder) {
+        this.tableId = builder.tableId;
+        this.name = builder.name;
+        this.owner = builder.owner;
+        this.schemaId = builder.schemaId;
+        this.engine = builder.engine;
+        this.columns = new ArrayList<>(builder.columns);
+        this.constraints = new ArrayList<>(builder.constraints);
     }
 
     public UUID getTableId() { return tableId; }
@@ -2849,60 +2807,57 @@ public class Table {
     public String getEngine() { return engine; }
     public List<Column> getColumns() { return columns; }
     public List<Constraint> getConstraints() { return constraints; }
-}
 
-// =====================================================
-// Builder: TableBuilder Class
-// =====================================================
-public class TableBuilder {
-    private UUID tableId;
-    private String name;
-    private String owner;
-    private UUID schemaId;
-    private String engine;
-    private final List<Column> columns = new ArrayList<>();
-    private final List<Constraint> constraints = new ArrayList<>();
+    public static class TableBuilder {
+        private UUID tableId = UUID.randomUUID();
+        private String name;
+        private String owner;
+        private UUID schemaId;
+        private String engine = "InnoDB";
+        private final List<Column> columns = new ArrayList<>();
+        private final List<Constraint> constraints = new ArrayList<>();
 
-    public TableBuilder setTableId(UUID tableId) {
-        this.tableId = tableId;
-        return this;
-    }
-    public TableBuilder setName(String name) {
-        this.name = name;
-        return this;
-    }
-    public TableBuilder setOwner(String owner) {
-        this.owner = owner;
-        return this;
-    }
-    public TableBuilder setSchemaId(UUID schemaId) {
-        this.schemaId = schemaId;
-        return this;
-    }
-    public TableBuilder setEngine(String engine) {
-        this.engine = engine;
-        return this;
-    }
-    public TableBuilder addColumn(Column column) {
-        this.columns.add(column);
-        return this;
-    }
-    public TableBuilder addConstraint(Constraint constraint) {
-        this.constraints.add(constraint);
-        return this;
-    }
-
-    public Table build() {
-        validate();
-        return new Table(tableId, name, owner, schemaId, engine, columns, constraints);
-    }
-
-    private void validate() {
-        if (name == null || name.isEmpty()) {
-            throw new IllegalStateException("Table name cannot be empty");
+        public TableBuilder setTableId(UUID tableId) {
+            this.tableId = tableId;
+            return this;
         }
-        if (columns.isEmpty()) {
-            throw new IllegalStateException("Table must have at least one column");
+        public TableBuilder setName(String name) {
+            this.name = name;
+            return this;
+        }
+        public TableBuilder setOwner(String owner) {
+            this.owner = owner;
+            return this;
+        }
+        public TableBuilder setSchemaId(UUID schemaId) {
+            this.schemaId = schemaId;
+            return this;
+        }
+        public TableBuilder setEngine(String engine) {
+            this.engine = engine;
+            return this;
+        }
+        public TableBuilder addColumn(Column column) {
+            this.columns.add(column);
+            return this;
+        }
+        public TableBuilder addConstraint(Constraint constraint) {
+            this.constraints.add(constraint);
+            return this;
+        }
+
+        public Table build() {
+            validate();
+            return new Table(this); 
+        }
+
+        private void validate() {
+            if (name == null || name.trim().isEmpty()) {
+                throw new IllegalStateException("Table name cannot be empty");
+            }
+            if (columns.isEmpty()) {
+                throw new IllegalStateException("Table must have at least one column");
+            }
         }
     }
 }   
@@ -2925,7 +2880,11 @@ public class TableMetadataProxy extends Table {
     private final MetadataLoader metadataLoader;
 
     public TableMetadataProxy(UUID tableId, String name, String owner, UUID schemaId, MetadataLoader loader) {
-        super(tableId, name, owner, schemaId, "InnoDB", new ArrayList<>(), new ArrayList<>());
+        super(Table.builder()
+                .setTableId(tableId)
+                .setName(name)
+                .setOwner(owner)
+                .setSchemaId(schemaId));
         this.metadataLoader = loader;
     }
 
@@ -3729,7 +3688,6 @@ sequenceDiagram
 ```
 
 ### 7.3 Code Example for Template Method
-### AbstractCommand 
 ```java
 public interface TableDataCommand {
     void execute(DataOperationContext context);
@@ -3738,55 +3696,86 @@ public interface TableDataCommand {
 public abstract class AbstractTableDataCommand implements TableDataCommand {
     @Override
     public final void execute(DataOperationContext context) {
-
+        validateRequest(context);
+        acquireLocks(context);
+        validateConstraints(context);
+        writeAheadLog(context);
+        modifyRow(context);
+        updateIndexes(context);
+        afterExecution(context);
     }
+
     protected abstract void validateRequest(DataOperationContext context);
     protected abstract void acquireLocks(DataOperationContext context);
     protected abstract void writeAheadLog(DataOperationContext context);
     protected abstract void modifyRow(DataOperationContext context);
     protected abstract void updateIndexes(DataOperationContext context);
+
     protected void validateConstraints(DataOperationContext context) {
-        
+        Table table = context.getTable();
+        Row row = getRow();
+        if (table != null && row != null) {
+            table.validateConstraints(row);
+        }
     }
+
     protected void afterExecution(DataOperationContext context) {
+        System.out.println("Command execution hook completed.");
     }
+
     protected abstract Row getRow();
 }
-
 ```
+
 ### Concrete class 
 ```java
 public class InsertRowCommand extends AbstractTableDataCommand {
     private Row row;
+
     public InsertRowCommand(Row row) {
         this.row = row;
     }
+
     @Override
     protected Row getRow() {
         return row;
     }
+
     @Override
     protected void validateRequest(DataOperationContext context) {
-        
+        if (row == null || row.rowId == null) {
+            throw new IllegalArgumentException("Cannot insert null row");
+        }
     }
+
     @Override
     protected void acquireLocks(DataOperationContext context) {
+        System.out.println("Acquiring ROW_EXCLUSIVE lock for row " + row.rowId);
     }
+
     @Override
     protected void writeAheadLog(DataOperationContext context) {
+        System.out.println("Writing WAL log entry for INSERT operation");
     }
+
     @Override
     protected void modifyRow(DataOperationContext context) {
-        
+        Table table = context.getTable();
+        if (table != null) {
+            table.insert(row);
+        }
     }
+
     @Override
     protected void updateIndexes(DataOperationContext context) {
-        
+        System.out.println("Updating B-Tree and Hash indexes for inserted row");
     }
+
     @Override
     protected void afterExecution(DataOperationContext context) {
+        System.out.println("InsertRowCommand completed successfully.");
     }
-} 
+}
 ```
 
 ### 7.3 Code Example for Command Pattern 
