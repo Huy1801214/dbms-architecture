@@ -1,7 +1,9 @@
 package dbms.catalog;
 
-import dbms.catalog.database.*;
-import dbms.catalog.schema.*;
+import dbms.catalog.database.entity.Database;
+import dbms.catalog.database.enums.DatabaseStatus;
+import dbms.catalog.schema.entity.Schema;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

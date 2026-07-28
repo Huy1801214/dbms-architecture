@@ -1,11 +1,14 @@
 package dbms.catalog;
 
-import dbms.catalog.base.*;
-import dbms.catalog.schema.*;
-import dbms.catalog.table.*;
-import dbms.catalog.view.*;
-import dbms.catalog.procedure.*;
-import dbms.catalog.sequence.*;
+import dbms.catalog.procedure.entity.StoredProcedure;
+import dbms.catalog.schema.entity.Schema;
+import dbms.catalog.sequence.entity.Sequence;
+import dbms.catalog.table.dto.TableCreateRequest;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.entity.Table;
+import dbms.catalog.table.enums.DataType;
+import dbms.catalog.view.entity.View;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

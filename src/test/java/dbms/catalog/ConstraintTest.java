@@ -1,12 +1,22 @@
 package dbms.catalog;
 
+import dbms.catalog.constraint.entity.CheckConstraint;
+import dbms.catalog.constraint.entity.ForeignKey;
+import dbms.catalog.constraint.entity.PrimaryKey;
+import dbms.catalog.constraint.entity.UniqueConstraint;
+import dbms.catalog.constraint.enums.ConstraintStatus;
+import dbms.catalog.constraint.enums.ConstraintType;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.entity.Row;
+import dbms.catalog.table.entity.Table;
+import dbms.catalog.table.enums.DataType;
+
 import org.junit.jupiter.api.Test;
 
-import dbms.catalog.constraint.*;
-import dbms.catalog.table.Column;
-import dbms.catalog.table.DataType;
-import dbms.catalog.table.Row;
-import dbms.catalog.table.Table;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.enums.DataType;
+import dbms.catalog.table.entity.Row;
+import dbms.catalog.table.entity.Table;
 
 import java.util.List;
 import java.util.UUID;

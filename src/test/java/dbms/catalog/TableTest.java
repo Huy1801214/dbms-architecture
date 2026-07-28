@@ -1,6 +1,16 @@
 package dbms.catalog;
 
-import dbms.catalog.table.*;
+import dbms.catalog.table.entity.Column;
+import dbms.catalog.table.entity.Row;
+import dbms.catalog.table.entity.Table;
+import dbms.catalog.table.entity.TableEvent;
+import dbms.catalog.table.entity.Trigger;
+import dbms.catalog.table.enums.DataType;
+import dbms.catalog.table.enums.TriggerEventType;
+import dbms.catalog.table.enums.TriggerTime;
+import dbms.catalog.table.service.MetadataLoader;
+import dbms.catalog.table.service.TableMetadataProxy;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
