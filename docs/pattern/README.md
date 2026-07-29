@@ -4773,9 +4773,36 @@ class SQLParser {
     +parse(sqlText : String) AST
 }
 
+%% =====================================================
+%% AST TREE (COMPOSITE PATTERN)
+%% =====================================================
+
 class AST {
-    -root : Object
-    +getRoot() Object
+    -root : AstNode
+    +getRoot() AstNode
+}
+
+class AstNode {
+    <<interface>>
+    +getChildren() List~AstNode~
+}
+
+class Statement {
+    <<abstract>>
+    +getChildren() List~AstNode~
+}
+
+class Expression {
+    <<abstract>>
+    +getChildren() List~AstNode~
+}
+
+class SelectStatement {
+    +getChildren() List~AstNode~
+}
+
+class BinaryExpression {
+    +getChildren() List~AstNode~
 }
 
 %% =====================================================
@@ -4852,7 +4879,7 @@ QueryCompiler --> PhysicalPlanner : delegates physical planning
 QueryCompiler ..> PhysicalPlan : produces
 
 %% =====================================================
-%% LEXER & PARSER RELATIONSHIPS
+%% LEXER, PARSER & AST COMPOSITE RELATIONSHIPS
 %% =====================================================
 
 Lexer --> LexerState : current state
@@ -4861,12 +4888,20 @@ Token --> TokenType : has type
 
 SQLParser --> Lexer : tokenizes SQL with
 SQLParser ..> AST : creates
+SQLParser ..> AstNode : builds tree
+
+AST *--> "1" AstNode : root
+AstNode <|.. Statement
+AstNode <|.. Expression
+Statement <|-- SelectStatement
+Expression <|-- BinaryExpression
 
 %% =====================================================
 %% BINDING & PLANNING RELATIONSHIPS
 %% =====================================================
 
 Binder ..> AST : consumes
+Binder ..> AstNode : traverses
 Binder ..> LogicalPlan : produces
 
 QueryOptimizer --> LogicalPlan : optimizes
@@ -4902,7 +4937,13 @@ style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style LexerState fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style Token fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style TokenType fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
 style AST fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style AstNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style Statement fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style Expression fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style SelectStatement fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style BinaryExpression fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
 
 style LogicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
@@ -4913,6 +4954,7 @@ style QueryExecutor fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
 style Transaction fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
 ```
+
 # Query Processing Feature and Design Pattern Analysis
 
 ## 1. SQL Lexical Analysis
@@ -5224,6 +5266,365 @@ public class Lexer {
         this.state = state;
     }
 
+}
+```
+
+## 2. SQL Syntax Parsing and AST Construction
+### Using Composite Pattern 
+#### Composite Pattern is suitable because an AST naturally forms a tree of nested nodes that should be handled through a common interface.
+
+#### Class Diagram 
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% PARSER - COMPOSITE CLIENT
+%% =====================================================
+
+class SQLParser {
+    -lexer : Lexer
+
+    +parse(sqlText : String) AST
+}
+
+class Lexer {
+    +tokenize(sql : String) List~Token~
+}
+
+class Token {
+    -type : TokenType
+    -value : String
+
+    +getType() TokenType
+    +getValue() String
+}
+
+class TokenType {
+    <<enumeration>>
+
+    KEYWORD
+    IDENTIFIER
+    NUMBER
+    STRING
+    OPERATOR
+    DELIMITER
+    END_OF_FILE
+}
+
+%% =====================================================
+%% AST TREE CONTAINER
+%% =====================================================
+
+class AST {
+    -root : AstNode
+
+    +getRoot() AstNode
+}
+
+%% =====================================================
+%% COMPOSITE COMPONENT
+%% =====================================================
+
+class AstNode {
+    <<interface>>
+
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% ABSTRACT NODE CATEGORIES
+%% =====================================================
+
+class Statement {
+    <<abstract>>
+
+    +getChildren() List~AstNode~
+}
+
+class Expression {
+    <<abstract>>
+
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% COMPOSITE NODES
+%% =====================================================
+
+class SelectStatement {
+    -selectItems : List~Expression~
+    -from : TableReference
+    -where : Expression
+
+    +getSelectItems() List~Expression~
+    +getFrom() TableReference
+    +getWhere() Expression
+    +getChildren() List~AstNode~
+}
+
+class BinaryExpression {
+    -left : Expression
+    -operator : String
+    -right : Expression
+
+    +getLeft() Expression
+    +getOperator() String
+    +getRight() Expression
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% LEAF NODES
+%% =====================================================
+
+class ColumnReference {
+    -columnName : String
+    -tableAlias : String
+
+    +getColumnName() String
+    +getTableAlias() String
+    +getChildren() List~AstNode~
+}
+
+class LiteralExpression {
+    -value : Object
+    -literalType : TokenType
+
+    +getValue() Object
+    +getLiteralType() TokenType
+    +getChildren() List~AstNode~
+}
+
+class TableReference {
+    -tableName : String
+    -alias : String
+
+    +getTableName() String
+    +getAlias() String
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% SEMANTIC ANALYSIS CLIENT
+%% =====================================================
+
+class Binder {
+    +bind(ast : AST) LogicalPlan
+}
+
+class LogicalPlan
+
+%% =====================================================
+%% COMPONENT IMPLEMENTATIONS
+%% =====================================================
+
+AstNode <|.. Statement
+AstNode <|.. Expression
+AstNode <|.. TableReference
+
+Statement <|-- SelectStatement
+
+Expression <|-- BinaryExpression
+Expression <|-- ColumnReference
+Expression <|-- LiteralExpression
+
+%% =====================================================
+%% COMPOSITE TREE
+%% =====================================================
+
+AST *--> "1" AstNode : root
+
+SelectStatement *--> "1..*" Expression : select items
+SelectStatement *--> "1" TableReference : from
+SelectStatement *--> "0..1" Expression : where
+
+BinaryExpression *--> "1" Expression : left operand
+BinaryExpression *--> "1" Expression : right operand
+
+%% =====================================================
+%% PARSING RELATIONSHIPS
+%% =====================================================
+
+SQLParser --> Lexer : obtains tokens
+Lexer *--> "0..*" Token : produces
+Token --> TokenType : has type
+
+SQLParser ..> AST : creates
+SQLParser ..> AstNode : builds tree from
+
+%% =====================================================
+%% BINDING RELATIONSHIPS
+%% =====================================================
+
+Binder ..> AST : consumes
+Binder ..> AstNode : traverses
+Binder ..> LogicalPlan : produces
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style SQLParser fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Lexer fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+
+style AST fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#664d03
+style AstNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style Statement fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style Expression fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style SelectStatement fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style BinaryExpression fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style ColumnReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style LiteralExpression fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style TableReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+
+style Binder fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+```
+#### Sequence Diagram shouldParseSelectStatementAndBuildCompositeAST()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Compiler as QueryCompiler
+    participant Parser as SQLParser
+    participant Lexer as Lexer
+    participant Condition as condition : BinaryExpression
+    participant Root as root : SelectStatement
+
+    Compiler->>Parser: parse(sqlText)
+    activate Parser
+
+    Parser->>Lexer: tokenize(sqlText)
+    activate Lexer
+    Lexer-->>Parser: tokens
+    deactivate Lexer
+
+    Note over Parser: Parse SELECT clause
+    Parser->>Parser: create ColumnReference("name")
+
+    Note over Parser: Parse FROM clause
+    Parser->>Parser: create TableReference("Student")
+
+    Note over Parser: Parse WHERE expression
+    Parser->>Parser: create ColumnReference("age")
+    Parser->>Parser: create LiteralExpression(18)
+
+    Parser->>Condition: new BinaryExpression(age, ">=", 18)
+    activate Condition
+    Condition-->>Parser: condition
+    deactivate Condition
+
+    Note over Parser,Root: Build Composite root from child nodes
+
+    Parser->>Root: new SelectStatement(selectItems, table, condition)
+    activate Root
+    Root-->>Parser: root
+    deactivate Root
+
+    Parser->>Parser: new AST(root)
+    Parser-->>Compiler: ast : AST
+
+    deactivate Parser
+```
+#### Code Example
+#### Component 
+```java
+public interface AstNode() {
+    List<AstNode> getChildren();
+}  
+```
+
+#### Abstract Component
+```java
+public abstract class Statement implements AstNode {
+}
+public abstract class Expression implements AstNode {
+}
+```
+
+#### Leaf
+```java
+public class ColumnReference extends Expression {
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of();
+    }
+}
+
+public class LiteralExpression extends Expression {
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of();
+    }
+}
+
+public class TableReference implements AstNode {
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of();
+    }
+}
+```
+
+#### Composite 
+```java
+public class BinaryExpression extends Expression {
+    private final Expression left;
+    private final String operator;
+    private final Expression right;
+
+    public BinaryExpression(Expression left, String operator, Expression right) {
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
+    }
+
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of(left, right);
+    }
+} 
+
+public class SelectStatement extends Statement {
+    private final List<Expression> selectItems;
+    private final TableReference from;
+    private final Expression where;
+
+    public SelectStatement(List<Expression> selectItems, TableReference from, Expression where) {
+        this.selectItems = selectItems;
+        this.from = from;
+        this.where = where;
+    }
+
+    @Override
+    public List<AstNode> getChildren() {
+        List<AstNode> children = new ArrayList<>();
+        children.addAll(selectItems);
+        children.add(from);
+
+        if (where != null) {
+            children.add(where);
+        }
+
+        return children;
+    }
+}
+```
+
+#### Client
+```java
+public class SQLParser {
+    private final Lexer lexer;
+    public SQLParser(Lexer lexer) {
+        this.lexer = lexer;
+    }
+
+    public AST parse(String sqlText) {
+        return null;
+    }
 }
 ```
 ## 8. Query Execution Coordination (Query Compilation)
