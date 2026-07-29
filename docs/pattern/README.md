@@ -1190,7 +1190,7 @@ CheckExpression ..> Row : evaluates
 Column --> DataType : uses
 
 TableBuilder ..> ConstraintDefinitionContext : creates validation context
-Table +-- TableBuilder : static inner class
+Table *-- TableBuilder : static inner class
 Table ..> RowSerializer : delegates binary serialization
 
 Table --> RowValidationHandler : delegates row validation
@@ -2576,7 +2576,7 @@ class RowSerializer {
 
 SchemaObject <|-- Table
 Table <|-- TableMetadataProxy
-Table +-- TableBuilder : static inner class
+Table *-- TableBuilder : static inner class
 Table ..> RowSerializer : delegates serialization
 
 SchemaObject --> LifecycleStatus : has
@@ -4713,8 +4713,519 @@ flowchart LR
 
 ---
 
+# Query Processing class diagram overview
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% QUERY COMPILATION (FACADE PATTERN)
+%% =====================================================
+
+class QueryCompiler {
+    -parser : SQLParser
+    -binder : Binder
+    -optimizer : QueryOptimizer
+    -physicalPlanner : PhysicalPlanner
+
+    +compile(sqlText : String) PhysicalPlan
+}
+
+%% =====================================================
+%% LEXICAL ANALYSIS & PARSING (STATE PATTERN)
+%% =====================================================
+
+class Lexer {
+    -input : String
+    -position : Integer
+    -state : LexerState
+
+    +tokenize(sql : String) List~Token~
+    +setState(state : LexerState) void
+}
+
+class LexerState {
+    <<interface>>
+    +consume(context : Lexer) void
+}
+
+class Token {
+    -type : TokenType
+    -value : String
+
+    +getType() TokenType
+    +getValue() String
+}
+
+class TokenType {
+    <<enumeration>>
+    KEYWORD
+    IDENTIFIER
+    NUMBER
+    STRING
+    OPERATOR
+    DELIMITER
+    END_OF_FILE
+}
+
+class SQLParser {
+    -lexer : Lexer
+    +parse(sqlText : String) AST
+}
+
+class AST {
+    -root : Object
+    +getRoot() Object
+}
+
+%% =====================================================
+%% SEMANTIC ANALYSIS & BINDING
+%% =====================================================
+
+class Binder {
+    +bind(ast : AST) LogicalPlan
+}
+
+class LogicalPlan {
+    -operators : List~Object~
+    +getOperators() List~Object~
+}
+
+%% =====================================================
+%% QUERY OPTIMIZATION
+%% =====================================================
+
+class QueryOptimizer {
+    +optimize(logicalPlan : LogicalPlan) LogicalPlan
+}
+
+class StatisticsManager {
+    +collect(table : Table) void
+}
+
+%% =====================================================
+%% PHYSICAL PLANNING & PLAN
+%% =====================================================
+
+class PhysicalPlanner {
+    +build(logicalPlan : LogicalPlan) PhysicalPlan
+}
+
+class PhysicalPlan {
+    -operators : List~Object~
+    +getOperators() List~Object~
+}
+
+%% =====================================================
+%% QUERY EXECUTION
+%% =====================================================
+
+class QueryExecutor {
+    -compiler : QueryCompiler
+    +execute(sqlText : String, transaction : Transaction) void
+}
+
+%% =====================================================
+%% EXTERNAL DEPENDENCIES
+%% =====================================================
+
+class Table {
+    +getId() UUID
+    +getName() String
+}
+
+class Transaction {
+    +transactionId : UUID
+    +begin() void
+    +commit() void
+    +rollback() void
+}
+
+%% =====================================================
+%% FACADE & COMPILATION RELATIONSHIPS
+%% =====================================================
+
+QueryCompiler --> SQLParser : delegates parsing
+QueryCompiler --> Binder : delegates binding
+QueryCompiler --> QueryOptimizer : delegates optimization
+QueryCompiler --> PhysicalPlanner : delegates physical planning
+QueryCompiler ..> PhysicalPlan : produces
+
+%% =====================================================
+%% LEXER & PARSER RELATIONSHIPS
+%% =====================================================
+
+Lexer --> LexerState : current state
+Lexer *--> "0..*" Token : produces
+Token --> TokenType : has type
+
+SQLParser --> Lexer : tokenizes SQL with
+SQLParser ..> AST : creates
+
+%% =====================================================
+%% BINDING & PLANNING RELATIONSHIPS
+%% =====================================================
+
+Binder ..> AST : consumes
+Binder ..> LogicalPlan : produces
+
+QueryOptimizer --> LogicalPlan : optimizes
+QueryOptimizer --> StatisticsManager : uses statistics
+
+PhysicalPlanner ..> LogicalPlan : consumes
+PhysicalPlanner ..> PhysicalPlan : produces
+
+%% =====================================================
+%% STATISTICS RELATIONSHIPS
+%% =====================================================
+
+StatisticsManager --> Table : collects statistics from
+
+%% =====================================================
+%% EXECUTION RELATIONSHIPS
+%% =====================================================
+
+QueryExecutor --> QueryCompiler : delegates compilation to
+QueryExecutor --> PhysicalPlan : executes
+QueryExecutor --> Transaction : executes within
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style QueryCompiler fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Binder fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style PhysicalPlanner fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
+style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style LexerState fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style Token fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style TokenType fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style AST fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
+style LogicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style StatisticsManager fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style PhysicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style QueryExecutor fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style Transaction fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+```
 # Query Processing Feature and Design Pattern Analysis
 
+## 1. SQL Lexical Analysis
+### Using state pattern 
+#### State Pattern is suitable because the Lexer handles the same character differently depending on its current parsing state.
+#### 1.1 Class diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% CONTEXT
+%% =====================================================
+
+class Lexer {
+    -input : String
+    -position : Integer
+    -buffer : StringBuilder
+    -tokens : List~Token~
+    -state : LexerState
+
+    +tokenize(sql : String) List~Token~
+    +setState(state : LexerState) void
+
+    +currentCharacter() char
+    +peekCharacter() char
+    +advance() void
+    +isEnd() boolean
+
+    +appendCurrentCharacter() void
+    +emitToken(type : TokenType) void
+    +clearBuffer() void
+}
+
+%% =====================================================
+%% STATE
+%% =====================================================
+
+class LexerState {
+    <<interface>>
+
+    +consume(context : Lexer) void
+}
+
+%% =====================================================
+%% CONCRETE STATES
+%% =====================================================
+
+class DefaultLexerState {
+    +consume(context : Lexer) void
+}
+
+class IdentifierLexerState {
+    +consume(context : Lexer) void
+}
+
+class NumberLexerState {
+    +consume(context : Lexer) void
+}
+
+class StringLexerState {
+    +consume(context : Lexer) void
+}
+
+class CommentLexerState {
+    +consume(context : Lexer) void
+}
+
+class OperatorLexerState {
+    +consume(context : Lexer) void
+}
+
+%% =====================================================
+%% TOKEN
+%% =====================================================
+
+class Token {
+    -type : TokenType
+    -value : String
+    -position : Integer
+
+    +getType() TokenType
+    +getValue() String
+}
+
+class TokenType {
+    <<enumeration>>
+
+    KEYWORD
+    IDENTIFIER
+    NUMBER
+    STRING
+    OPERATOR
+    DELIMITER
+    END_OF_FILE
+}
+
+%% =====================================================
+%% STATE RELATIONSHIPS
+%% =====================================================
+
+Lexer --> LexerState : current state
+
+LexerState <|.. DefaultLexerState
+LexerState <|.. IdentifierLexerState
+LexerState <|.. NumberLexerState
+LexerState <|.. StringLexerState
+LexerState <|.. CommentLexerState
+LexerState <|.. OperatorLexerState
+
+%% =====================================================
+%% TOKEN RELATIONSHIPS
+%% =====================================================
+
+Lexer *--> "0..*" Token : produces
+Token --> TokenType : has type
+
+%% =====================================================
+%% STATE TRANSITIONS
+%% =====================================================
+
+DefaultLexerState ..> IdentifierLexerState : letter
+DefaultLexerState ..> NumberLexerState : digit
+DefaultLexerState ..> StringLexerState : quote
+DefaultLexerState ..> CommentLexerState : comment marker
+DefaultLexerState ..> OperatorLexerState : operator
+
+IdentifierLexerState ..> DefaultLexerState : token completed
+NumberLexerState ..> DefaultLexerState : token completed
+StringLexerState ..> DefaultLexerState : closing quote
+CommentLexerState ..> DefaultLexerState : comment completed
+OperatorLexerState ..> DefaultLexerState : token completed
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style Lexer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style LexerState fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style IdentifierLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style NumberLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style StringLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style CommentLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style OperatorLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+
+style Token fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style TokenType fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+```
+#### 1.2 Sequence diagram shouldTokenizeKeywordAndStringUsingStateTransitions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Parser as SQLParser
+    participant Lexer as lexer : Lexer
+    participant Default as defaultState : DefaultLexerState
+    participant Identifier as identifierState : IdentifierLexerState
+    participant StringState as stringState : StringLexerState
+
+    Parser->>Lexer: tokenize("SELECT 'Huy'")
+    activate Lexer
+
+    Lexer->>Lexer: setState(defaultState)
+
+    Note over Lexer,Default: Current character = "S"
+
+    Lexer->>Default: consume(lexer)
+    activate Default
+    Default->>Lexer: setState(identifierState)
+    deactivate Default
+
+    loop Read S, E, L, E, C, T
+        Lexer->>Identifier: consume(lexer)
+        activate Identifier
+        Identifier->>Lexer: appendCurrentCharacter()
+        Identifier->>Lexer: advance()
+        deactivate Identifier
+    end
+
+    Lexer->>Identifier: consume(lexer)
+    activate Identifier
+    Note over Identifier: Whitespace ends the identifier
+    Identifier->>Lexer: emitToken(KEYWORD, "SELECT")
+    Identifier->>Lexer: clearBuffer()
+    Identifier->>Lexer: setState(defaultState)
+    deactivate Identifier
+
+    Lexer->>Default: consume(lexer)
+    activate Default
+    Note over Default: Ignore whitespace
+    Default->>Lexer: advance()
+    deactivate Default
+
+    Lexer->>Default: consume(lexer)
+    activate Default
+    Note over Default: Opening quote starts a string
+    Default->>Lexer: clearBuffer()
+    Default->>Lexer: advance()
+    Default->>Lexer: setState(stringState)
+    deactivate Default
+
+    loop Read H, u, y
+        Lexer->>StringState: consume(lexer)
+        activate StringState
+        StringState->>Lexer: appendCurrentCharacter()
+        StringState->>Lexer: advance()
+        deactivate StringState
+    end
+
+    Lexer->>StringState: consume(lexer)
+    activate StringState
+    Note over StringState: Closing quote ends the string
+    StringState->>Lexer: emitToken(STRING, "Huy")
+    StringState->>Lexer: clearBuffer()
+    StringState->>Lexer: advance()
+    StringState->>Lexer: setState(defaultState)
+    deactivate StringState
+
+    Lexer->>Lexer: emitToken(END_OF_FILE, "")
+    Lexer-->>Parser: tokens [SELECT, Huy, EOF]
+
+    deactivate Lexer
+```
+#### 1.3 Code Example
+
+#### TokenType & Token
+```java
+public enum TokenType {
+    KEYWORD,
+    IDENTIFIER,
+    NUMBER,
+    STRING,
+    OPERATOR,
+    DELIMITER,
+    END_OF_FILE
+}
+
+public class Token {
+    private final TokenType type;
+    private final String value;
+    private final int position;
+
+    public Token(TokenType type, String value, int position) {
+        this.type = type;
+        this.value = value;
+        this.position = position;
+    }
+
+    public TokenType getType() { return type; }
+    public String getValue() { return value; }
+    public int getPosition() { return position; }
+}
+```
+
+#### State Interface
+```java
+public interface LexerState {
+    void consume(Lexer context);
+}
+```
+
+#### Concrete States
+```java
+public class DefaultLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class IdentifierLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class StringLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class NumberLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class CommentLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class OperatorLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+```
+
+#### Context (Lexer)
+```java
+public class Lexer {
+    private LexerState state;
+
+    public void setState(LexerState state) {
+        this.state = state;
+    }
+
+}
+```
 ## 8. Query Execution Coordination (Query Compilation)
 ### Using Facade Pattern
 
