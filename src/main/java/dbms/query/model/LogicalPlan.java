@@ -1,7 +1,12 @@
 package dbms.query.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LogicalPlan {
-    public List<Object> operators;
+    private final List<LogicalOperator> operators = new ArrayList<>();
+
+    public List<LogicalOperator> getOperators() {
+        return operators;
+    }
 }

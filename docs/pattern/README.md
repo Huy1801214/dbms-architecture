@@ -4199,6 +4199,7 @@ style IndexKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 style DataType fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+```
 
 ### 9.2 Sequence Diagram Search Rows Using Selected Index Strategy
 ```mermaid
@@ -4798,10 +4799,34 @@ class Expression {
 }
 
 class SelectStatement {
+    -selectItems : List~Expression~
+    -from : TableReference
+    -where : Expression
     +getChildren() List~AstNode~
 }
 
 class BinaryExpression {
+    -left : Expression
+    -operator : String
+    -right : Expression
+    +getChildren() List~AstNode~
+}
+
+class ColumnReference {
+    -columnName : String
+    -tableAlias : String
+    +getChildren() List~AstNode~
+}
+
+class LiteralExpression {
+    -value : Object
+    -literalType : TokenType
+    +getChildren() List~AstNode~
+}
+
+class TableReference {
+    -tableName : String
+    -alias : String
     +getChildren() List~AstNode~
 }
 
@@ -4814,8 +4839,8 @@ class Binder {
 }
 
 class LogicalPlan {
-    -operators : List~Object~
-    +getOperators() List~Object~
+    -operators : List~LogicalOperator~
+    +getOperators() List~LogicalOperator~
 }
 
 %% =====================================================
@@ -4828,19 +4853,80 @@ class QueryOptimizer {
 
 class StatisticsManager {
     +collect(table : Table) void
+    +estimateRowCount(tableId : UUID) Long
+    +estimateSelectivity(logicalOperator : LogicalOperator) Double
 }
 
 %% =====================================================
-%% PHYSICAL PLANNING & PLAN
+%% PHYSICAL PLANNING (FACTORY METHOD PATTERN)
 %% =====================================================
 
 class PhysicalPlanner {
-    +build(logicalPlan : LogicalPlan) PhysicalPlan
+    -creators : Map~LogicalOperatorType, PhysicalOperatorCreator~
+    +build(logicalPlan : LogicalPlan, context : PlanningContext) PhysicalPlan
+}
+
+class PlanningContext {
+    -statisticsManager : StatisticsManager
+    +hasUsableIndex(tableId : UUID, columnIds : List~UUID~) boolean
+}
+
+class PhysicalOperatorCreator {
+    <<abstract>>
+    +create(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext)* PhysicalOperator
+}
+
+class ScanOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class JoinOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+%% =====================================================
+%% PHYSICAL OPERATORS & PLAN
+%% =====================================================
+
+class PhysicalOperator {
+    <<interface>>
+    +open() void
+    +next() Row
+    +close() void
+    +getOperatorName() String
+}
+
+class SequentialScanOperator {
+    -tableId : UUID
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class IndexScanOperator {
+    -tableId : UUID
+    -indexId : UUID
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class NestedLoopJoinOperator {
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class HashJoinOperator {
+    +open() void
+    +next() Row
+    +close() void
 }
 
 class PhysicalPlan {
-    -operators : List~Object~
-    +getOperators() List~Object~
+    -operators : List~PhysicalOperator~
+    +getOperators() List~PhysicalOperator~
 }
 
 %% =====================================================
@@ -4893,8 +4979,20 @@ SQLParser ..> AstNode : builds tree
 AST *--> "1" AstNode : root
 AstNode <|.. Statement
 AstNode <|.. Expression
+AstNode <|.. TableReference
+
 Statement <|-- SelectStatement
+
 Expression <|-- BinaryExpression
+Expression <|-- ColumnReference
+Expression <|-- LiteralExpression
+
+SelectStatement *--> "1..*" Expression : select items
+SelectStatement *--> "1" TableReference : from
+SelectStatement *--> "0..1" Expression : where
+
+BinaryExpression *--> "1" Expression : left operand
+BinaryExpression *--> "1" Expression : right operand
 
 %% =====================================================
 %% BINDING & PLANNING RELATIONSHIPS
@@ -4907,8 +5005,31 @@ Binder ..> LogicalPlan : produces
 QueryOptimizer --> LogicalPlan : optimizes
 QueryOptimizer --> StatisticsManager : uses statistics
 
-PhysicalPlanner ..> LogicalPlan : consumes
+%% =====================================================
+%% FACTORY METHOD RELATIONSHIPS
+%% =====================================================
+
+PhysicalPlanner --> PhysicalOperatorCreator : selects creator
+PhysicalPlanner --> PlanningContext : uses
 PhysicalPlanner ..> PhysicalPlan : produces
+
+PlanningContext --> StatisticsManager : uses
+
+PhysicalOperatorCreator <|-- ScanOperatorCreator
+PhysicalOperatorCreator <|-- JoinOperatorCreator
+PhysicalOperatorCreator ..> PhysicalOperator : factory method creates
+
+PhysicalOperator <|.. SequentialScanOperator
+PhysicalOperator <|.. IndexScanOperator
+PhysicalOperator <|.. NestedLoopJoinOperator
+PhysicalOperator <|.. HashJoinOperator
+
+ScanOperatorCreator ..> SequentialScanOperator : creates
+ScanOperatorCreator ..> IndexScanOperator : creates
+JoinOperatorCreator ..> NestedLoopJoinOperator : creates
+JoinOperatorCreator ..> HashJoinOperator : creates
+
+PhysicalPlan *--> "1..*" PhysicalOperator : contains
 
 %% =====================================================
 %% STATISTICS RELATIONSHIPS
@@ -4930,7 +5051,8 @@ QueryExecutor --> Transaction : executes within
 
 style QueryCompiler fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
 style Binder fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style PhysicalPlanner fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style PhysicalPlanner fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style PlanningContext fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
 
 style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
@@ -4944,6 +5066,20 @@ style Statement fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style Expression fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style SelectStatement fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
 style BinaryExpression fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+
+style ColumnReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style LiteralExpression fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style TableReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+
+style PhysicalOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style ScanOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style JoinOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style PhysicalOperator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style SequentialScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style IndexScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style NestedLoopJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style HashJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
 
 style LogicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
@@ -5624,6 +5760,402 @@ public class SQLParser {
 
     public AST parse(String sqlText) {
         return null;
+    }
+}
+```
+## 7. Physical Plan Generation
+### Using Factory Method
+#### Factory Method is suitable because physical plan generation must create different physical operators without coupling the planner to their concrete classes.
+
+#### Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% CLIENT AND PLANNING
+%% =====================================================
+
+class PhysicalPlanner {
+    -creators : Map~LogicalOperatorType, PhysicalOperatorCreator~
+
+    +build(logicalPlan : LogicalPlan, context : PlanningContext) PhysicalPlan
+    -createPhysicalOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class PlanningContext {
+    -statisticsManager : StatisticsManager
+
+    +hasUsableIndex(tableId : UUID, columnIds : List~UUID~) boolean
+    +estimateRowCount(tableId : UUID) Long
+    +estimateSelectivity(logicalOperator : LogicalOperator) Double
+}
+
+class StatisticsManager {
+    +estimateRowCount(tableId : UUID) Long
+    +estimateSelectivity(logicalOperator : LogicalOperator) Double
+}
+
+%% =====================================================
+%% LOGICAL PLAN
+%% =====================================================
+
+class LogicalPlan {
+    -operators : List~LogicalOperator~
+
+    +getOperators() List~LogicalOperator~
+}
+
+class LogicalOperator {
+    <<abstract>>
+
+    +getType() LogicalOperatorType
+}
+
+class LogicalScan {
+    -tableId : UUID
+    -predicate : Object
+
+    +getType() LogicalOperatorType
+}
+
+class LogicalJoin {
+    -leftTableId : UUID
+    -rightTableId : UUID
+    -condition : Object
+
+    +getType() LogicalOperatorType
+}
+
+class LogicalOperatorType {
+    <<enumeration>>
+
+    SCAN
+    JOIN
+}
+
+%% =====================================================
+%% CREATOR
+%% =====================================================
+
+class PhysicalOperatorCreator {
+    <<abstract>>
+
+    +create(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+
+    #validate(logicalOperator : LogicalOperator, context : PlanningContext) void
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext)* PhysicalOperator
+}
+
+%% =====================================================
+%% CONCRETE CREATORS
+%% =====================================================
+
+class ScanOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class JoinOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+%% =====================================================
+%% PRODUCT
+%% =====================================================
+
+class PhysicalOperator {
+    <<interface>>
+
+    +getOperatorName() String
+}
+
+%% =====================================================
+%% CONCRETE PRODUCTS - SCAN
+%% =====================================================
+
+class SequentialScanOperator {
+    -tableId : UUID
+
+    +getOperatorName() String
+}
+
+class IndexScanOperator {
+    -tableId : UUID
+    -indexId : UUID
+
+    +getOperatorName() String
+}
+
+%% =====================================================
+%% CONCRETE PRODUCTS - JOIN
+%% =====================================================
+
+class NestedLoopJoinOperator {
+    +getOperatorName() String
+}
+
+class HashJoinOperator {
+    +getOperatorName() String
+}
+
+%% =====================================================
+%% PHYSICAL PLAN
+%% =====================================================
+
+class PhysicalPlan {
+    -operators : List~PhysicalOperator~
+
+    +getOperators() List~PhysicalOperator~
+}
+
+%% =====================================================
+%% LOGICAL PLAN RELATIONSHIPS
+%% =====================================================
+
+LogicalPlan *--> "1..*" LogicalOperator : contains
+
+LogicalOperator <|-- LogicalScan
+LogicalOperator <|-- LogicalJoin
+
+LogicalOperator --> LogicalOperatorType : identifies
+
+%% =====================================================
+%% FACTORY METHOD RELATIONSHIPS
+%% =====================================================
+
+PhysicalPlanner --> PhysicalOperatorCreator : selects creator
+
+PhysicalOperatorCreator <|-- ScanOperatorCreator
+PhysicalOperatorCreator <|-- JoinOperatorCreator
+
+PhysicalOperatorCreator ..> PhysicalOperator : factory method creates
+
+%% =====================================================
+%% PRODUCT RELATIONSHIPS
+%% =====================================================
+
+PhysicalOperator <|.. SequentialScanOperator
+PhysicalOperator <|.. IndexScanOperator
+PhysicalOperator <|.. NestedLoopJoinOperator
+PhysicalOperator <|.. HashJoinOperator
+
+ScanOperatorCreator ..> SequentialScanOperator : creates
+ScanOperatorCreator ..> IndexScanOperator : creates
+
+JoinOperatorCreator ..> NestedLoopJoinOperator : creates
+JoinOperatorCreator ..> HashJoinOperator : creates
+
+%% =====================================================
+%% PLANNING RELATIONSHIPS
+%% =====================================================
+
+PhysicalPlanner --> LogicalPlan : consumes
+PhysicalPlanner --> PlanningContext : uses
+PhysicalPlanner ..> PhysicalPlan : produces
+
+PlanningContext --> StatisticsManager : uses
+
+PhysicalPlan *--> "1..*" PhysicalOperator : contains
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style PhysicalPlanner fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style PlanningContext fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+style StatisticsManager fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+
+style PhysicalOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style ScanOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style JoinOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style PhysicalOperator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style SequentialScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style IndexScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style NestedLoopJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style HashJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+
+style LogicalPlan fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalOperator fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalScan fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalJoin fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalOperatorType fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+
+style PhysicalPlan fill:#fde8e8,stroke:#e84a5f,stroke-width:2px,color:#9b1c1c
+```
+
+#### Sequence Diagram shouldGenerateIndexScanPhysicalPlanUsingFactoryMethod()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Compiler as QueryCompiler
+    participant Planner as PhysicalPlanner
+    participant Context as PlanningContext
+    participant Creator as creator : IndexScanCreator
+    participant Operator as operator : IndexScanOperator
+
+    Compiler->>Planner: build(logicalPlan, context)
+    activate Planner
+
+    Note over Planner: Process LogicalScan(Student)
+
+    Planner->>Context: hasUsableIndex(logicalScan)
+    activate Context
+    Context-->>Planner: true
+    deactivate Context
+
+    Planner->>Context: findBestIndex(logicalScan)
+    activate Context
+    Context-->>Planner: studentIdIndex
+    deactivate Context
+
+    Note over Planner,Creator: Select Concrete Creator
+
+    Planner->>Creator: new IndexScanCreator(studentIdIndex)
+
+    Planner->>Creator: create(logicalScan)
+    activate Creator
+
+    Note over Creator: Common creation process
+
+    Creator->>Creator: validate(logicalScan)
+
+    Note over Creator: Factory Method overridden by IndexScanCreator
+
+    Creator->>Creator: createOperator(logicalScan)
+
+    Creator->>Operator: new IndexScanOperator(tableId, indexId)
+    activate Operator
+    Operator-->>Creator: operator
+    deactivate Operator
+
+    Creator->>Creator: initialize(operator)
+    Creator-->>Planner: operator : PhysicalOperator
+
+    deactivate Creator
+
+    Planner->>Planner: new PhysicalPlan(operator)
+    Planner-->>Compiler: physicalPlan : PhysicalPlan
+
+    deactivate Planner
+```
+
+#### Code Example
+#### Product Interface
+```java
+public interface PhysicalOperator {
+    void open();
+    Row next();
+    void close();
+} 
+```
+#### Concrete Product 
+```java
+public class SequentialScanOperator implements PhysicalOperator {
+    private final UUID tableId;
+
+    public SequentialScanOperator(UUID tableId) {
+        this.tableId = tableId;
+    }
+
+    public UUID getTableId() {return tableId;}
+
+    @Override
+    public void open() {
+    }
+
+    @Override
+    public Row next() {
+        return null;
+    }
+
+    @Override
+    public void close() {
+    }
+}
+
+public class IndexScanOperator implements PhysicalOperator {
+    private final UUID tableId;
+    private final UUID indexId;
+
+    public IndexScanOperator(UUID tableId, UUID indexId) {
+        this.tableId = tableId;
+        this.indexId = indexId;
+    }
+
+    public UUID getTableId() {return tableId;}
+
+    public UUID getIndexId() {
+        return indexId;
+    }
+
+    @Override
+    public void open() {
+    }
+
+    @Override
+    public Row next() {
+        return null;
+    }
+
+    @Override
+    public void close() {
+    }
+}
+```
+#### Creator
+```java
+public abstract class PhysicalOperatorCreator {
+
+    public final PhysicalOperator create(LogicalScan logicalScan) {
+        validate(logicalScan);
+        PhysicalOperator operator = createOperator(logicalScan);
+        initialize(operator);
+        return operator;
+    }
+
+    protected abstract PhysicalOperator createOperator(LogicalScan logicalScan);
+} 
+``` 
+#### Concrete Creator
+```java
+public class SequentialScanCreator extends PhysicalOperatorCreator {
+
+    @Override
+    protected PhysicalOperator createOperator(LogicalScan logicalScan) {
+        return new SequentialScanOperator(logicalScan.getTableId());
+    }
+}
+
+public class IndexScanCreator extends PhysicalOperatorCreator {
+    private final UUID indexId;
+
+    public IndexScanCreator(UUID indexId) {
+        this.indexId = indexId;
+    }
+
+    @Override
+    protected PhysicalOperator createOperator(LogicalScan logicalScan) {
+        return new IndexScanOperator(logicalScan.getTableId(),indexId);
+    }
+}
+```
+#### Client
+```java
+public class PhysicalPlanner {
+
+    public PhysicalOperator createScanOperator(LogicalScan logicalScan, boolean useIndex, UUID indexId) {
+        ScanOperatorCreator creator;
+
+        if (useIndex) {
+            creator = new IndexScanCreator(indexId);
+        } else {
+            creator = new SequentialScanCreator();
+        }
+
+        return creator.create(logicalScan);
     }
 }
 ```
