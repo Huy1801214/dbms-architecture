@@ -1190,7 +1190,7 @@ CheckExpression ..> Row : evaluates
 Column --> DataType : uses
 
 TableBuilder ..> ConstraintDefinitionContext : creates validation context
-Table +-- TableBuilder : static inner class
+Table *-- TableBuilder : static inner class
 Table ..> RowSerializer : delegates binary serialization
 
 Table --> RowValidationHandler : delegates row validation
@@ -2576,7 +2576,7 @@ class RowSerializer {
 
 SchemaObject <|-- Table
 Table <|-- TableMetadataProxy
-Table +-- TableBuilder : static inner class
+Table *-- TableBuilder : static inner class
 Table ..> RowSerializer : delegates serialization
 
 SchemaObject --> LifecycleStatus : has
@@ -4199,6 +4199,7 @@ style IndexKey fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
 style Column fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 style Row fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
 style DataType fill:#e0f2f1,stroke:#009688,stroke-width:1px,color:#004d40
+```
 
 ### 9.2 Sequence Diagram Search Rows Using Selected Index Strategy
 ```mermaid
@@ -4713,8 +4714,1451 @@ flowchart LR
 
 ---
 
+# Query Processing class diagram overview
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% QUERY COMPILATION (FACADE PATTERN)
+%% =====================================================
+
+class QueryCompiler {
+    -parser : SQLParser
+    -binder : Binder
+    -optimizer : QueryOptimizer
+    -physicalPlanner : PhysicalPlanner
+
+    +compile(sqlText : String) PhysicalPlan
+}
+
+%% =====================================================
+%% LEXICAL ANALYSIS & PARSING (STATE PATTERN)
+%% =====================================================
+
+class Lexer {
+    -input : String
+    -position : Integer
+    -state : LexerState
+
+    +tokenize(sql : String) List~Token~
+    +setState(state : LexerState) void
+}
+
+class LexerState {
+    <<interface>>
+    +consume(context : Lexer) void
+}
+
+class Token {
+    -type : TokenType
+    -value : String
+
+    +getType() TokenType
+    +getValue() String
+}
+
+class TokenType {
+    <<enumeration>>
+    KEYWORD
+    IDENTIFIER
+    NUMBER
+    STRING
+    OPERATOR
+    DELIMITER
+    END_OF_FILE
+}
+
+class SQLParser {
+    -lexer : Lexer
+    +parse(sqlText : String) AST
+}
+
+%% =====================================================
+%% AST TREE (COMPOSITE PATTERN)
+%% =====================================================
+
+class AST {
+    -root : AstNode
+    +getRoot() AstNode
+}
+
+class AstNode {
+    <<interface>>
+    +getChildren() List~AstNode~
+}
+
+class Statement {
+    <<abstract>>
+    +getChildren() List~AstNode~
+}
+
+class Expression {
+    <<abstract>>
+    +getChildren() List~AstNode~
+}
+
+class SelectStatement {
+    -selectItems : List~Expression~
+    -from : TableReference
+    -where : Expression
+    +getChildren() List~AstNode~
+}
+
+class BinaryExpression {
+    -left : Expression
+    -operator : String
+    -right : Expression
+    +getChildren() List~AstNode~
+}
+
+class ColumnReference {
+    -columnName : String
+    -tableAlias : String
+    +getChildren() List~AstNode~
+}
+
+class LiteralExpression {
+    -value : Object
+    -literalType : TokenType
+    +getChildren() List~AstNode~
+}
+
+class TableReference {
+    -tableName : String
+    -alias : String
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% SEMANTIC ANALYSIS & BINDING
+%% =====================================================
+
+class Binder {
+    +bind(ast : AST) LogicalPlan
+}
+
+class LogicalPlan {
+    -operators : List~LogicalOperator~
+    +getOperators() List~LogicalOperator~
+}
+
+%% =====================================================
+%% QUERY OPTIMIZATION
+%% =====================================================
+
+class QueryOptimizer {
+    +optimize(logicalPlan : LogicalPlan) LogicalPlan
+}
+
+class StatisticsManager {
+    +collect(table : Table) void
+    +estimateRowCount(tableId : UUID) Long
+    +estimateSelectivity(logicalOperator : LogicalOperator) Double
+}
+
+%% =====================================================
+%% PHYSICAL PLANNING (FACTORY METHOD PATTERN)
+%% =====================================================
+
+class PhysicalPlanner {
+    -creators : Map~LogicalOperatorType, PhysicalOperatorCreator~
+    +build(logicalPlan : LogicalPlan, context : PlanningContext) PhysicalPlan
+}
+
+class PlanningContext {
+    -statisticsManager : StatisticsManager
+    +hasUsableIndex(tableId : UUID, columnIds : List~UUID~) boolean
+}
+
+class PhysicalOperatorCreator {
+    <<abstract>>
+    +create(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext)* PhysicalOperator
+}
+
+class ScanOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class JoinOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+%% =====================================================
+%% PHYSICAL OPERATORS & PLAN
+%% =====================================================
+
+class PhysicalOperator {
+    <<interface>>
+    +open() void
+    +next() Row
+    +close() void
+    +getOperatorName() String
+}
+
+class SequentialScanOperator {
+    -tableId : UUID
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class IndexScanOperator {
+    -tableId : UUID
+    -indexId : UUID
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class NestedLoopJoinOperator {
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class HashJoinOperator {
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class PhysicalPlan {
+    -operators : List~PhysicalOperator~
+    +getOperators() List~PhysicalOperator~
+}
+
+%% =====================================================
+%% QUERY EXECUTION
+%% =====================================================
+
+class QueryExecutor {
+    -compiler : QueryCompiler
+    +execute(sqlText : String, transaction : Transaction) void
+}
+
+%% =====================================================
+%% EXTERNAL DEPENDENCIES
+%% =====================================================
+
+class Table {
+    +getId() UUID
+    +getName() String
+}
+
+class Transaction {
+    +transactionId : UUID
+    +begin() void
+    +commit() void
+    +rollback() void
+}
+
+%% =====================================================
+%% FACADE & COMPILATION RELATIONSHIPS
+%% =====================================================
+
+QueryCompiler --> SQLParser : delegates parsing
+QueryCompiler --> Binder : delegates binding
+QueryCompiler --> QueryOptimizer : delegates optimization
+QueryCompiler --> PhysicalPlanner : delegates physical planning
+QueryCompiler ..> PhysicalPlan : produces
+
+%% =====================================================
+%% LEXER, PARSER & AST COMPOSITE RELATIONSHIPS
+%% =====================================================
+
+Lexer --> LexerState : current state
+Lexer *--> "0..*" Token : produces
+Token --> TokenType : has type
+
+SQLParser --> Lexer : tokenizes SQL with
+SQLParser ..> AST : creates
+SQLParser ..> AstNode : builds tree
+
+AST *--> "1" AstNode : root
+AstNode <|.. Statement
+AstNode <|.. Expression
+AstNode <|.. TableReference
+
+Statement <|-- SelectStatement
+
+Expression <|-- BinaryExpression
+Expression <|-- ColumnReference
+Expression <|-- LiteralExpression
+
+SelectStatement *--> "1..*" Expression : select items
+SelectStatement *--> "1" TableReference : from
+SelectStatement *--> "0..1" Expression : where
+
+BinaryExpression *--> "1" Expression : left operand
+BinaryExpression *--> "1" Expression : right operand
+
+%% =====================================================
+%% BINDING & PLANNING RELATIONSHIPS
+%% =====================================================
+
+Binder ..> AST : consumes
+Binder ..> AstNode : traverses
+Binder ..> LogicalPlan : produces
+
+QueryOptimizer --> LogicalPlan : optimizes
+QueryOptimizer --> StatisticsManager : uses statistics
+
+%% =====================================================
+%% FACTORY METHOD RELATIONSHIPS
+%% =====================================================
+
+PhysicalPlanner --> PhysicalOperatorCreator : selects creator
+PhysicalPlanner --> PlanningContext : uses
+PhysicalPlanner ..> PhysicalPlan : produces
+
+PlanningContext --> StatisticsManager : uses
+
+PhysicalOperatorCreator <|-- ScanOperatorCreator
+PhysicalOperatorCreator <|-- JoinOperatorCreator
+PhysicalOperatorCreator ..> PhysicalOperator : factory method creates
+
+PhysicalOperator <|.. SequentialScanOperator
+PhysicalOperator <|.. IndexScanOperator
+PhysicalOperator <|.. NestedLoopJoinOperator
+PhysicalOperator <|.. HashJoinOperator
+
+ScanOperatorCreator ..> SequentialScanOperator : creates
+ScanOperatorCreator ..> IndexScanOperator : creates
+JoinOperatorCreator ..> NestedLoopJoinOperator : creates
+JoinOperatorCreator ..> HashJoinOperator : creates
+
+PhysicalPlan *--> "1..*" PhysicalOperator : contains
+
+%% =====================================================
+%% STATISTICS RELATIONSHIPS
+%% =====================================================
+
+StatisticsManager --> Table : collects statistics from
+
+%% =====================================================
+%% EXECUTION RELATIONSHIPS
+%% =====================================================
+
+QueryExecutor --> QueryCompiler : delegates compilation to
+QueryExecutor --> PhysicalPlan : executes
+QueryExecutor --> Transaction : executes within
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style QueryCompiler fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Binder fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style PhysicalPlanner fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style PlanningContext fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+
+style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style LexerState fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style Token fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style TokenType fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
+style AST fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style AstNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style Statement fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style Expression fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style SelectStatement fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style BinaryExpression fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+
+style ColumnReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style LiteralExpression fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style TableReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+
+style PhysicalOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style ScanOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style JoinOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style PhysicalOperator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style SequentialScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style IndexScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style NestedLoopJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style HashJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+
+style LogicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style StatisticsManager fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style PhysicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style QueryExecutor fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
+style Table fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style Transaction fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+```
+
 # Query Processing Feature and Design Pattern Analysis
 
+## 1. SQL Lexical Analysis
+### Using state pattern 
+#### State Pattern is suitable because the Lexer handles the same character differently depending on its current parsing state.
+#### 1.1 Class diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% CONTEXT
+%% =====================================================
+
+class Lexer {
+    -input : String
+    -position : Integer
+    -buffer : StringBuilder
+    -tokens : List~Token~
+    -state : LexerState
+
+    +tokenize(sql : String) List~Token~
+    +setState(state : LexerState) void
+
+    +currentCharacter() char
+    +peekCharacter() char
+    +advance() void
+    +isEnd() boolean
+
+    +appendCurrentCharacter() void
+    +emitToken(type : TokenType) void
+    +clearBuffer() void
+}
+
+%% =====================================================
+%% STATE
+%% =====================================================
+
+class LexerState {
+    <<interface>>
+
+    +consume(context : Lexer) void
+}
+
+%% =====================================================
+%% CONCRETE STATES
+%% =====================================================
+
+class DefaultLexerState {
+    +consume(context : Lexer) void
+}
+
+class IdentifierLexerState {
+    +consume(context : Lexer) void
+}
+
+class NumberLexerState {
+    +consume(context : Lexer) void
+}
+
+class StringLexerState {
+    +consume(context : Lexer) void
+}
+
+class CommentLexerState {
+    +consume(context : Lexer) void
+}
+
+class OperatorLexerState {
+    +consume(context : Lexer) void
+}
+
+%% =====================================================
+%% TOKEN
+%% =====================================================
+
+class Token {
+    -type : TokenType
+    -value : String
+    -position : Integer
+
+    +getType() TokenType
+    +getValue() String
+}
+
+class TokenType {
+    <<enumeration>>
+
+    KEYWORD
+    IDENTIFIER
+    NUMBER
+    STRING
+    OPERATOR
+    DELIMITER
+    END_OF_FILE
+}
+
+%% =====================================================
+%% STATE RELATIONSHIPS
+%% =====================================================
+
+Lexer --> LexerState : current state
+
+LexerState <|.. DefaultLexerState
+LexerState <|.. IdentifierLexerState
+LexerState <|.. NumberLexerState
+LexerState <|.. StringLexerState
+LexerState <|.. CommentLexerState
+LexerState <|.. OperatorLexerState
+
+%% =====================================================
+%% TOKEN RELATIONSHIPS
+%% =====================================================
+
+Lexer *--> "0..*" Token : produces
+Token --> TokenType : has type
+
+%% =====================================================
+%% STATE TRANSITIONS
+%% =====================================================
+
+DefaultLexerState ..> IdentifierLexerState : letter
+DefaultLexerState ..> NumberLexerState : digit
+DefaultLexerState ..> StringLexerState : quote
+DefaultLexerState ..> CommentLexerState : comment marker
+DefaultLexerState ..> OperatorLexerState : operator
+
+IdentifierLexerState ..> DefaultLexerState : token completed
+NumberLexerState ..> DefaultLexerState : token completed
+StringLexerState ..> DefaultLexerState : closing quote
+CommentLexerState ..> DefaultLexerState : comment completed
+OperatorLexerState ..> DefaultLexerState : token completed
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style Lexer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+
+style LexerState fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style DefaultLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style IdentifierLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style NumberLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style StringLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style CommentLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+style OperatorLexerState fill:#fde8e8,stroke:#e84a5f,stroke-width:1px,color:#9b1c1c
+
+style Token fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style TokenType fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+```
+#### 1.2 Sequence diagram shouldTokenizeKeywordAndStringUsingStateTransitions()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Parser as SQLParser
+    participant Lexer as lexer : Lexer
+    participant Default as defaultState : DefaultLexerState
+    participant Identifier as identifierState : IdentifierLexerState
+    participant StringState as stringState : StringLexerState
+
+    Parser->>Lexer: tokenize("SELECT 'Huy'")
+    activate Lexer
+
+    Lexer->>Lexer: setState(defaultState)
+
+    Note over Lexer,Default: Current character = "S"
+
+    Lexer->>Default: consume(lexer)
+    activate Default
+    Default->>Lexer: setState(identifierState)
+    deactivate Default
+
+    loop Read S, E, L, E, C, T
+        Lexer->>Identifier: consume(lexer)
+        activate Identifier
+        Identifier->>Lexer: appendCurrentCharacter()
+        Identifier->>Lexer: advance()
+        deactivate Identifier
+    end
+
+    Lexer->>Identifier: consume(lexer)
+    activate Identifier
+    Note over Identifier: Whitespace ends the identifier
+    Identifier->>Lexer: emitToken(KEYWORD, "SELECT")
+    Identifier->>Lexer: clearBuffer()
+    Identifier->>Lexer: setState(defaultState)
+    deactivate Identifier
+
+    Lexer->>Default: consume(lexer)
+    activate Default
+    Note over Default: Ignore whitespace
+    Default->>Lexer: advance()
+    deactivate Default
+
+    Lexer->>Default: consume(lexer)
+    activate Default
+    Note over Default: Opening quote starts a string
+    Default->>Lexer: clearBuffer()
+    Default->>Lexer: advance()
+    Default->>Lexer: setState(stringState)
+    deactivate Default
+
+    loop Read H, u, y
+        Lexer->>StringState: consume(lexer)
+        activate StringState
+        StringState->>Lexer: appendCurrentCharacter()
+        StringState->>Lexer: advance()
+        deactivate StringState
+    end
+
+    Lexer->>StringState: consume(lexer)
+    activate StringState
+    Note over StringState: Closing quote ends the string
+    StringState->>Lexer: emitToken(STRING, "Huy")
+    StringState->>Lexer: clearBuffer()
+    StringState->>Lexer: advance()
+    StringState->>Lexer: setState(defaultState)
+    deactivate StringState
+
+    Lexer->>Lexer: emitToken(END_OF_FILE, "")
+    Lexer-->>Parser: tokens [SELECT, Huy, EOF]
+
+    deactivate Lexer
+```
+#### 1.3 Code Example
+
+#### TokenType & Token
+```java
+public enum TokenType {
+    KEYWORD,
+    IDENTIFIER,
+    NUMBER,
+    STRING,
+    OPERATOR,
+    DELIMITER,
+    END_OF_FILE
+}
+
+public class Token {
+    private final TokenType type;
+    private final String value;
+    private final int position;
+
+    public Token(TokenType type, String value, int position) {
+        this.type = type;
+        this.value = value;
+        this.position = position;
+    }
+
+    public TokenType getType() { return type; }
+    public String getValue() { return value; }
+    public int getPosition() { return position; }
+}
+```
+
+#### State Interface
+```java
+public interface LexerState {
+    void consume(Lexer context);
+}
+```
+
+#### Concrete States
+```java
+public class DefaultLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class IdentifierLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class StringLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class NumberLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class CommentLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+
+public class OperatorLexerState implements LexerState {
+    @Override
+    public void consume(Lexer context) {
+    }
+}
+```
+
+#### Context (Lexer)
+```java
+public class Lexer {
+    private LexerState state;
+
+    public void setState(LexerState state) {
+        this.state = state;
+    }
+
+}
+```
+
+## 2. SQL Syntax Parsing and AST Construction
+### Using Composite Pattern 
+#### Composite Pattern is suitable because an AST naturally forms a tree of nested nodes that should be handled through a common interface.
+
+#### Class Diagram 
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% PARSER - COMPOSITE CLIENT
+%% =====================================================
+
+class SQLParser {
+    -lexer : Lexer
+
+    +parse(sqlText : String) AST
+}
+
+class Lexer {
+    +tokenize(sql : String) List~Token~
+}
+
+class Token {
+    -type : TokenType
+    -value : String
+
+    +getType() TokenType
+    +getValue() String
+}
+
+class TokenType {
+    <<enumeration>>
+
+    KEYWORD
+    IDENTIFIER
+    NUMBER
+    STRING
+    OPERATOR
+    DELIMITER
+    END_OF_FILE
+}
+
+%% =====================================================
+%% AST TREE CONTAINER
+%% =====================================================
+
+class AST {
+    -root : AstNode
+
+    +getRoot() AstNode
+}
+
+%% =====================================================
+%% COMPOSITE COMPONENT
+%% =====================================================
+
+class AstNode {
+    <<interface>>
+
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% ABSTRACT NODE CATEGORIES
+%% =====================================================
+
+class Statement {
+    <<abstract>>
+
+    +getChildren() List~AstNode~
+}
+
+class Expression {
+    <<abstract>>
+
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% COMPOSITE NODES
+%% =====================================================
+
+class SelectStatement {
+    -selectItems : List~Expression~
+    -from : TableReference
+    -where : Expression
+
+    +getSelectItems() List~Expression~
+    +getFrom() TableReference
+    +getWhere() Expression
+    +getChildren() List~AstNode~
+}
+
+class BinaryExpression {
+    -left : Expression
+    -operator : String
+    -right : Expression
+
+    +getLeft() Expression
+    +getOperator() String
+    +getRight() Expression
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% LEAF NODES
+%% =====================================================
+
+class ColumnReference {
+    -columnName : String
+    -tableAlias : String
+
+    +getColumnName() String
+    +getTableAlias() String
+    +getChildren() List~AstNode~
+}
+
+class LiteralExpression {
+    -value : Object
+    -literalType : TokenType
+
+    +getValue() Object
+    +getLiteralType() TokenType
+    +getChildren() List~AstNode~
+}
+
+class TableReference {
+    -tableName : String
+    -alias : String
+
+    +getTableName() String
+    +getAlias() String
+    +getChildren() List~AstNode~
+}
+
+%% =====================================================
+%% SEMANTIC ANALYSIS CLIENT
+%% =====================================================
+
+class Binder {
+    +bind(ast : AST) LogicalPlan
+}
+
+class LogicalPlan
+
+%% =====================================================
+%% COMPONENT IMPLEMENTATIONS
+%% =====================================================
+
+AstNode <|.. Statement
+AstNode <|.. Expression
+AstNode <|.. TableReference
+
+Statement <|-- SelectStatement
+
+Expression <|-- BinaryExpression
+Expression <|-- ColumnReference
+Expression <|-- LiteralExpression
+
+%% =====================================================
+%% COMPOSITE TREE
+%% =====================================================
+
+AST *--> "1" AstNode : root
+
+SelectStatement *--> "1..*" Expression : select items
+SelectStatement *--> "1" TableReference : from
+SelectStatement *--> "0..1" Expression : where
+
+BinaryExpression *--> "1" Expression : left operand
+BinaryExpression *--> "1" Expression : right operand
+
+%% =====================================================
+%% PARSING RELATIONSHIPS
+%% =====================================================
+
+SQLParser --> Lexer : obtains tokens
+Lexer *--> "0..*" Token : produces
+Token --> TokenType : has type
+
+SQLParser ..> AST : creates
+SQLParser ..> AstNode : builds tree from
+
+%% =====================================================
+%% BINDING RELATIONSHIPS
+%% =====================================================
+
+Binder ..> AST : consumes
+Binder ..> AstNode : traverses
+Binder ..> LogicalPlan : produces
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style SQLParser fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Lexer fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+
+style AST fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#664d03
+style AstNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+
+style Statement fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style Expression fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style SelectStatement fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+style BinaryExpression fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+
+style ColumnReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style LiteralExpression fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style TableReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+
+style Binder fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+```
+#### Sequence Diagram shouldParseSelectStatementAndBuildCompositeAST()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Compiler as QueryCompiler
+    participant Parser as SQLParser
+    participant Lexer as Lexer
+    participant Condition as condition : BinaryExpression
+    participant Root as root : SelectStatement
+
+    Compiler->>Parser: parse(sqlText)
+    activate Parser
+
+    Parser->>Lexer: tokenize(sqlText)
+    activate Lexer
+    Lexer-->>Parser: tokens
+    deactivate Lexer
+
+    Note over Parser: Parse SELECT clause
+    Parser->>Parser: create ColumnReference("name")
+
+    Note over Parser: Parse FROM clause
+    Parser->>Parser: create TableReference("Student")
+
+    Note over Parser: Parse WHERE expression
+    Parser->>Parser: create ColumnReference("age")
+    Parser->>Parser: create LiteralExpression(18)
+
+    Parser->>Condition: new BinaryExpression(age, ">=", 18)
+    activate Condition
+    Condition-->>Parser: condition
+    deactivate Condition
+
+    Note over Parser,Root: Build Composite root from child nodes
+
+    Parser->>Root: new SelectStatement(selectItems, table, condition)
+    activate Root
+    Root-->>Parser: root
+    deactivate Root
+
+    Parser->>Parser: new AST(root)
+    Parser-->>Compiler: ast : AST
+
+    deactivate Parser
+```
+#### Code Example
+#### Component 
+```java
+public interface AstNode() {
+    List<AstNode> getChildren();
+}  
+```
+
+#### Abstract Component
+```java
+public abstract class Statement implements AstNode {
+}
+public abstract class Expression implements AstNode {
+}
+```
+
+#### Leaf
+```java
+public class ColumnReference extends Expression {
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of();
+    }
+}
+
+public class LiteralExpression extends Expression {
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of();
+    }
+}
+
+public class TableReference implements AstNode {
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of();
+    }
+}
+```
+
+#### Composite 
+```java
+public class BinaryExpression extends Expression {
+    private final Expression left;
+    private final String operator;
+    private final Expression right;
+
+    public BinaryExpression(Expression left, String operator, Expression right) {
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
+    }
+
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of(left, right);
+    }
+} 
+
+public class SelectStatement extends Statement {
+    private final List<Expression> selectItems;
+    private final TableReference from;
+    private final Expression where;
+
+    public SelectStatement(List<Expression> selectItems, TableReference from, Expression where) {
+        this.selectItems = selectItems;
+        this.from = from;
+        this.where = where;
+    }
+
+    @Override
+    public List<AstNode> getChildren() {
+        List<AstNode> children = new ArrayList<>();
+        children.addAll(selectItems);
+        children.add(from);
+
+        if (where != null) {
+            children.add(where);
+        }
+
+        return children;
+    }
+}
+```
+
+#### Client
+```java
+public class SQLParser {
+    private final Lexer lexer;
+    public SQLParser(Lexer lexer) {
+        this.lexer = lexer;
+    }
+
+    public AST parse(String sqlText) {
+        return null;
+    }
+}
+```
+## 7. Physical Plan Generation
+### Using Factory Method
+#### Factory Method is suitable because physical plan generation must create different physical operators without coupling the planner to their concrete classes.
+
+#### Class Diagram
+```mermaid
+classDiagram
+direction TB
+
+%% =====================================================
+%% CLIENT AND PLANNING
+%% =====================================================
+
+class PhysicalPlanner {
+    -creators : Map~LogicalOperatorType, PhysicalOperatorCreator~
+
+    +build(logicalPlan : LogicalPlan, context : PlanningContext) PhysicalPlan
+    -createPhysicalOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class PlanningContext {
+    -statisticsManager : StatisticsManager
+
+    +hasUsableIndex(tableId : UUID, columnIds : List~UUID~) boolean
+    +estimateRowCount(tableId : UUID) Long
+    +estimateSelectivity(logicalOperator : LogicalOperator) Double
+}
+
+class StatisticsManager {
+    +estimateRowCount(tableId : UUID) Long
+    +estimateSelectivity(logicalOperator : LogicalOperator) Double
+}
+
+%% =====================================================
+%% LOGICAL PLAN
+%% =====================================================
+
+class LogicalPlan {
+    -operators : List~LogicalOperator~
+
+    +getOperators() List~LogicalOperator~
+}
+
+class LogicalOperator {
+    <<abstract>>
+
+    +getType() LogicalOperatorType
+}
+
+class LogicalScan {
+    -tableId : UUID
+    -predicate : Object
+
+    +getType() LogicalOperatorType
+}
+
+class LogicalJoin {
+    -leftTableId : UUID
+    -rightTableId : UUID
+    -condition : Object
+
+    +getType() LogicalOperatorType
+}
+
+class LogicalOperatorType {
+    <<enumeration>>
+
+    SCAN
+    JOIN
+}
+
+%% =====================================================
+%% CREATOR
+%% =====================================================
+
+class PhysicalOperatorCreator {
+    <<abstract>>
+
+    +create(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+
+    #validate(logicalOperator : LogicalOperator, context : PlanningContext) void
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext)* PhysicalOperator
+}
+
+%% =====================================================
+%% CONCRETE CREATORS
+%% =====================================================
+
+class ScanOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class JoinOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+%% =====================================================
+%% PRODUCT
+%% =====================================================
+
+class PhysicalOperator {
+    <<interface>>
+
+    +getOperatorName() String
+}
+
+%% =====================================================
+%% CONCRETE PRODUCTS - SCAN
+%% =====================================================
+
+class SequentialScanOperator {
+    -tableId : UUID
+
+    +getOperatorName() String
+}
+
+class IndexScanOperator {
+    -tableId : UUID
+    -indexId : UUID
+
+    +getOperatorName() String
+}
+
+%% =====================================================
+%% CONCRETE PRODUCTS - JOIN
+%% =====================================================
+
+class NestedLoopJoinOperator {
+    +getOperatorName() String
+}
+
+class HashJoinOperator {
+    +getOperatorName() String
+}
+
+%% =====================================================
+%% PHYSICAL PLAN
+%% =====================================================
+
+class PhysicalPlan {
+    -operators : List~PhysicalOperator~
+
+    +getOperators() List~PhysicalOperator~
+}
+
+%% =====================================================
+%% LOGICAL PLAN RELATIONSHIPS
+%% =====================================================
+
+LogicalPlan *--> "1..*" LogicalOperator : contains
+
+LogicalOperator <|-- LogicalScan
+LogicalOperator <|-- LogicalJoin
+
+LogicalOperator --> LogicalOperatorType : identifies
+
+%% =====================================================
+%% FACTORY METHOD RELATIONSHIPS
+%% =====================================================
+
+PhysicalPlanner --> PhysicalOperatorCreator : selects creator
+
+PhysicalOperatorCreator <|-- ScanOperatorCreator
+PhysicalOperatorCreator <|-- JoinOperatorCreator
+
+PhysicalOperatorCreator ..> PhysicalOperator : factory method creates
+
+%% =====================================================
+%% PRODUCT RELATIONSHIPS
+%% =====================================================
+
+PhysicalOperator <|.. SequentialScanOperator
+PhysicalOperator <|.. IndexScanOperator
+PhysicalOperator <|.. NestedLoopJoinOperator
+PhysicalOperator <|.. HashJoinOperator
+
+ScanOperatorCreator ..> SequentialScanOperator : creates
+ScanOperatorCreator ..> IndexScanOperator : creates
+
+JoinOperatorCreator ..> NestedLoopJoinOperator : creates
+JoinOperatorCreator ..> HashJoinOperator : creates
+
+%% =====================================================
+%% PLANNING RELATIONSHIPS
+%% =====================================================
+
+PhysicalPlanner --> LogicalPlan : consumes
+PhysicalPlanner --> PlanningContext : uses
+PhysicalPlanner ..> PhysicalPlan : produces
+
+PlanningContext --> StatisticsManager : uses
+
+PhysicalPlan *--> "1..*" PhysicalOperator : contains
+
+%% =====================================================
+%% STYLING
+%% =====================================================
+
+style PhysicalPlanner fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style PlanningContext fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+style StatisticsManager fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+
+style PhysicalOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style ScanOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style JoinOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style PhysicalOperator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+style SequentialScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style IndexScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style NestedLoopJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style HashJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+
+style LogicalPlan fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalOperator fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalScan fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalJoin fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+style LogicalOperatorType fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#664d03
+
+style PhysicalPlan fill:#fde8e8,stroke:#e84a5f,stroke-width:2px,color:#9b1c1c
+```
+
+#### Sequence Diagram shouldGenerateIndexScanPhysicalPlanUsingFactoryMethod()
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Compiler as QueryCompiler
+    participant Planner as PhysicalPlanner
+    participant Context as PlanningContext
+    participant Creator as creator : IndexScanCreator
+    participant Operator as operator : IndexScanOperator
+
+    Compiler->>Planner: build(logicalPlan, context)
+    activate Planner
+
+    Note over Planner: Process LogicalScan(Student)
+
+    Planner->>Context: hasUsableIndex(logicalScan)
+    activate Context
+    Context-->>Planner: true
+    deactivate Context
+
+    Planner->>Context: findBestIndex(logicalScan)
+    activate Context
+    Context-->>Planner: studentIdIndex
+    deactivate Context
+
+    Note over Planner,Creator: Select Concrete Creator
+
+    Planner->>Creator: new IndexScanCreator(studentIdIndex)
+
+    Planner->>Creator: create(logicalScan)
+    activate Creator
+
+    Note over Creator: Common creation process
+
+    Creator->>Creator: validate(logicalScan)
+
+    Note over Creator: Factory Method overridden by IndexScanCreator
+
+    Creator->>Creator: createOperator(logicalScan)
+
+    Creator->>Operator: new IndexScanOperator(tableId, indexId)
+    activate Operator
+    Operator-->>Creator: operator
+    deactivate Operator
+
+    Creator->>Creator: initialize(operator)
+    Creator-->>Planner: operator : PhysicalOperator
+
+    deactivate Creator
+
+    Planner->>Planner: new PhysicalPlan(operator)
+    Planner-->>Compiler: physicalPlan : PhysicalPlan
+
+    deactivate Planner
+```
+
+#### Code Example
+#### Product Interface
+```java
+public interface PhysicalOperator {
+    void open();
+    Row next();
+    void close();
+} 
+```
+#### Concrete Product 
+```java
+public class SequentialScanOperator implements PhysicalOperator {
+    private final UUID tableId;
+
+    public SequentialScanOperator(UUID tableId) {
+        this.tableId = tableId;
+    }
+
+    public UUID getTableId() {return tableId;}
+
+    @Override
+    public void open() {
+    }
+
+    @Override
+    public Row next() {
+        return null;
+    }
+
+    @Override
+    public void close() {
+    }
+}
+
+public class IndexScanOperator implements PhysicalOperator {
+    private final UUID tableId;
+    private final UUID indexId;
+
+    public IndexScanOperator(UUID tableId, UUID indexId) {
+        this.tableId = tableId;
+        this.indexId = indexId;
+    }
+
+    public UUID getTableId() {return tableId;}
+
+    public UUID getIndexId() {
+        return indexId;
+    }
+
+    @Override
+    public void open() {
+    }
+
+    @Override
+    public Row next() {
+        return null;
+    }
+
+    @Override
+    public void close() {
+    }
+}
+```
+#### Creator
+```java
+public abstract class PhysicalOperatorCreator {
+
+    public final PhysicalOperator create(LogicalScan logicalScan) {
+        validate(logicalScan);
+        PhysicalOperator operator = createOperator(logicalScan);
+        initialize(operator);
+        return operator;
+    }
+
+    protected abstract PhysicalOperator createOperator(LogicalScan logicalScan);
+} 
+``` 
+#### Concrete Creator
+```java
+public class SequentialScanCreator extends PhysicalOperatorCreator {
+
+    @Override
+    protected PhysicalOperator createOperator(LogicalScan logicalScan) {
+        return new SequentialScanOperator(logicalScan.getTableId());
+    }
+}
+
+public class IndexScanCreator extends PhysicalOperatorCreator {
+    private final UUID indexId;
+
+    public IndexScanCreator(UUID indexId) {
+        this.indexId = indexId;
+    }
+
+    @Override
+    protected PhysicalOperator createOperator(LogicalScan logicalScan) {
+        return new IndexScanOperator(logicalScan.getTableId(),indexId);
+    }
+}
+```
+#### Client
+```java
+public class PhysicalPlanner {
+
+    public PhysicalOperator createScanOperator(LogicalScan logicalScan, boolean useIndex, UUID indexId) {
+        ScanOperatorCreator creator;
+
+        if (useIndex) {
+            creator = new IndexScanCreator(indexId);
+        } else {
+            creator = new SequentialScanCreator();
+        }
+
+        return creator.create(logicalScan);
+    }
+}
+```
 ## 8. Query Execution Coordination (Query Compilation)
 ### Using Facade Pattern
 
