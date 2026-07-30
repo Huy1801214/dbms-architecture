@@ -45,68 +45,31 @@ public class Database implements DatabaseComponent {
     }
 
     private void validateName(String name) {
-        if (name == null) {
-            throw new IllegalStateException("Database name cannot be null");
-        }
-        if (name.trim().isEmpty()) {
-            throw new IllegalStateException("Database name cannot be empty");
-        }
-        if (name.length() > 64) {
-            throw new IllegalStateException("Database name cannot exceed 64 characters");
-        }
-        if (!name.matches("^[a-zA-Z0-9_]+$")) {
-            throw new IllegalStateException("Database name contains invalid characters");
-        }
-        if ("system".equalsIgnoreCase(name)) {
-            throw new IllegalStateException("Database name cannot be 'system'");
-        }
     }
 
     private void validateOwner(String owner) {
-        if (owner == null) {
-            throw new IllegalStateException("Owner cannot be null");
-        }
     }
 
     public void open() {
-        if (status == DatabaseStatus.ONLINE || status == DatabaseStatus.OPENING || status == DatabaseStatus.CLOSING) {
-            throw new IllegalStateException("Database is already online or in transition");
-        }
-        this.status = DatabaseStatus.ONLINE;
     }
 
     public void close() {
-        if (status == DatabaseStatus.OFFLINE || status == DatabaseStatus.CLOSING) {
-            throw new IllegalStateException("Database is already offline or in transition");
-        }
-        this.status = DatabaseStatus.OFFLINE;
     }
 
     @Override
     public void rename(String newName) {
-        if (status == DatabaseStatus.OPENING || status == DatabaseStatus.CLOSING || status == DatabaseStatus.OFFLINE) {
-            throw new IllegalStateException("Cannot rename database in current status: " + status);
-        }
-        validateName(newName);
-        this.name = newName;
     }
 
     public void setOwner(String owner) {
-        validateOwner(owner);
-        this.owner = owner;
     }
 
     public void validateCurrentState() {
-        if (status == DatabaseStatus.OFFLINE) {
-            throw new UnsupportedOperationException("Database is offline");
-        }
     }
 
     public void validateDropOperation() {
     }
 
     public void executeOperation() {
-        validateCurrentState();
     }
 
     public String getDatabaseId() {
@@ -131,7 +94,8 @@ public class Database implements DatabaseComponent {
 
     @Override
     public UUID getId() {
-        if (databaseId == null) return null;
+        if (databaseId == null)
+            return null;
         try {
             return UUID.fromString(databaseId);
         } catch (IllegalArgumentException e) {
@@ -151,21 +115,6 @@ public class Database implements DatabaseComponent {
 
     @Override
     public void drop(DropMode mode) {
-        if (this.lifecycleStatus != LifecycleStatus.ACTIVE) {
-            throw new IllegalStateException("Database is not active");
-        }
-        if (mode == DropMode.RESTRICT && !schemas.isEmpty()) {
-            throw new IllegalStateException("Cannot drop database with active schemas in RESTRICT mode");
-        }
-        this.lifecycleStatus = LifecycleStatus.DROPPING;
-        if (mode == DropMode.CASCADE) {
-            List<Schema> schemasToDrop = new ArrayList<>(schemas.values());
-            for (Schema s : schemasToDrop) {
-                s.drop(mode);
-                schemas.remove(s.getName());
-            }
-        }
-        this.lifecycleStatus = LifecycleStatus.DROPPED;
     }
 
     @Override
@@ -174,20 +123,9 @@ public class Database implements DatabaseComponent {
     }
 
     public void addSchema(Schema schema) {
-        if (status == DatabaseStatus.OFFLINE) {
-            throw new IllegalStateException("Database is closed");
-        }
-        if (schema == null || schema.getName() == null) {
-            throw new IllegalArgumentException();
-        }
-        if (schemas.containsKey(schema.getName())) {
-            throw new IllegalStateException("Schema already exists");
-        }
-        schemas.put(schema.getName(), schema);
     }
 
     public void removeSchema(UUID schemaId) {
-        schemas.values().removeIf(s -> s.getId().equals(schemaId));
     }
 
     public Schema findSchema(String name) {
@@ -195,38 +133,13 @@ public class Database implements DatabaseComponent {
     }
 
     public Schema createSchema(String name, String owner) {
-        if (status == DatabaseStatus.OFFLINE) {
-            throw new IllegalStateException("Database is closed");
-        }
-        if (name == null || !name.matches("^[a-zA-Z0-9_]+$")) {
-            throw new IllegalStateException("Invalid schema name");
-        }
-        if (schemas.containsKey(name)) {
-            throw new IllegalStateException("Duplicate schema name");
-        }
-        Schema schema = new Schema(UUID.randomUUID().toString(), name, owner);
-        schemas.put(name, schema);
-        return schema;
+        return null;
     }
 
     public void dropSchema(String key) {
-        if (schemas.containsKey(key)) {
-            schemas.remove(key);
-        } else {
-            // Find by ID
-            schemas.values().removeIf(s -> s.getSchemaId().equals(key));
-        }
     }
 
     public Schema getSchema(String key) {
-        if (schemas.containsKey(key)) {
-            return schemas.get(key);
-        }
-        for (Schema s : schemas.values()) {
-            if (s.getSchemaId().equals(key)) {
-                return s;
-            }
-        }
         return null;
     }
 
@@ -234,4 +147,3 @@ public class Database implements DatabaseComponent {
         return new ArrayList<>(schemas.values());
     }
 }
-
