@@ -3,5 +3,5 @@
 ![alt text](<pics/Request Flow.png>)
 ![alt text](pics/IoC.png)
 ![alt text](pics/DI.png)
-![alt text](<pics/DI Step by Step.png>)
+![alt text](<pics/StepDI.png>)
 ![alt text](<pics/Spring Security.png>)
