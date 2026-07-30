@@ -7,4 +7,6 @@
 ![alt text](pics/BeanLifecycle.png)
 ![alt text](pics/BeanScope.png)
 ![alt text](pics/ExampleStatefull.png)
+![alt text](pics/MVC.png)
+![alt text](pics/MVCStep.png)
 ![alt text](<pics/Spring Security.png>)
