@@ -432,6 +432,8 @@ class Sequence{
 }
 
 class QueryExecutor {
+    -compiler : QueryCompiler
+    +execute(sqlText : String, transaction : Transaction) void
     +execute(command : TableDataCommand, context : DataOperationContext) void
 }
 
@@ -529,32 +531,186 @@ class CatalogManager{
     +findTable()
 }
 
-class SQLParser{
-    +parse()
+class QueryCompiler {
+    -parser : SQLParser
+    -binder : Binder
+    -optimizer : QueryOptimizer
+    -physicalPlanner : PhysicalPlanner
+
+    +compile(sqlText : String) PhysicalPlan
 }
 
-class Lexer{
-    +tokenize()
+class Lexer {
+    -input : String
+    -position : Integer
+    -state : LexerState
+
+    +tokenize(sql : String) List~Token~
+    +setState(state : LexerState) void
 }
 
-class AST{
-    +root
+class LexerState {
+    <<interface>>
+    +consume(context : Lexer) void
 }
 
-class QueryOptimizer{
-    +optimize()
+class Token {
+    -type : TokenType
+    -value : String
+
+    +getType() TokenType
+    +getValue() String
 }
 
-class LogicalPlan{
-    +operators
+class TokenType {
+    <<enumeration>>
+    KEYWORD
+    IDENTIFIER
+    NUMBER
+    STRING
+    OPERATOR
+    DELIMITER
+    END_OF_FILE
 }
 
-class PhysicalPlan{
-    +operators
+class SQLParser {
+    -lexer : Lexer
+    +parse(sqlText : String) AST
 }
 
-class StatisticsManager{
-    +collect()
+class AST {
+    -root : AstNode
+    +getRoot() AstNode
+}
+
+class AstNode {
+    <<interface>>
+    +getChildren() List~AstNode~
+}
+
+class Statement {
+    <<abstract>>
+    +getChildren() List~AstNode~
+}
+
+class Expression {
+    <<abstract>>
+    +getChildren() List~AstNode~
+}
+
+class SelectStatement {
+    -selectItems : List~Expression~
+    -from : TableReference
+    -where : Expression
+    +getChildren() List~AstNode~
+}
+
+class BinaryExpression {
+    -left : Expression
+    -operator : String
+    -right : Expression
+    +getChildren() List~AstNode~
+}
+
+class ColumnReference {
+    -columnName : String
+    -tableAlias : String
+    +getChildren() List~AstNode~
+}
+
+class LiteralExpression {
+    -value : Object
+    -literalType : TokenType
+    +getChildren() List~AstNode~
+}
+
+class TableReference {
+    -tableName : String
+    -alias : String
+    +getChildren() List~AstNode~
+}
+
+class Binder {
+    +bind(ast : AST) LogicalPlan
+}
+
+class LogicalPlan {
+    -operators : List~LogicalOperator~
+    +getOperators() List~LogicalOperator~
+}
+
+class QueryOptimizer {
+    +optimize(logicalPlan : LogicalPlan) LogicalPlan
+}
+
+class StatisticsManager {
+    +collect(table : Table) void
+    +estimateRowCount(tableId : UUID) Long
+    +estimateSelectivity(logicalOperator : LogicalOperator) Double
+}
+
+class PhysicalPlanner {
+    -creators : Map~LogicalOperatorType, PhysicalOperatorCreator~
+    +build(logicalPlan : LogicalPlan, context : PlanningContext) PhysicalPlan
+}
+
+class PlanningContext {
+    -statisticsManager : StatisticsManager
+    +hasUsableIndex(tableId : UUID, columnIds : List~UUID~) boolean
+}
+
+class PhysicalOperatorCreator {
+    <<abstract>>
+    +create(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext)* PhysicalOperator
+}
+
+class ScanOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class JoinOperatorCreator {
+    #createOperator(logicalOperator : LogicalOperator, context : PlanningContext) PhysicalOperator
+}
+
+class PhysicalOperator {
+    <<interface>>
+    +open() void
+    +next() Row
+    +close() void
+    +getOperatorName() String
+}
+
+class SequentialScanOperator {
+    -tableId : UUID
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class IndexScanOperator {
+    -tableId : UUID
+    -indexId : UUID
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class NestedLoopJoinOperator {
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class HashJoinOperator {
+    +open() void
+    +next() Row
+    +close() void
+}
+
+class PhysicalPlan {
+    -operators : List~PhysicalOperator~
+    +getOperators() List~PhysicalOperator~
 }
 
 class SecurityManager{
@@ -704,16 +860,72 @@ CatalogManager --> Table
 CatalogManager --> Index
 CatalogManager --> Schema
 
-SQLParser --> Lexer
-SQLParser --> AST
-AST --> LogicalPlan
-QueryOptimizer --> LogicalPlan
-QueryOptimizer --> PhysicalPlan
-QueryExecutor --> PhysicalPlan
-QueryExecutor --> Transaction
+QueryCompiler --> SQLParser : delegates parsing
+QueryCompiler --> Binder : delegates binding
+QueryCompiler --> QueryOptimizer : delegates optimization
+QueryCompiler --> PhysicalPlanner : delegates physical planning
+QueryCompiler ..> PhysicalPlan : produces
 
-StatisticsManager --> Table
-QueryOptimizer --> StatisticsManager
+Lexer --> LexerState : current state
+Lexer *--> "0..*" Token : produces
+Token --> TokenType : has type
+
+SQLParser --> Lexer : tokenizes SQL with
+SQLParser ..> AST : creates
+SQLParser ..> AstNode : builds tree
+
+AST *--> "1" AstNode : root
+AstNode <|.. Statement
+AstNode <|.. Expression
+AstNode <|.. TableReference
+
+Statement <|-- SelectStatement
+
+Expression <|-- BinaryExpression
+Expression <|-- ColumnReference
+Expression <|-- LiteralExpression
+
+SelectStatement *--> "1..*" Expression : select items
+SelectStatement *--> "1" TableReference : from
+SelectStatement *--> "0..1" Expression : where
+
+BinaryExpression *--> "1" Expression : left operand
+BinaryExpression *--> "1" Expression : right operand
+
+Binder ..> AST : consumes
+Binder ..> AstNode : traverses
+Binder ..> LogicalPlan : produces
+
+QueryOptimizer --> LogicalPlan : optimizes
+QueryOptimizer --> StatisticsManager : uses statistics
+
+PhysicalPlanner --> PhysicalOperatorCreator : selects creator
+PhysicalPlanner --> PlanningContext : uses
+PhysicalPlanner ..> PhysicalPlan : produces
+
+PlanningContext --> StatisticsManager : uses
+
+PhysicalOperatorCreator <|-- ScanOperatorCreator
+PhysicalOperatorCreator <|-- JoinOperatorCreator
+PhysicalOperatorCreator ..> PhysicalOperator : factory method creates
+
+PhysicalOperator <|.. SequentialScanOperator
+PhysicalOperator <|.. IndexScanOperator
+PhysicalOperator <|.. NestedLoopJoinOperator
+PhysicalOperator <|.. HashJoinOperator
+
+ScanOperatorCreator ..> SequentialScanOperator : creates
+ScanOperatorCreator ..> IndexScanOperator : creates
+JoinOperatorCreator ..> NestedLoopJoinOperator : creates
+JoinOperatorCreator ..> HashJoinOperator : creates
+
+PhysicalPlan *--> "1..*" PhysicalOperator : contains
+
+StatisticsManager --> Table : collects statistics from
+
+QueryExecutor --> QueryCompiler : delegates compilation to
+QueryExecutor --> PhysicalPlan : executes
+QueryExecutor --> Transaction : executes within
 
 SecurityManager --> User
 SecurityManager --> Role
@@ -786,15 +998,44 @@ style UpdateRowCommand fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d0
 style DeleteRowCommand fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style DataOperationContext fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 
-%% Query Engine (Yellow/Orange)
+%% Query Engine (Yellow/Orange & Subsystems)
+style QueryCompiler fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style Binder fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style PhysicalPlanner fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#084298
+style PlanningContext fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+
 style SQLParser fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style Lexer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style LexerState fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style Token fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style TokenType fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+
 style AST fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style AstNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style Statement fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style Expression fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:#4a148c
+style SelectStatement fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style BinaryExpression fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+
+style ColumnReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style LiteralExpression fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+style TableReference fill:#ffffff,stroke:#607d8b,stroke-width:1px,color:#37474f
+
+style PhysicalOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+style ScanOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+style JoinOperatorCreator fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#7f2704
+
+style PhysicalOperator fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+style SequentialScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style IndexScanOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style NestedLoopJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+style HashJoinOperator fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:#0f5132
+
 style LogicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style QueryOptimizer fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
+style StatisticsManager fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style PhysicalPlan fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 style QueryExecutor fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
-style StatisticsManager fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#664d03
 
 %% Storage Engine (Teal)
 style StorageEngine fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40
@@ -813,6 +1054,318 @@ style RecoveryManager fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#842029
 ```
 
 --- 
+
+# API Mindmap
+```mermaid
+flowchart LR
+    %% =====================================================
+    %% ROOT
+    %% =====================================================
+
+    ROOT((DBMS REST API))
+
+    %% =====================================================
+    %% LEFT-SIDE BRANCHES (Flow: Leaf/Branch --> ROOT)
+    %% =====================================================
+
+    OBJECTS["Database Objects API"]
+    CATALOG["Catalog API"]
+
+    OBJECTS --> ROOT
+    CATALOG --> ROOT
+
+    %% --- Catalog API ---
+    CAT_DATABASES["GET /api/v1/catalog/databases"]
+    CAT_SCHEMAS["GET /api/v1/catalog/databases/{databaseId}/schemas"]
+    CAT_OBJECTS["GET /api/v1/catalog/schemas/{schemaId}/objects"]
+    CAT_SEARCH["GET /api/v1/catalog/search"]
+
+    CAT_DATABASES --> CATALOG
+    CAT_SCHEMAS --> CATALOG
+    CAT_OBJECTS --> CATALOG
+    CAT_SEARCH --> CATALOG
+
+    %% --- Database Objects API Hierarchy ---
+    DATABASE["Database"]
+    SCHEMA["Schema"]
+    TABLE["Table"]
+    VIEW["View"]
+    PROCEDURE["Stored Procedure"]
+    SEQUENCE["Sequence"]
+
+    DATABASE --> OBJECTS
+    SCHEMA --> DATABASE
+
+    TABLE --> SCHEMA
+    VIEW --> SCHEMA
+    PROCEDURE --> SCHEMA
+    SEQUENCE --> SCHEMA
+
+    COLUMN["Column"]
+    CONSTRAINT["Constraint"]
+    INDEX["Index"]
+    PARTITION["Partition"]
+    TRIGGER["Trigger"]
+
+    COLUMN --> TABLE
+    CONSTRAINT --> TABLE
+    INDEX --> TABLE
+    PARTITION --> TABLE
+    TRIGGER --> TABLE
+
+    %% Database Endpoints
+    DB_CREATE["POST /api/v1/databases"]
+    DB_LIST["GET /api/v1/databases"]
+    DB_GET["GET /api/v1/databases/{databaseId}"]
+    DB_UPDATE["PATCH /api/v1/databases/{databaseId}"]
+    DB_DROP["DELETE /api/v1/databases/{databaseId}"]
+    DB_OPEN["POST /api/v1/databases/{databaseId}/actions/open"]
+    DB_CLOSE["POST /api/v1/databases/{databaseId}/actions/close"]
+
+    DB_CREATE --> DATABASE
+    DB_LIST --> DATABASE
+    DB_GET --> DATABASE
+    DB_UPDATE --> DATABASE
+    DB_DROP --> DATABASE
+    DB_OPEN --> DATABASE
+    DB_CLOSE --> DATABASE
+
+    %% Schema Endpoints
+    SCHEMA_CREATE["POST /api/v1/databases/{databaseId}/schemas"]
+    SCHEMA_LIST["GET /api/v1/databases/{databaseId}/schemas"]
+    SCHEMA_GET["GET /api/v1/schemas/{schemaId}"]
+    SCHEMA_UPDATE["PATCH /api/v1/schemas/{schemaId}"]
+    SCHEMA_DROP["DELETE /api/v1/schemas/{schemaId}"]
+
+    SCHEMA_CREATE --> SCHEMA
+    SCHEMA_LIST --> SCHEMA
+    SCHEMA_GET --> SCHEMA
+    SCHEMA_UPDATE --> SCHEMA
+    SCHEMA_DROP --> SCHEMA
+
+    %% Table Endpoints
+    TABLE_CREATE["POST /api/v1/schemas/{schemaId}/tables"]
+    TABLE_LIST["GET /api/v1/schemas/{schemaId}/tables"]
+    TABLE_GET["GET /api/v1/tables/{tableId}"]
+    TABLE_UPDATE["PATCH /api/v1/tables/{tableId}"]
+    TABLE_DROP["DELETE /api/v1/tables/{tableId}"]
+
+    TABLE_CREATE --> TABLE
+    TABLE_LIST --> TABLE
+    TABLE_GET --> TABLE
+    TABLE_UPDATE --> TABLE
+    TABLE_DROP --> TABLE
+
+    %% Column Endpoints
+    COLUMN_CREATE["POST /api/v1/tables/{tableId}/columns"]
+    COLUMN_LIST["GET /api/v1/tables/{tableId}/columns"]
+    COLUMN_GET["GET /api/v1/columns/{columnId}"]
+    COLUMN_UPDATE["PATCH /api/v1/columns/{columnId}"]
+    COLUMN_DROP["DELETE /api/v1/columns/{columnId}"]
+
+    COLUMN_CREATE --> COLUMN
+    COLUMN_LIST --> COLUMN
+    COLUMN_GET --> COLUMN
+    COLUMN_UPDATE --> COLUMN
+    COLUMN_DROP --> COLUMN
+
+    %% Constraint Endpoints
+    CONSTRAINT_CREATE["POST /api/v1/tables/{tableId}/constraints"]
+    CONSTRAINT_LIST["GET /api/v1/tables/{tableId}/constraints"]
+    CONSTRAINT_GET["GET /api/v1/constraints/{constraintId}"]
+    CONSTRAINT_DROP["DELETE /api/v1/constraints/{constraintId}"]
+    CONSTRAINT_ENABLE["POST /api/v1/constraints/{constraintId}/actions/enable"]
+    CONSTRAINT_DISABLE["POST /api/v1/constraints/{constraintId}/actions/disable"]
+    CONSTRAINT_VALIDATE["POST /api/v1/constraints/{constraintId}/actions/validate"]
+
+    CONSTRAINT_CREATE --> CONSTRAINT
+    CONSTRAINT_LIST --> CONSTRAINT
+    CONSTRAINT_GET --> CONSTRAINT
+    CONSTRAINT_DROP --> CONSTRAINT
+    CONSTRAINT_ENABLE --> CONSTRAINT
+    CONSTRAINT_DISABLE --> CONSTRAINT
+    CONSTRAINT_VALIDATE --> CONSTRAINT
+
+    %% Index Endpoints
+    INDEX_CREATE["POST /api/v1/tables/{tableId}/indexes"]
+    INDEX_LIST["GET /api/v1/tables/{tableId}/indexes"]
+    INDEX_GET["GET /api/v1/indexes/{indexId}"]
+    INDEX_DROP["DELETE /api/v1/indexes/{indexId}"]
+    INDEX_BUILD["POST /api/v1/indexes/{indexId}/actions/build"]
+    INDEX_REBUILD["POST /api/v1/indexes/{indexId}/actions/rebuild"]
+    INDEX_ENABLE["POST /api/v1/indexes/{indexId}/actions/enable"]
+    INDEX_DISABLE["POST /api/v1/indexes/{indexId}/actions/disable"]
+
+    INDEX_CREATE --> INDEX
+    INDEX_LIST --> INDEX
+    INDEX_GET --> INDEX
+    INDEX_DROP --> INDEX
+    INDEX_BUILD --> INDEX
+    INDEX_REBUILD --> INDEX
+    INDEX_ENABLE --> INDEX
+    INDEX_DISABLE --> INDEX
+
+    %% Partition Endpoints
+    PARTITION_CREATE["POST /api/v1/tables/{tableId}/partitions"]
+    PARTITION_LIST["GET /api/v1/tables/{tableId}/partitions"]
+    PARTITION_GET["GET /api/v1/partitions/{partitionId}"]
+    PARTITION_UPDATE["PATCH /api/v1/partitions/{partitionId}"]
+    PARTITION_DROP["DELETE /api/v1/partitions/{partitionId}"]
+
+    PARTITION_CREATE --> PARTITION
+    PARTITION_LIST --> PARTITION
+    PARTITION_GET --> PARTITION
+    PARTITION_UPDATE --> PARTITION
+    PARTITION_DROP --> PARTITION
+
+    %% Trigger Endpoints
+    TRIGGER_CREATE["POST /api/v1/tables/{tableId}/triggers"]
+    TRIGGER_LIST["GET /api/v1/tables/{tableId}/triggers"]
+    TRIGGER_GET["GET /api/v1/triggers/{triggerId}"]
+    TRIGGER_UPDATE["PATCH /api/v1/triggers/{triggerId}"]
+    TRIGGER_DROP["DELETE /api/v1/triggers/{triggerId}"]
+    TRIGGER_ENABLE["POST /api/v1/triggers/{triggerId}/actions/enable"]
+    TRIGGER_DISABLE["POST /api/v1/triggers/{triggerId}/actions/disable"]
+
+    TRIGGER_CREATE --> TRIGGER
+    TRIGGER_LIST --> TRIGGER
+    TRIGGER_GET --> TRIGGER
+    TRIGGER_UPDATE --> TRIGGER
+    TRIGGER_DROP --> TRIGGER
+    TRIGGER_ENABLE --> TRIGGER
+    TRIGGER_DISABLE --> TRIGGER
+
+    %% View Endpoints
+    VIEW_CREATE["POST /api/v1/schemas/{schemaId}/views"]
+    VIEW_LIST["GET /api/v1/schemas/{schemaId}/views"]
+    VIEW_GET["GET /api/v1/views/{viewId}"]
+    VIEW_UPDATE["PATCH /api/v1/views/{viewId}"]
+    VIEW_DROP["DELETE /api/v1/views/{viewId}"]
+
+    VIEW_CREATE --> VIEW
+    VIEW_LIST --> VIEW
+    VIEW_GET --> VIEW
+    VIEW_UPDATE --> VIEW
+    VIEW_DROP --> VIEW
+
+    %% Stored Procedure Endpoints
+    PROCEDURE_CREATE["POST /api/v1/schemas/{schemaId}/procedures"]
+    PROCEDURE_LIST["GET /api/v1/schemas/{schemaId}/procedures"]
+    PROCEDURE_GET["GET /api/v1/procedures/{procedureId}"]
+    PROCEDURE_UPDATE["PATCH /api/v1/procedures/{procedureId}"]
+    PROCEDURE_DROP["DELETE /api/v1/procedures/{procedureId}"]
+    PROCEDURE_EXECUTE["POST /api/v1/procedures/{procedureId}/actions/execute"]
+
+    PROCEDURE_CREATE --> PROCEDURE
+    PROCEDURE_LIST --> PROCEDURE
+    PROCEDURE_GET --> PROCEDURE
+    PROCEDURE_UPDATE --> PROCEDURE
+    PROCEDURE_DROP --> PROCEDURE
+    PROCEDURE_EXECUTE --> PROCEDURE
+
+    %% Sequence Endpoints
+    SEQUENCE_CREATE["POST /api/v1/schemas/{schemaId}/sequences"]
+    SEQUENCE_LIST["GET /api/v1/schemas/{schemaId}/sequences"]
+    SEQUENCE_GET["GET /api/v1/sequences/{sequenceId}"]
+    SEQUENCE_UPDATE["PATCH /api/v1/sequences/{sequenceId}"]
+    SEQUENCE_DROP["DELETE /api/v1/sequences/{sequenceId}"]
+    SEQUENCE_NEXT["POST /api/v1/sequences/{sequenceId}/actions/next-value"]
+
+    SEQUENCE_CREATE --> SEQUENCE
+    SEQUENCE_LIST --> SEQUENCE
+    SEQUENCE_GET --> SEQUENCE
+    SEQUENCE_UPDATE --> SEQUENCE
+    SEQUENCE_DROP --> SEQUENCE
+    SEQUENCE_NEXT --> SEQUENCE
+
+    %% =====================================================
+    %% RIGHT-SIDE BRANCHES (Flow: ROOT --> Branch/Leaf)
+    %% =====================================================
+
+    DATA["Data Operations API"]
+    QUERY["Query Processing API"]
+    TRANSACTION["Transaction API"]
+
+    ROOT --> DATA
+    ROOT --> QUERY
+    ROOT --> TRANSACTION
+
+    %% --- Data Operations API ---
+    ROW["Row"]
+    DATA --> ROW
+
+    ROW_INSERT["POST /api/v1/tables/{tableId}/rows"]
+    ROW_LIST["GET /api/v1/tables/{tableId}/rows"]
+    ROW_GET["GET /api/v1/tables/{tableId}/rows/{rowId}"]
+    ROW_UPDATE["PATCH /api/v1/tables/{tableId}/rows/{rowId}"]
+    ROW_DELETE["DELETE /api/v1/tables/{tableId}/rows/{rowId}"]
+
+    ROW --> ROW_INSERT
+    ROW --> ROW_LIST
+    ROW --> ROW_GET
+    ROW --> ROW_UPDATE
+    ROW --> ROW_DELETE
+
+    %% --- Query Processing API ---
+    QUERY_EXECUTE["POST /api/v1/queries"]
+    QUERY_EXPLAIN["POST /api/v1/queries/explain"]
+    QUERY_STATUS["GET /api/v1/queries/{queryId}"]
+    QUERY_CANCEL["DELETE /api/v1/queries/{queryId}"]
+
+    QUERY --> QUERY_EXECUTE
+    QUERY --> QUERY_EXPLAIN
+    QUERY --> QUERY_STATUS
+    QUERY --> QUERY_CANCEL
+
+    %% --- Transaction API ---
+    TX_BEGIN["POST /api/v1/transactions"]
+    TX_GET["GET /api/v1/transactions/{transactionId}"]
+    TX_COMMIT["POST /api/v1/transactions/{transactionId}/commit"]
+    TX_ROLLBACK["POST /api/v1/transactions/{transactionId}/rollback"]
+
+    TRANSACTION --> TX_BEGIN
+    TRANSACTION --> TX_GET
+    TRANSACTION --> TX_COMMIT
+    TRANSACTION --> TX_ROLLBACK
+
+    %% =====================================================
+    %% STYLING
+    %% =====================================================
+
+    classDef rootStyle fill:#1d3557,stroke:#457b9d,stroke-width:3px,color:#ffffff
+    classDef groupStyle fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px,color:#7f2704
+    classDef objectStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#0f5132
+    classDef operationStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#084298
+    classDef dataStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+
+    class ROOT rootStyle
+
+    class OBJECTS,DATA,QUERY,TRANSACTION,CATALOG groupStyle
+
+    class DATABASE,SCHEMA,TABLE,COLUMN,CONSTRAINT,INDEX objectStyle
+    class PARTITION,TRIGGER,VIEW,PROCEDURE,SEQUENCE,ROW objectStyle
+
+    class DB_CREATE,DB_LIST,DB_GET,DB_UPDATE,DB_DROP,DB_OPEN,DB_CLOSE operationStyle
+    class SCHEMA_CREATE,SCHEMA_LIST,SCHEMA_GET,SCHEMA_UPDATE,SCHEMA_DROP operationStyle
+    class TABLE_CREATE,TABLE_LIST,TABLE_GET,TABLE_UPDATE,TABLE_DROP operationStyle
+    class COLUMN_CREATE,COLUMN_LIST,COLUMN_GET,COLUMN_UPDATE,COLUMN_DROP operationStyle
+    class CONSTRAINT_CREATE,CONSTRAINT_LIST,CONSTRAINT_GET,CONSTRAINT_DROP operationStyle
+    class CONSTRAINT_ENABLE,CONSTRAINT_DISABLE,CONSTRAINT_VALIDATE operationStyle
+    class INDEX_CREATE,INDEX_LIST,INDEX_GET,INDEX_DROP operationStyle
+    class INDEX_BUILD,INDEX_REBUILD,INDEX_ENABLE,INDEX_DISABLE operationStyle
+    class PARTITION_CREATE,PARTITION_LIST,PARTITION_GET,PARTITION_UPDATE,PARTITION_DROP operationStyle
+    class TRIGGER_CREATE,TRIGGER_LIST,TRIGGER_GET,TRIGGER_UPDATE,TRIGGER_DROP operationStyle
+    class TRIGGER_ENABLE,TRIGGER_DISABLE operationStyle
+    class VIEW_CREATE,VIEW_LIST,VIEW_GET,VIEW_UPDATE,VIEW_DROP operationStyle
+    class PROCEDURE_CREATE,PROCEDURE_LIST,PROCEDURE_GET,PROCEDURE_UPDATE operationStyle
+    class PROCEDURE_DROP,PROCEDURE_EXECUTE operationStyle
+    class SEQUENCE_CREATE,SEQUENCE_LIST,SEQUENCE_GET,SEQUENCE_UPDATE operationStyle
+    class SEQUENCE_DROP,SEQUENCE_NEXT operationStyle
+    class ROW_INSERT,ROW_LIST,ROW_GET,ROW_UPDATE,ROW_DELETE operationStyle
+    class QUERY_EXECUTE,QUERY_EXPLAIN,QUERY_STATUS,QUERY_CANCEL dataStyle
+    class TX_BEGIN,TX_GET,TX_COMMIT,TX_ROLLBACK dataStyle
+    class CAT_DATABASES,CAT_SCHEMAS,CAT_OBJECTS,CAT_SEARCH dataStyle
+```
 
 # Test Mindmap
 ## Database Server Test
