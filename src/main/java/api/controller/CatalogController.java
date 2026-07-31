@@ -12,7 +12,7 @@ import api.service.DatabaseService;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping({"/api/v1/catalog", "/catalog"})
+@RequestMapping({ "/api/v1/catalog", "/catalog" })
 public class CatalogController {
     private final DatabaseService service;
 
