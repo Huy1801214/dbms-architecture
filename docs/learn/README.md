@@ -10,3 +10,5 @@
 ![alt text](pics/MVC.png)
 ![alt text](pics/MVCStep.png)
 ![alt text](<pics/Spring Security.png>)
+![alt text](pics/SOLID.png)
+![alt text](pics/Cleancode.png)
