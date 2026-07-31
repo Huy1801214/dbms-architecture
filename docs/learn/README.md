@@ -1,4 +1,5 @@
 ![alt text](pics/Overview.png)
+![alt text](pics/ChangeToSpringBoot.png)
 ![alt text](pics/Architecture.png)
 ![alt text](<pics/Request Flow.png>)
 ![alt text](pics/IoC.png)
@@ -10,3 +11,5 @@
 ![alt text](pics/MVC.png)
 ![alt text](pics/MVCStep.png)
 ![alt text](<pics/Spring Security.png>)
+![alt text](pics/SOLID.png)
+![alt text](pics/Cleancode.png)
