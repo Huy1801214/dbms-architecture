@@ -1,28 +1,44 @@
 openapi: 3.0.3
 info:
   title: DBMS REST API
-  description: REST API documentation for a Database Management System. The API supports catalog browsing, database object
-    management, data operations, SQL query processing, and transaction management.
+  description: REST API documentation for a Database Management System. The API uses nested resource paths to clearly express
+    ownership relationships between databases, schemas, tables, and their child objects. It supports catalog browsing, database
+    object management, data operations, SQL query processing, and transaction management.
   version: 1.0.0
 servers:
 - url: http://localhost:8080/api/v1
   description: Local development server
 tags:
 - name: Catalog
+  description: Browse and search metadata stored in the system catalog.
 - name: Databases
+  description: Manage database lifecycle and database metadata.
 - name: Schemas
+  description: Manage schemas within a database.
 - name: Tables
+  description: Manage tables within a schema.
 - name: Columns
+  description: Manage columns within a table.
 - name: Constraints
+  description: Manage and validate table constraints.
 - name: Indexes
+  description: Manage index definitions, lifecycle, and build operations.
 - name: Partitions
+  description: Manage table partitions.
 - name: Triggers
+  description: Manage triggers associated with a table.
 - name: Views
+  description: Manage views within a schema.
 - name: Stored Procedures
+  description: Manage and execute stored procedures within a schema.
 - name: Sequences
+  description: Manage sequences within a schema.
 - name: Rows
+  description: Perform CRUD operations on table rows.
 - name: Queries
+  description: Submit, explain, inspect, and cancel SQL queries.
 - name: Transactions
+  description: Begin, inspect, commit, and roll back transactions.
 paths:
   /catalog/databases:
     get:
@@ -422,7 +438,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all schemas that belong to the specified database.
-  /schemas/{schemaId}:
+  /databases/{databaseId}/schemas/{schemaId}:
     get:
       tags:
       - Schemas
@@ -444,6 +460,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/databaseId'
       - $ref: '#/components/parameters/schemaId'
       description: Retrieves detailed metadata for a specific schema.
     patch:
@@ -467,6 +484,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/databaseId'
       - $ref: '#/components/parameters/schemaId'
       requestBody:
         required: true
@@ -492,6 +510,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/databaseId'
       - $ref: '#/components/parameters/schemaId'
       description: Deletes a schema. The operation may fail if the schema still contains database objects.
   /schemas/{schemaId}/tables:
@@ -565,7 +584,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all tables that belong to the specified schema.
-  /tables/{tableId}:
+  /schemas/{schemaId}/tables/{tableId}:
     get:
       tags:
       - Tables
@@ -587,6 +606,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/tableId'
       description: Retrieves the metadata and structural information of a specific table.
     patch:
@@ -610,6 +630,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/tableId'
       requestBody:
         required: true
@@ -635,6 +656,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/tableId'
       description: Deletes a table together with its data and dependent objects according to the configured deletion policy.
   /tables/{tableId}/columns:
@@ -708,7 +730,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all columns of a table, including their defined order.
-  /columns/{columnId}:
+  /tables/{tableId}/columns/{columnId}:
     get:
       tags:
       - Columns
@@ -730,6 +752,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/columnId'
       description: Retrieves the complete definition of a specific column.
     patch:
@@ -753,6 +776,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/columnId'
       requestBody:
         required: true
@@ -778,6 +802,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/columnId'
       description: Deletes a column from a table. The system checks constraints, indexes, and dependencies before removal.
   /tables/{tableId}/partitions:
@@ -851,7 +876,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all partitions defined for the specified table.
-  /partitions/{partitionId}:
+  /tables/{tableId}/partitions/{partitionId}:
     get:
       tags:
       - Partitions
@@ -873,6 +898,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/partitionId'
       description: Retrieves detailed information about a specific partition.
     patch:
@@ -896,6 +922,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/partitionId'
       requestBody:
         required: true
@@ -921,6 +948,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/partitionId'
       description: Deletes a partition according to the system's configured data-handling policy.
   /tables/{tableId}/triggers:
@@ -994,7 +1022,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all triggers defined on the specified table.
-  /triggers/{triggerId}:
+  /tables/{tableId}/triggers/{triggerId}:
     get:
       tags:
       - Triggers
@@ -1016,6 +1044,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/triggerId'
       description: Retrieves the definition and current state of a specific trigger.
     patch:
@@ -1039,6 +1068,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/triggerId'
       requestBody:
         required: true
@@ -1064,6 +1094,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/triggerId'
       description: Removes a trigger from its table.
   /schemas/{schemaId}/views:
@@ -1137,7 +1168,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all views that belong to the specified schema.
-  /views/{viewId}:
+  /schemas/{schemaId}/views/{viewId}:
     get:
       tags:
       - Views
@@ -1159,6 +1190,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/viewId'
       description: Retrieves a view's metadata and SQL definition.
     patch:
@@ -1182,6 +1214,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/viewId'
       requestBody:
         required: true
@@ -1207,6 +1240,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/viewId'
       description: Deletes a view from its schema.
   /schemas/{schemaId}/procedures:
@@ -1280,7 +1314,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all stored procedures that belong to the specified schema.
-  /procedures/{procedureId}:
+  /schemas/{schemaId}/procedures/{procedureId}:
     get:
       tags:
       - Stored Procedures
@@ -1302,6 +1336,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/procedureId'
       description: Retrieves the definition and metadata of a stored procedure.
     patch:
@@ -1325,6 +1360,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/procedureId'
       requestBody:
         required: true
@@ -1350,6 +1386,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/procedureId'
       description: Deletes a stored procedure from its schema.
   /schemas/{schemaId}/sequences:
@@ -1423,7 +1460,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all sequences that belong to the specified schema.
-  /sequences/{sequenceId}:
+  /schemas/{schemaId}/sequences/{sequenceId}:
     get:
       tags:
       - Sequences
@@ -1445,6 +1482,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/sequenceId'
       description: Retrieves the configuration and current value of a sequence.
     patch:
@@ -1468,6 +1506,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/sequenceId'
       requestBody:
         required: true
@@ -1493,6 +1532,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/sequenceId'
       description: Deletes a sequence from its schema.
   /databases/{databaseId}/actions/open:
@@ -1614,7 +1654,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all constraints defined on the specified table.
-  /constraints/{constraintId}:
+  /tables/{tableId}/constraints/{constraintId}:
     get:
       tags:
       - Constraints
@@ -1636,6 +1676,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/constraintId'
       description: Retrieves the detailed definition and current state of a constraint.
     delete:
@@ -1655,9 +1696,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/constraintId'
       description: Removes a constraint from its table.
-  /constraints/{constraintId}/actions/enable:
+  /tables/{tableId}/constraints/{constraintId}/actions/enable:
     post:
       tags:
       - Constraints
@@ -1679,9 +1721,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/constraintId'
       description: Enables a constraint so that it is enforced for subsequent data operations.
-  /constraints/{constraintId}/actions/disable:
+  /tables/{tableId}/constraints/{constraintId}/actions/disable:
     post:
       tags:
       - Constraints
@@ -1703,9 +1746,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/constraintId'
       description: Temporarily disables a constraint without removing its definition.
-  /constraints/{constraintId}/actions/validate:
+  /tables/{tableId}/constraints/{constraintId}/actions/validate:
     post:
       tags:
       - Constraints
@@ -1727,6 +1771,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/constraintId'
       description: Checks whether the existing data in the table satisfies the specified constraint.
   /tables/{tableId}/indexes:
@@ -1800,7 +1845,7 @@ paths:
           type: string
         description: Sorting expression, for example name,asc
       description: Retrieves all indexes defined on the specified table.
-  /indexes/{indexId}:
+  /tables/{tableId}/indexes/{indexId}:
     get:
       tags:
       - Indexes
@@ -1822,6 +1867,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/indexId'
       description: Retrieves the configuration, current state, and metadata of a specific index.
     delete:
@@ -1841,9 +1887,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/indexId'
       description: Deletes an index and releases its associated storage structures.
-  /indexes/{indexId}/actions/build:
+  /tables/{tableId}/indexes/{indexId}/actions/build:
     post:
       tags:
       - Indexes
@@ -1867,9 +1914,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/indexId'
       description: Builds the physical index structure from the table's current data.
-  /indexes/{indexId}/actions/rebuild:
+  /tables/{tableId}/indexes/{indexId}/actions/rebuild:
     post:
       tags:
       - Indexes
@@ -1893,9 +1941,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/indexId'
       description: Rebuilds an index to repair it or optimize its physical storage structure.
-  /indexes/{indexId}/actions/enable:
+  /tables/{tableId}/indexes/{indexId}/actions/enable:
     post:
       tags:
       - Indexes
@@ -1919,9 +1968,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/indexId'
       description: Enables the index so that it can be considered by the query optimizer.
-  /indexes/{indexId}/actions/disable:
+  /tables/{tableId}/indexes/{indexId}/actions/disable:
     post:
       tags:
       - Indexes
@@ -1945,9 +1995,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/indexId'
       description: Prevents the query optimizer from using the index without deleting it.
-  /triggers/{triggerId}/actions/enable:
+  /tables/{tableId}/triggers/{triggerId}/actions/enable:
     post:
       tags:
       - Triggers
@@ -1969,9 +2020,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/triggerId'
       description: Enables a trigger so that it runs when the associated event occurs.
-  /triggers/{triggerId}/actions/disable:
+  /tables/{tableId}/triggers/{triggerId}/actions/disable:
     post:
       tags:
       - Triggers
@@ -1993,9 +2045,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/tableId'
       - $ref: '#/components/parameters/triggerId'
       description: Temporarily disables a trigger without deleting its definition.
-  /procedures/{procedureId}/actions/execute:
+  /schemas/{schemaId}/procedures/{procedureId}/actions/execute:
     post:
       tags:
       - Stored Procedures
@@ -2018,6 +2071,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/procedureId'
       requestBody:
         required: true
@@ -2026,7 +2080,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ProcedureExecuteRequest'
       description: Executes a stored procedure using the supplied input parameters and returns the execution result.
-  /sequences/{sequenceId}/actions/next-value:
+  /schemas/{schemaId}/sequences/{sequenceId}/actions/next-value:
     post:
       tags:
       - Sequences
@@ -2048,6 +2102,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       parameters:
+      - $ref: '#/components/parameters/schemaId'
       - $ref: '#/components/parameters/sequenceId'
       description: Generates and returns the next value of the sequence according to its current configuration.
   /tables/{tableId}/rows:
