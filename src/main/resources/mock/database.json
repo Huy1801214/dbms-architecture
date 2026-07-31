@@ -1,0 +1,20 @@
+[
+    {
+        "id": "6d8fd07b-0863-48a5-bd7b-5e265f758e22",
+        "name": "student_db",
+        "owner": "admin",
+        "status": "ONLINE"
+    },
+    {
+        "id": "a842f47c-3bd9-41e3-90f6-53cb01b07e98",
+        "name": "system_db",
+        "owner": "system",
+        "status": "OFFLINE"
+    },
+    {
+        "id": "c931e58d-4ce0-42f4-ae87-64dc12c18f01",
+        "name": "finance_db",
+        "owner": "finance_admin",
+        "status": "ONLINE"
+    }
+]
