@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class DatabaseRepository {
@@ -54,6 +55,13 @@ public class DatabaseRepository {
 
     public List<Database> findAllDatabases() {
         return List.copyOf(databases);
+    }
+
+    public Database save(Database db) {
+        String newId = UUID.randomUUID().toString();
+        Database newDb = new Database(newId, db.getName(), db.getOwner(), db.getStatus(), db.getCreatedAt());
+        databases.add(newDb);
+        return newDb;
     }
 
     private record MockDatabaseData(String id, String name, String owner, String status) {
