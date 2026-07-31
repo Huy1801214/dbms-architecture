@@ -1,4 +1,4 @@
-package dbms.server.service;
+package dbms.server;
 
 import java.time.LocalDateTime;
 

@@ -1,9 +1,7 @@
-package dbms.replication.service;
+package dbms.replication;
 
-import dbms.recovery.service.WALManager;
-import dbms.replication.entity.ClusterNode;
+import dbms.recovery.WALManager;
 import java.util.List;
-import dbms.recovery.service.WALManager;
 
 public class ReplicationManager {
     public String replicationMode;

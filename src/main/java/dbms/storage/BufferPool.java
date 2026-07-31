@@ -1,4 +1,4 @@
-package dbms.storage.model;
+package dbms.storage;
 
 import java.util.List;
 
