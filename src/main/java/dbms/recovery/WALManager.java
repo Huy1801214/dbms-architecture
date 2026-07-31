@@ -1,6 +1,5 @@
-package dbms.recovery.service;
+package dbms.recovery;
 
-import dbms.recovery.entity.LogRecord;
 import java.util.List;
 
 public class WALManager {
