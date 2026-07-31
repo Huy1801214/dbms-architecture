@@ -2,8 +2,12 @@ package api.service;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+
+import api.dto.DatabaseCreateRequest;
 import api.dto.DatabaseResponse;
 import api.repository.DatabaseRepository;
+import dbms.catalog.database.entity.Database;
+import dbms.catalog.database.enums.DatabaseStatus;
 
 @Service
 public class DatabaseService {
@@ -27,5 +31,18 @@ public class DatabaseService {
                                 ? database.getLifecycleStatus().name()
                                 : "ACTIVE"))
                 .toList();
+    }
+
+    public DatabaseResponse createDatabase(DatabaseCreateRequest request) {
+        DatabaseStatus status = DatabaseStatus.OPENING;
+        Database database = new Database(null, request.getName(), request.getOwner(), status,
+                java.time.LocalDateTime.now());
+        Database saved = repository.save(database);
+        return new DatabaseResponse(
+                saved.getId(),
+                saved.getName(),
+                saved.getOwner(),
+                saved.getStatus().name(),
+                saved.getLifecycleStatus() != null ? saved.getLifecycleStatus().name() : "ACTIVE");
     }
 }
