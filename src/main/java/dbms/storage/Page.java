@@ -1,5 +1,4 @@
-package dbms.storage.model;
-
+package dbms.storage;
 
 public class Page {
     public int pageId;

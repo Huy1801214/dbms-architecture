@@ -1,5 +1,4 @@
-package dbms.storage.service;
-
+package dbms.storage;
 
 public class FileManager {
     public void read(String path, byte[] buffer) {}

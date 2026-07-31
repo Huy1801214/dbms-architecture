@@ -1,6 +1,4 @@
-package dbms.storage.service;
-
-import dbms.storage.model.Page;
+package dbms.storage;
 
 import java.util.List;
 
