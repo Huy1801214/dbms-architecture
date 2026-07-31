@@ -1,0 +1,3186 @@
+openapi: 3.0.3
+info:
+  title: DBMS REST API
+  description: REST API documentation for a Database Management System. The API supports catalog browsing, database object
+    management, data operations, SQL query processing, and transaction management.
+  version: 1.0.0
+servers:
+- url: http://localhost:8080/api/v1
+  description: Local development server
+tags:
+- name: Catalog
+- name: Databases
+- name: Schemas
+- name: Tables
+- name: Columns
+- name: Constraints
+- name: Indexes
+- name: Partitions
+- name: Triggers
+- name: Views
+- name: Stored Procedures
+- name: Sequences
+- name: Rows
+- name: Queries
+- name: Transactions
+paths:
+  /catalog/databases:
+    get:
+      tags:
+      - Catalog
+      summary: List databases in catalog
+      operationId: listCatalogDatabases
+      responses:
+        '200':
+          description: List of database resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all databases registered in the system catalog. This operation reads metadata only and does not
+        open or load the databases.
+  /catalog/databases/{databaseId}/schemas:
+    get:
+      tags:
+      - Catalog
+      summary: List schemas in catalog database
+      operationId: listCatalogSchemas
+      responses:
+        '200':
+          description: List of schema resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all schemas that belong to the specified database from the system catalog.
+  /catalog/schemas/{schemaId}/objects:
+    get:
+      tags:
+      - Catalog
+      summary: List objects in catalog schema
+      operationId: listCatalogObjects
+      responses:
+        '200':
+          description: Catalog objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves database objects that belong to the specified schema, such as tables, views, stored procedures,
+        and sequences.
+  /catalog/search:
+    get:
+      tags:
+      - Catalog
+      summary: Search catalog objects
+      operationId: searchCatalog
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Searches the system catalog for database objects by keyword and optional object type.
+  /databases:
+    post:
+      tags:
+      - Databases
+      summary: Create database
+      operationId: createDatabase
+      responses:
+        '201':
+          description: Database created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseCreateRequest'
+      description: Creates the metadata and initial structure for a new database. The system validates duplicate names, storage
+        configuration, and applicable business rules before creation.
+    get:
+      tags:
+      - Databases
+      summary: List database resources
+      operationId: listDatabases
+      responses:
+        '200':
+          description: List of database resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves the databases that the current user is authorized to view. Pagination and sorting are supported.
+  /databases/{databaseId}:
+    get:
+      tags:
+      - Databases
+      summary: Get database
+      operationId: getDatabase
+      responses:
+        '200':
+          description: Database returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      description: Retrieves detailed information about a database by its databaseId, including its name, current state, and
+        timestamps.
+    patch:
+      tags:
+      - Databases
+      summary: Update database
+      operationId: updateDatabase
+      responses:
+        '200':
+          description: Database updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseUpdateRequest'
+      description: Partially updates the configuration or metadata of a database. Only fields included in the request body
+        are changed.
+    delete:
+      tags:
+      - Databases
+      summary: Delete database
+      operationId: deleteDatabase
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      description: Deletes a database and its related metadata. The operation may be rejected when the database is open or
+        still has unresolved dependencies.
+  /databases/{databaseId}/schemas:
+    post:
+      tags:
+      - Schemas
+      summary: Create schema
+      operationId: createSchema
+      responses:
+        '201':
+          description: Schema created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schema'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaCreateRequest'
+      description: Creates a new schema inside the specified database.
+    get:
+      tags:
+      - Schemas
+      summary: List schema resources
+      operationId: listSchemas
+      responses:
+        '200':
+          description: List of schema resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all schemas that belong to the specified database.
+  /schemas/{schemaId}:
+    get:
+      tags:
+      - Schemas
+      summary: Get schema
+      operationId: getSchema
+      responses:
+        '200':
+          description: Schema returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schema'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      description: Retrieves detailed metadata for a specific schema.
+    patch:
+      tags:
+      - Schemas
+      summary: Update schema
+      operationId: updateSchema
+      responses:
+        '200':
+          description: Schema updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schema'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaUpdateRequest'
+      description: Updates the schema name or other schema metadata that can be modified.
+    delete:
+      tags:
+      - Schemas
+      summary: Delete schema
+      operationId: deleteSchema
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      description: Deletes a schema. The operation may fail if the schema still contains database objects.
+  /schemas/{schemaId}/tables:
+    post:
+      tags:
+      - Tables
+      summary: Create table
+      operationId: createTable
+      responses:
+        '201':
+          description: Table created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableCreateRequest'
+      description: Creates a new table in the specified schema using the supplied table name and initial structure.
+    get:
+      tags:
+      - Tables
+      summary: List table resources
+      operationId: listTables
+      responses:
+        '200':
+          description: List of table resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all tables that belong to the specified schema.
+  /tables/{tableId}:
+    get:
+      tags:
+      - Tables
+      summary: Get table
+      operationId: getTable
+      responses:
+        '200':
+          description: Table returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      description: Retrieves the metadata and structural information of a specific table.
+    patch:
+      tags:
+      - Tables
+      summary: Update table
+      operationId: updateTable
+      responses:
+        '200':
+          description: Table updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableUpdateRequest'
+      description: Updates table metadata or other table properties that can be modified.
+    delete:
+      tags:
+      - Tables
+      summary: Delete table
+      operationId: deleteTable
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      description: Deletes a table together with its data and dependent objects according to the configured deletion policy.
+  /tables/{tableId}/columns:
+    post:
+      tags:
+      - Columns
+      summary: Create column
+      operationId: createColumn
+      responses:
+        '201':
+          description: Column created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnCreateRequest'
+      description: Adds a new column to a table with its name, data type, nullability, and other column properties.
+    get:
+      tags:
+      - Columns
+      summary: List column resources
+      operationId: listColumns
+      responses:
+        '200':
+          description: List of column resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all columns of a table, including their defined order.
+  /columns/{columnId}:
+    get:
+      tags:
+      - Columns
+      summary: Get column
+      operationId: getColumn
+      responses:
+        '200':
+          description: Column returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/columnId'
+      description: Retrieves the complete definition of a specific column.
+    patch:
+      tags:
+      - Columns
+      summary: Update column
+      operationId: updateColumn
+      responses:
+        '200':
+          description: Column updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/columnId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnUpdateRequest'
+      description: Updates a column definition, such as its name, data type, or nullability.
+    delete:
+      tags:
+      - Columns
+      summary: Delete column
+      operationId: deleteColumn
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/columnId'
+      description: Deletes a column from a table. The system checks constraints, indexes, and dependencies before removal.
+  /tables/{tableId}/partitions:
+    post:
+      tags:
+      - Partitions
+      summary: Create partition
+      operationId: createPartition
+      responses:
+        '201':
+          description: Partition created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Partition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartitionCreateRequest'
+      description: Creates a new table partition according to the configured partitioning strategy.
+    get:
+      tags:
+      - Partitions
+      summary: List partition resources
+      operationId: listPartitions
+      responses:
+        '200':
+          description: List of partition resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartitionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all partitions defined for the specified table.
+  /partitions/{partitionId}:
+    get:
+      tags:
+      - Partitions
+      summary: Get partition
+      operationId: getPartition
+      responses:
+        '200':
+          description: Partition returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Partition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/partitionId'
+      description: Retrieves detailed information about a specific partition.
+    patch:
+      tags:
+      - Partitions
+      summary: Update partition
+      operationId: updatePartition
+      responses:
+        '200':
+          description: Partition updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Partition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/partitionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartitionUpdateRequest'
+      description: Updates the metadata or modifiable configuration of a partition.
+    delete:
+      tags:
+      - Partitions
+      summary: Delete partition
+      operationId: deletePartition
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/partitionId'
+      description: Deletes a partition according to the system's configured data-handling policy.
+  /tables/{tableId}/triggers:
+    post:
+      tags:
+      - Triggers
+      summary: Create trigger
+      operationId: createTrigger
+      responses:
+        '201':
+          description: Trigger created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trigger'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerCreateRequest'
+      description: Creates a trigger for a table and associates it with an INSERT, UPDATE, or DELETE event.
+    get:
+      tags:
+      - Triggers
+      summary: List trigger resources
+      operationId: listTriggers
+      responses:
+        '200':
+          description: List of trigger resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all triggers defined on the specified table.
+  /triggers/{triggerId}:
+    get:
+      tags:
+      - Triggers
+      summary: Get trigger
+      operationId: getTrigger
+      responses:
+        '200':
+          description: Trigger returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trigger'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/triggerId'
+      description: Retrieves the definition and current state of a specific trigger.
+    patch:
+      tags:
+      - Triggers
+      summary: Update trigger
+      operationId: updateTrigger
+      responses:
+        '200':
+          description: Trigger updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trigger'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/triggerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerUpdateRequest'
+      description: Updates the trigger body, triggering event, or related metadata.
+    delete:
+      tags:
+      - Triggers
+      summary: Delete trigger
+      operationId: deleteTrigger
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/triggerId'
+      description: Removes a trigger from its table.
+  /schemas/{schemaId}/views:
+    post:
+      tags:
+      - Views
+      summary: Create view
+      operationId: createView
+      responses:
+        '201':
+          description: View created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewCreateRequest'
+      description: Creates a new view in the specified schema from a SQL query definition.
+    get:
+      tags:
+      - Views
+      summary: List view resources
+      operationId: listViews
+      responses:
+        '200':
+          description: List of view resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViewListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all views that belong to the specified schema.
+  /views/{viewId}:
+    get:
+      tags:
+      - Views
+      summary: Get view
+      operationId: getView
+      responses:
+        '200':
+          description: View returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/viewId'
+      description: Retrieves a view's metadata and SQL definition.
+    patch:
+      tags:
+      - Views
+      summary: Update view
+      operationId: updateView
+      responses:
+        '200':
+          description: View updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/viewId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewUpdateRequest'
+      description: Updates the name or SQL definition of a view.
+    delete:
+      tags:
+      - Views
+      summary: Delete view
+      operationId: deleteView
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/viewId'
+      description: Deletes a view from its schema.
+  /schemas/{schemaId}/procedures:
+    post:
+      tags:
+      - Stored Procedures
+      summary: Create procedure
+      operationId: createProcedure
+      responses:
+        '201':
+          description: Procedure created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Procedure'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedureCreateRequest'
+      description: Creates a new stored procedure in the specified schema.
+    get:
+      tags:
+      - Stored Procedures
+      summary: List procedure resources
+      operationId: listProcedures
+      responses:
+        '200':
+          description: List of procedure resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all stored procedures that belong to the specified schema.
+  /procedures/{procedureId}:
+    get:
+      tags:
+      - Stored Procedures
+      summary: Get procedure
+      operationId: getProcedure
+      responses:
+        '200':
+          description: Procedure returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Procedure'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/procedureId'
+      description: Retrieves the definition and metadata of a stored procedure.
+    patch:
+      tags:
+      - Stored Procedures
+      summary: Update procedure
+      operationId: updateProcedure
+      responses:
+        '200':
+          description: Procedure updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Procedure'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/procedureId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedureUpdateRequest'
+      description: Updates the definition or metadata of a stored procedure.
+    delete:
+      tags:
+      - Stored Procedures
+      summary: Delete procedure
+      operationId: deleteProcedure
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/procedureId'
+      description: Deletes a stored procedure from its schema.
+  /schemas/{schemaId}/sequences:
+    post:
+      tags:
+      - Sequences
+      summary: Create sequence
+      operationId: createSequence
+      responses:
+        '201':
+          description: Sequence created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sequence'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SequenceCreateRequest'
+      description: Creates a new sequence for generating ordered numeric values.
+    get:
+      tags:
+      - Sequences
+      summary: List sequence resources
+      operationId: listSequences
+      responses:
+        '200':
+          description: List of sequence resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SequenceListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/schemaId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all sequences that belong to the specified schema.
+  /sequences/{sequenceId}:
+    get:
+      tags:
+      - Sequences
+      summary: Get sequence
+      operationId: getSequence
+      responses:
+        '200':
+          description: Sequence returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sequence'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/sequenceId'
+      description: Retrieves the configuration and current value of a sequence.
+    patch:
+      tags:
+      - Sequences
+      summary: Update sequence
+      operationId: updateSequence
+      responses:
+        '200':
+          description: Sequence updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sequence'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/sequenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SequenceUpdateRequest'
+      description: Updates sequence settings such as its increment value or value limits.
+    delete:
+      tags:
+      - Sequences
+      summary: Delete sequence
+      operationId: deleteSequence
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/sequenceId'
+      description: Deletes a sequence from its schema.
+  /databases/{databaseId}/actions/open:
+    post:
+      tags:
+      - Databases
+      summary: Open database
+      operationId: openDatabase
+      responses:
+        '200':
+          description: Database open operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      description: Opens the database and changes it to a state in which it can accept queries and data operations.
+  /databases/{databaseId}/actions/close:
+    post:
+      tags:
+      - Databases
+      summary: Close database
+      operationId: closeDatabase
+      responses:
+        '200':
+          description: Database close operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/databaseId'
+      description: Closes the database, prevents new operations, and releases the resources currently associated with it.
+  /tables/{tableId}/constraints:
+    post:
+      tags:
+      - Constraints
+      summary: Create constraint
+      operationId: createConstraint
+      responses:
+        '201':
+          description: Constraint created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Constraint'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConstraintCreateRequest'
+      description: Creates a table constraint such as a primary key, foreign key, unique constraint, or check constraint.
+    get:
+      tags:
+      - Constraints
+      summary: List constraints
+      operationId: listConstraints
+      responses:
+        '200':
+          description: List of constraint resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConstraintListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all constraints defined on the specified table.
+  /constraints/{constraintId}:
+    get:
+      tags:
+      - Constraints
+      summary: Get constraint
+      operationId: getConstraint
+      responses:
+        '200':
+          description: Constraint returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Constraint'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/constraintId'
+      description: Retrieves the detailed definition and current state of a constraint.
+    delete:
+      tags:
+      - Constraints
+      summary: Delete constraint
+      operationId: deleteConstraint
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/constraintId'
+      description: Removes a constraint from its table.
+  /constraints/{constraintId}/actions/enable:
+    post:
+      tags:
+      - Constraints
+      summary: Enable constraint
+      operationId: enableConstraint
+      responses:
+        '200':
+          description: Constraint enable operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/constraintId'
+      description: Enables a constraint so that it is enforced for subsequent data operations.
+  /constraints/{constraintId}/actions/disable:
+    post:
+      tags:
+      - Constraints
+      summary: Disable constraint
+      operationId: disableConstraint
+      responses:
+        '200':
+          description: Constraint disable operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/constraintId'
+      description: Temporarily disables a constraint without removing its definition.
+  /constraints/{constraintId}/actions/validate:
+    post:
+      tags:
+      - Constraints
+      summary: Validate constraint
+      operationId: validateConstraint
+      responses:
+        '200':
+          description: Constraint validate operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/constraintId'
+      description: Checks whether the existing data in the table satisfies the specified constraint.
+  /tables/{tableId}/indexes:
+    post:
+      tags:
+      - Indexes
+      summary: Create index
+      operationId: createIndex
+      responses:
+        '201':
+          description: Index created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Index'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexCreateRequest'
+      description: Creates a new index definition for one or more columns of a table.
+    get:
+      tags:
+      - Indexes
+      summary: List indexes
+      operationId: listIndexes
+      responses:
+        '200':
+          description: List of index resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      description: Retrieves all indexes defined on the specified table.
+  /indexes/{indexId}:
+    get:
+      tags:
+      - Indexes
+      summary: Get index
+      operationId: getIndex
+      responses:
+        '200':
+          description: Index returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Index'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/indexId'
+      description: Retrieves the configuration, current state, and metadata of a specific index.
+    delete:
+      tags:
+      - Indexes
+      summary: Delete index
+      operationId: deleteIndex
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/indexId'
+      description: Deletes an index and releases its associated storage structures.
+  /indexes/{indexId}/actions/build:
+    post:
+      tags:
+      - Indexes
+      summary: Build index
+      operationId: buildIndex
+      responses:
+        '200':
+          description: Index build operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '202':
+          description: Operation accepted for asynchronous processing
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/indexId'
+      description: Builds the physical index structure from the table's current data.
+  /indexes/{indexId}/actions/rebuild:
+    post:
+      tags:
+      - Indexes
+      summary: Rebuild index
+      operationId: rebuildIndex
+      responses:
+        '200':
+          description: Index rebuild operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '202':
+          description: Operation accepted for asynchronous processing
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/indexId'
+      description: Rebuilds an index to repair it or optimize its physical storage structure.
+  /indexes/{indexId}/actions/enable:
+    post:
+      tags:
+      - Indexes
+      summary: Enable index
+      operationId: enableIndex
+      responses:
+        '200':
+          description: Index enable operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '202':
+          description: Operation accepted for asynchronous processing
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/indexId'
+      description: Enables the index so that it can be considered by the query optimizer.
+  /indexes/{indexId}/actions/disable:
+    post:
+      tags:
+      - Indexes
+      summary: Disable index
+      operationId: disableIndex
+      responses:
+        '200':
+          description: Index disable operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '202':
+          description: Operation accepted for asynchronous processing
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/indexId'
+      description: Prevents the query optimizer from using the index without deleting it.
+  /triggers/{triggerId}/actions/enable:
+    post:
+      tags:
+      - Triggers
+      summary: Enable trigger
+      operationId: enableTrigger
+      responses:
+        '200':
+          description: Trigger enable operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/triggerId'
+      description: Enables a trigger so that it runs when the associated event occurs.
+  /triggers/{triggerId}/actions/disable:
+    post:
+      tags:
+      - Triggers
+      summary: Disable trigger
+      operationId: disableTrigger
+      responses:
+        '200':
+          description: Trigger disable operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/triggerId'
+      description: Temporarily disables a trigger without deleting its definition.
+  /procedures/{procedureId}/actions/execute:
+    post:
+      tags:
+      - Stored Procedures
+      summary: Execute stored procedure
+      operationId: executeProcedure
+      responses:
+        '200':
+          description: Procedure execution result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/procedureId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedureExecuteRequest'
+      description: Executes a stored procedure using the supplied input parameters and returns the execution result.
+  /sequences/{sequenceId}/actions/next-value:
+    post:
+      tags:
+      - Sequences
+      summary: Get next sequence value
+      operationId: getNextSequenceValue
+      responses:
+        '200':
+          description: Next sequence value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SequenceValueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/sequenceId'
+      description: Generates and returns the next value of the sequence according to its current configuration.
+  /tables/{tableId}/rows:
+    post:
+      tags:
+      - Rows
+      summary: Insert row
+      operationId: insertRow
+      responses:
+        '201':
+          description: Row inserted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Row'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RowCreateRequest'
+      description: Inserts a new row into the table. The system validates data types, constraints, and transaction rules before
+        writing the data.
+    get:
+      tags:
+      - Rows
+      summary: List rows
+      operationId: listRows
+      responses:
+        '200':
+          description: List of row resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RowListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+        description: Sorting expression, for example name,asc
+      - name: filter
+        in: query
+        schema:
+          type: string
+        description: Implementation-defined filter expression
+      description: Retrieves rows from the specified table with optional pagination, sorting, and filtering.
+  /tables/{tableId}/rows/{rowId}:
+    get:
+      tags:
+      - Rows
+      summary: Get row
+      operationId: getRow
+      responses:
+        '200':
+          description: Row returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Row'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - $ref: '#/components/parameters/rowId'
+      description: Retrieves a specific row by its rowId.
+    patch:
+      tags:
+      - Rows
+      summary: Update row
+      operationId: updateRow
+      responses:
+        '200':
+          description: Row updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Row'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - $ref: '#/components/parameters/rowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RowUpdateRequest'
+      description: Partially updates a row. Only the columns included in the request body are changed.
+    delete:
+      tags:
+      - Rows
+      summary: Delete row
+      operationId: deleteRow
+      responses:
+        '204':
+          description: Operation completed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/tableId'
+      - $ref: '#/components/parameters/rowId'
+      description: Deletes a specific row from the table by its rowId.
+  /queries:
+    post:
+      tags:
+      - Queries
+      summary: Execute SQL query
+      operationId: executeQuery
+      responses:
+        '202':
+          description: Query accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryExecuteRequest'
+      description: Submits a SQL statement to the query processing engine. The system parses, validates, optimizes, and executes
+        the query, and the result may be returned asynchronously.
+  /queries/explain:
+    post:
+      tags:
+      - Queries
+      summary: Explain SQL query
+      operationId: explainQuery
+      responses:
+        '200':
+          description: Query execution plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplainResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryExplainRequest'
+      description: Analyzes a SQL statement and returns its logical plan, physical plan, and estimated cost without necessarily
+        executing the query.
+  /queries/{queryId}:
+    get:
+      tags:
+      - Queries
+      summary: Get query status or result
+      operationId: getQuery
+      responses:
+        '200':
+          description: Query status or result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/queryId'
+      description: Retrieves the current status or execution result of a previously submitted query.
+    delete:
+      tags:
+      - Queries
+      summary: Cancel query
+      operationId: cancelQuery
+      responses:
+        '202':
+          description: Query cancellation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/queryId'
+      description: Requests cancellation of a query that is queued or currently running.
+  /transactions:
+    post:
+      tags:
+      - Transactions
+      summary: Begin transaction
+      operationId: beginTransaction
+      responses:
+        '201':
+          description: Transaction started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreateRequest'
+      description: Starts a new transaction with an optional isolation level, read-only mode, and timeout.
+  /transactions/{transactionId}:
+    get:
+      tags:
+      - Transactions
+      summary: Get transaction
+      operationId: getTransaction
+      responses:
+        '200':
+          description: Transaction returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/transactionId'
+      description: Retrieves the current state and metadata of a transaction.
+  /transactions/{transactionId}/commit:
+    post:
+      tags:
+      - Transactions
+      summary: Commit transaction
+      operationId: commitTransaction
+      responses:
+        '200':
+          description: Transaction commit completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/transactionId'
+      description: Commits all changes made within the transaction and makes them permanent.
+  /transactions/{transactionId}/rollback:
+    post:
+      tags:
+      - Transactions
+      summary: Rollback transaction
+      operationId: rollbackTransaction
+      responses:
+        '200':
+          description: Transaction rollback completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      parameters:
+      - $ref: '#/components/parameters/transactionId'
+      description: Discards all uncommitted changes and restores the data to its state before the transaction.
+components:
+  parameters:
+    databaseId:
+      name: databaseId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: databaseId'
+    schemaId:
+      name: schemaId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: schemaId'
+    tableId:
+      name: tableId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: tableId'
+    columnId:
+      name: columnId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: columnId'
+    constraintId:
+      name: constraintId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: constraintId'
+    indexId:
+      name: indexId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: indexId'
+    partitionId:
+      name: partitionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: partitionId'
+    triggerId:
+      name: triggerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: triggerId'
+    viewId:
+      name: viewId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: viewId'
+    procedureId:
+      name: procedureId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: procedureId'
+    sequenceId:
+      name: sequenceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: sequenceId'
+    rowId:
+      name: rowId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: rowId'
+    queryId:
+      name: queryId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: queryId'
+    transactionId:
+      name: transactionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Unique identifier: transactionId'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: RESOURCE_NOT_FOUND
+            message:
+              type: string
+              example: Requested resource was not found
+            details:
+              type: array
+              items:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+    ActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 0
+          example: 0
+        size:
+          type: integer
+          minimum: 1
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+    Database:
+      type: object
+      properties:
+        databaseId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        state:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    DatabaseCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a database.
+    DatabaseUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a database.
+    DatabaseListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Database'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Schema:
+      type: object
+      properties:
+        schemaId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        databaseId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    SchemaCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a schema.
+    SchemaUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a schema.
+    SchemaListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schema'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Table:
+      type: object
+      properties:
+        tableId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        schemaId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    TableCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a table.
+    TableUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a table.
+    TableListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Column:
+      type: object
+      properties:
+        columnId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        dataType:
+          type: string
+        nullable:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    ColumnCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a column.
+    ColumnUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a column.
+    ColumnListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Constraint:
+      type: object
+      properties:
+        constraintId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    ConstraintCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a constraint.
+    ConstraintUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a constraint.
+    ConstraintListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Constraint'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Index:
+      type: object
+      properties:
+        indexId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    IndexCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a index.
+    IndexUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a index.
+    IndexListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Index'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Partition:
+      type: object
+      properties:
+        partitionId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        strategy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    PartitionCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a partition.
+    PartitionUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a partition.
+    PartitionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Partition'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Trigger:
+      type: object
+      properties:
+        triggerId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        event:
+          type: string
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    TriggerCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a trigger.
+    TriggerUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a trigger.
+    TriggerListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trigger'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    View:
+      type: object
+      properties:
+        viewId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        definition:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    ViewCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a view.
+    ViewUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a view.
+    ViewListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/View'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Procedure:
+      type: object
+      properties:
+        procedureId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        definition:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    ProcedureCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a procedure.
+    ProcedureUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a procedure.
+    ProcedureListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Procedure'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Sequence:
+      type: object
+      properties:
+        sequenceId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        currentValue:
+          type: integer
+          format: int64
+        incrementBy:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    SequenceCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a sequence.
+    SequenceUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a sequence.
+    SequenceListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sequence'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Row:
+      type: object
+      properties:
+        rowId:
+          type: string
+          format: uuid
+          readOnly: true
+        values:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    RowCreateRequest:
+      type: object
+      additionalProperties: true
+      description: Payload used to create a row.
+    RowUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a row.
+    RowListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Row'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Transaction:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          readOnly: true
+        state:
+          type: string
+        isolationLevel:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    TransactionCreateRequest:
+      type: object
+      properties:
+        isolationLevel:
+          type: string
+          enum:
+          - READ_UNCOMMITTED
+          - READ_COMMITTED
+          - REPEATABLE_READ
+          - SERIALIZABLE
+          default: READ_COMMITTED
+        readOnly:
+          type: boolean
+          default: false
+        timeoutSeconds:
+          type: integer
+          minimum: 1
+    TransactionUpdateRequest:
+      type: object
+      additionalProperties: true
+      description: Fields used to update a transaction.
+    TransactionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    QueryExecuteRequest:
+      type: object
+      required:
+      - sql
+      properties:
+        sql:
+          type: string
+          example: SELECT * FROM students
+        databaseId:
+          type: string
+          format: uuid
+        transactionId:
+          type: string
+          format: uuid
+        timeoutSeconds:
+          type: integer
+          minimum: 1
+          default: 30
+        parameters:
+          type: object
+          additionalProperties: true
+    QueryExplainRequest:
+      type: object
+      required:
+      - sql
+      properties:
+        sql:
+          type: string
+        databaseId:
+          type: string
+          format: uuid
+        analyze:
+          type: boolean
+          default: false
+    QueryResult:
+      type: object
+      properties:
+        queryId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - QUEUED
+          - RUNNING
+          - COMPLETED
+          - FAILED
+          - CANCELLED
+        columns:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        affectedRows:
+          type: integer
+          format: int64
+        executionTimeMs:
+          type: integer
+          format: int64
+    ExplainResult:
+      type: object
+      properties:
+        logicalPlan:
+          type: string
+        physicalPlan:
+          type: string
+        estimatedCost:
+          type: number
+          format: double
+    ProcedureExecuteRequest:
+      type: object
+      properties:
+        parameters:
+          type: object
+          additionalProperties: true
+        transactionId:
+          type: string
+          format: uuid
+    SequenceValueResponse:
+      type: object
+      properties:
+        sequenceId:
+          type: string
+          format: uuid
+        value:
+          type: integer
+          format: int64
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
