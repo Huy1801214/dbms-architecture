@@ -2,6 +2,8 @@ package api.repository;
 
 import dbms.catalog.database.entity.Database;
 import dbms.catalog.database.enums.DatabaseStatus;
+import dbms.catalog.schema.entity.Schema;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Repository;
@@ -62,6 +64,23 @@ public class DatabaseRepository {
         Database newDb = new Database(newId, db.getName(), db.getOwner(), db.getStatus(), db.getCreatedAt());
         databases.add(newDb);
         return newDb;
+    }
+
+    public Database findDatabaseById(String databaseId) {
+        if (databaseId == null)
+            return null;
+        return databases.stream().filter(db -> databaseId.equals(db.getDatabaseId())).findFirst().orElse(null);
+    }
+
+    public Schema saveSchema(String databaseId, Schema schema) {
+        Database database = findDatabaseById(databaseId);
+        if (database == null) {
+            throw new IllegalArgumentException("Database not found: " + databaseId);
+        }
+        String newId = UUID.randomUUID().toString();
+        Schema newSchema = new Schema(newId, schema.getName(), schema.getOwner());
+        database.addSchema(newSchema);
+        return newSchema;
     }
 
     private record MockDatabaseData(String id, String name, String owner, String status) {

@@ -114,6 +114,41 @@ Manage schemas within a database.
 | 4 | Update schema | `PATCH` | `/databases/{databaseId}/schemas/{schemaId}` | Updates the schema name or other schema metadata that can be modified. | database Id path parameter, schema Id path parameter<br>Body: Schema Update Request | `200 OK` — Schema updated successfully (Schema) |
 | 5 | Delete schema | `DELETE` | `/databases/{databaseId}/schemas/{schemaId}` | Deletes a schema. The operation may fail if the schema still contains database objects. | database Id path parameter, schema Id path parameter | `204 No Content` — Operation completed successfully |
 
+### Sequence Diagram (`POST /databases/{databaseId}/schemas`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client / Swagger UI / Test
+    participant C as CatalogController<br/>(Presentation Layer)
+    participant S as DatabaseService<br/>(Service Layer)
+    participant R as DatabaseRepository<br/>(Repository Layer)
+    participant DB as Target Database Entity<br/>(In-Memory)
+
+    %% HTTP POST Request Flow
+    Client->>C: HTTP POST /api/v1/databases/{databaseId}/schemas<br/>(Path: databaseId, Body: name, owner)
+    Note over C: Extract @PathVariable databaseId<br/>& Deserialize @RequestBody SchemaCreateRequest DTO
+    
+    C->>S: 1. Call service.createSchema(databaseId, request)
+    Note over S: Execute Business Logic:<br/>- Instantiate transient Schema Entity<br/>- Prepare for parent Database association
+    
+    S->>R: 2. Call repository.saveSchema(databaseId, schema)
+    Note over R: Data Persistence:<br/>- Call findDatabaseById(databaseId)<br/>- Generate random UUID for Schema
+    
+    R->>DB: Add new Schema Entity via database.addSchema(newSchema)
+    DB-->>R: Confirm Schema added to Database
+    
+    R-->>S: 3. Return saved Schema Entity (with UUID)
+    
+    Note over S: Data Transformation (Mapping):<br/>Schema Entity ➔ SchemaCreateResponse DTO
+    
+    S-->>C: 4. Return SchemaCreateResponse DTO
+    
+    Note over C: Serialize SchemaCreateResponse ➔ JSON Body
+    
+    C-->>Client: HTTP 201 Created (JSON Response Body with Schema UUID)
+```
+
 ## 4. Tables APIs
 
 Manage tables within a schema.

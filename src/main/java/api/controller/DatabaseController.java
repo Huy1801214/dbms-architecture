@@ -12,9 +12,13 @@ import api.dto.DatabaseCreateRequest;
 import api.dto.DatabaseResponse;
 import api.service.DatabaseService;
 
+import api.dto.SchemaCreateRequest;
+import api.dto.SchemaCreateResponse;
+import org.springframework.web.bind.annotation.PathVariable;
+
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping({ "/api/v1/databases" })
+@RequestMapping({ "/api/v1/databases", "/databases" })
 public class DatabaseController {
     private final DatabaseService service;
 
@@ -26,5 +30,13 @@ public class DatabaseController {
     @ResponseStatus(HttpStatus.CREATED)
     public DatabaseResponse createDatabase(@RequestBody DatabaseCreateRequest request) {
         return service.createDatabase(request);
+    }
+
+    @PostMapping("/{databaseId}/schemas")
+    @ResponseStatus(HttpStatus.CREATED)
+    public SchemaCreateResponse createSchema(
+            @PathVariable("databaseId") String databaseId,
+            @RequestBody SchemaCreateRequest request) {
+        return service.createSchema(databaseId, request);
     }
 }
