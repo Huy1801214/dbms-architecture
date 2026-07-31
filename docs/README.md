@@ -1,3 +1,15 @@
+## DBMS System Overview
+
+This project presents the architecture and core components of a simplified Database Management System inspired by modern relational DBMS platforms. It covers major areas such as database object management, metadata and catalog services, data storage, query processing, transaction management, security, recovery, and system monitoring.
+
+The project focuses on architectural design, object-oriented principles, design patterns, API design, diagrams, and testing documentation to provide a clear foundation for understanding how the main components of a DBMS collaborate.
+
+## API Documentation
+
+The interactive REST API documentation is available through Swagger UI: [View DBMS REST API Documentation](https://huy1801214.github.io/dbms-architecture/)
+
+---
+
 # DBMS System Architecture
 
 ```mermaid
