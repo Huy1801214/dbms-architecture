@@ -1,5 +1,4 @@
-package dbms.server.service;
-
+package dbms.server;
 
 public class MonitoringManager {
 }
