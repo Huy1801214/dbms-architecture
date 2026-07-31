@@ -1,4 +1,4 @@
-package dbms.security.entity;
+package dbms.security;
 
 import java.util.List;
 

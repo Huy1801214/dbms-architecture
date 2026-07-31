@@ -1,17 +1,11 @@
-package dbms.server.service;
+package dbms.server;
 
 import dbms.catalog.database.entity.Database;
 import dbms.catalog.database.enums.DatabaseStatus;
-import dbms.server.dto.DatabaseCreateRequest;
 
-import dbms.catalog.database.entity.Database;
-import dbms.catalog.database.enums.DatabaseStatus;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.UUID;
 
 public class DatabaseManager {
     private Map<String, Database> databases = new HashMap<>();

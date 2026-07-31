@@ -1,5 +1,4 @@
-package dbms.server.dto;
-
+package dbms.server;
 
 public class DatabaseCreateRequest {
     private String name;

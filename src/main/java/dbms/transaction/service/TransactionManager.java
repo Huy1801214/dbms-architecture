@@ -1,6 +1,6 @@
 package dbms.transaction.service;
 
-import dbms.recovery.service.WALManager;
+import dbms.recovery.WALManager;
 import dbms.transaction.entity.Transaction;
 
 public class TransactionManager {

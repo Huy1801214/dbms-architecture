@@ -1,7 +1,5 @@
-package dbms.security.service;
+package dbms.security;
 
-import dbms.security.entity.Role;
-import dbms.security.entity.User;
 import java.util.List;
 
 public class SecurityManager {
