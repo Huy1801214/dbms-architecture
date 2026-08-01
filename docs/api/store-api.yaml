@@ -1,0 +1,1764 @@
+openapi: 3.0.3
+
+info:
+  title: Online Store Customer Management API
+  version: 1.0.0
+  description: |
+    REST API specification for the customer management dashboard shown in the provided UI.
+    The specification covers customer statistics, customer CRUD operations, batch actions,
+    customer users, exports, filter metadata, user profile, authentication, and store modules.
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Customer Statistics
+    description: Customer dashboard statistics
+  - name: Customers
+    description: Customer search, retrieval, creation, update, and deletion
+  - name: Customer Batch Operations
+    description: Bulk operations for multiple customers
+  - name: Customer Users
+    description: Users associated with a customer
+  - name: Exports
+    description: Customer export and download operations
+  - name: Customer Metadata
+    description: Status, category, filter, and sorting metadata
+  - name: User Profile
+    description: Current user profile and settings
+  - name: Authentication
+    description: Authentication operations
+  - name: Dashboard
+    description: Dashboard overview
+  - name: Products
+    description: Product management
+  - name: Orders
+    description: Order management
+  - name: Subscriptions
+    description: Subscription management
+  - name: Discounts
+    description: Discount management
+  - name: Licenses
+    description: License management
+  - name: Emails
+    description: Email campaign management
+  - name: Reports
+    description: Report management
+  - name: Designs
+    description: Store design management
+  - name: Store Settings
+    description: Store configuration
+
+paths:
+  /customers/statistics:
+    get:
+      tags: [Customer Statistics]
+      summary: Get customer dashboard statistics
+      description: Returns total customers, members, active customers, growth rates, and representative avatars.
+      operationId: getCustomerStatistics
+      parameters:
+        - $ref: '#/components/parameters/FromDate'
+        - $ref: '#/components/parameters/ToDate'
+      responses:
+        '200':
+          description: Customer statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerStatistics'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /customers/statistics/total:
+    get:
+      tags: [Customer Statistics]
+      summary: Get total customer count
+      description: Returns the total number of customers and the growth percentage for the selected period.
+      operationId: getTotalCustomerStatistics
+      parameters:
+        - $ref: '#/components/parameters/FromDate'
+        - $ref: '#/components/parameters/ToDate'
+      responses:
+        '200':
+          description: Total customer statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricStatistic'
+
+  /customers/statistics/members:
+    get:
+      tags: [Customer Statistics]
+      summary: Get member statistics
+      description: Returns the total number of members and the growth percentage for the selected period.
+      operationId: getMemberStatistics
+      parameters:
+        - $ref: '#/components/parameters/FromDate'
+        - $ref: '#/components/parameters/ToDate'
+      responses:
+        '200':
+          description: Member statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricStatistic'
+
+  /customers/statistics/active:
+    get:
+      tags: [Customer Statistics]
+      summary: Get active customer statistics
+      description: Returns the number of currently active customers and a list of representative avatars.
+      operationId: getActiveCustomerStatistics
+      parameters:
+        - $ref: '#/components/parameters/FromDate'
+        - $ref: '#/components/parameters/ToDate'
+      responses:
+        '200':
+          description: Active customer statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveCustomerStatistic'
+
+  /customers:
+    get:
+      tags: [Customers]
+      summary: Get paginated customers
+      description: Returns a paginated, sortable, searchable, and filterable list of customers.
+      operationId: getCustomers
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/SortDirection'
+        - $ref: '#/components/parameters/Keyword'
+        - $ref: '#/components/parameters/CustomerStatusQuery'
+        - $ref: '#/components/parameters/CategoryQuery'
+      responses:
+        '200':
+          description: Customer page retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      tags: [Customers]
+      summary: Create a customer
+      description: Creates a new customer company record.
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: Customer created successfully
+          headers:
+            Location:
+              description: URL of the created customer
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /customers/search:
+    get:
+      tags: [Customers]
+      summary: Search customers
+      description: Searches customers by company name, domain, category, or description.
+      operationId: searchCustomers
+      parameters:
+        - $ref: '#/components/parameters/KeywordRequired'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Customer search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPage'
+
+  /customers/filter:
+    get:
+      tags: [Customers]
+      summary: Filter customers
+      description: Filters customers by status, category, and creation date range.
+      operationId: filterCustomers
+      parameters:
+        - $ref: '#/components/parameters/CustomerStatusQuery'
+        - $ref: '#/components/parameters/CategoryQuery'
+        - name: createdFrom
+          in: query
+          description: Earliest customer creation date
+          schema:
+            type: string
+            format: date
+        - name: createdTo
+          in: query
+          description: Latest customer creation date
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Filtered customers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPage'
+
+  /customers/count:
+    get:
+      tags: [Customers]
+      summary: Count matching customers
+      description: Returns the number of customers matching the supplied search and filter criteria.
+      operationId: countCustomers
+      parameters:
+        - $ref: '#/components/parameters/Keyword'
+        - $ref: '#/components/parameters/CustomerStatusQuery'
+        - $ref: '#/components/parameters/CategoryQuery'
+      responses:
+        '200':
+          description: Customer count retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+
+  /customers/batch:
+    post:
+      tags: [Customer Batch Operations]
+      summary: Get multiple customers
+      description: Returns customer records for the supplied customer identifiers.
+      operationId: getCustomersByIds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerIdsRequest'
+      responses:
+        '200':
+          description: Customers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+    delete:
+      tags: [Customer Batch Operations]
+      summary: Delete multiple customers
+      description: Soft-deletes multiple customers in one operation.
+      operationId: deleteCustomersBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerIdsRequest'
+      responses:
+        '204':
+          description: Customers deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /customers/{customerId}:
+    parameters:
+      - $ref: '#/components/parameters/CustomerId'
+    get:
+      tags: [Customers]
+      summary: Get customer details
+      description: Returns detailed information about a specific customer.
+      operationId: getCustomerById
+      responses:
+        '200':
+          description: Customer retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Customers]
+      summary: Replace customer information
+      description: Replaces all editable fields of an existing customer.
+      operationId: replaceCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: Customer replaced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Customers]
+      summary: Partially update a customer
+      description: Updates one or more editable customer fields.
+      operationId: updateCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchCustomerRequest'
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Customers]
+      summary: Delete a customer
+      description: Soft-deletes a customer record.
+      operationId: deleteCustomer
+      responses:
+        '204':
+          description: Customer deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /customers/{customerId}/status:
+    patch:
+      tags: [Customers]
+      summary: Update customer status
+      description: Changes the lifecycle status of a customer.
+      operationId: updateCustomerStatus
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Customer status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /customers/{customerId}/restore:
+    post:
+      tags: [Customers]
+      summary: Restore a deleted customer
+      description: Restores a previously soft-deleted customer.
+      operationId: restoreCustomer
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Customer restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /customers/batch/status:
+    patch:
+      tags: [Customer Batch Operations]
+      summary: Update status for multiple customers
+      description: Changes the status of all selected customers.
+      operationId: updateCustomersStatusBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchStatusRequest'
+      responses:
+        '200':
+          description: Customer statuses updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchOperationResult'
+
+  /customers/batch/archive:
+    post:
+      tags: [Customer Batch Operations]
+      summary: Archive multiple customers
+      description: Archives all selected customers.
+      operationId: archiveCustomersBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerIdsRequest'
+      responses:
+        '200':
+          description: Customers archived successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchOperationResult'
+
+  /customers/batch/restore:
+    post:
+      tags: [Customer Batch Operations]
+      summary: Restore multiple customers
+      description: Restores multiple soft-deleted or archived customers.
+      operationId: restoreCustomersBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerIdsRequest'
+      responses:
+        '200':
+          description: Customers restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchOperationResult'
+
+  /customers/{customerId}/users:
+    get:
+      tags: [Customer Users]
+      summary: Get users belonging to a customer
+      description: Returns a paginated list of users associated with the selected customer.
+      operationId: getCustomerUsers
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Customer users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerUserPage'
+    post:
+      tags: [Customer Users]
+      summary: Add a user to a customer
+      description: Creates or associates a user with the selected customer.
+      operationId: addCustomerUser
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerUserRequest'
+      responses:
+        '201':
+          description: User added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerUser'
+
+  /customers/{customerId}/users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/CustomerId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Customer Users]
+      summary: Get a customer user
+      description: Returns detailed information about a user associated with a customer.
+      operationId: getCustomerUser
+      responses:
+        '200':
+          description: Customer user retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerUser'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Customer Users]
+      summary: Remove a user from a customer
+      description: Removes the association between a user and a customer.
+      operationId: removeCustomerUser
+      responses:
+        '204':
+          description: User removed successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /customers/{customerId}/users/{userId}/role:
+    patch:
+      tags: [Customer Users]
+      summary: Update a customer user's role
+      description: Changes the role assigned to a user within a customer organization.
+      operationId: updateCustomerUserRole
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRoleRequest'
+      responses:
+        '200':
+          description: User role updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerUser'
+
+  /customers/{customerId}/users/count:
+    get:
+      tags: [Customer Users]
+      summary: Count users belonging to a customer
+      description: Returns the total number of users associated with a customer.
+      operationId: countCustomerUsers
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Customer user count retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+
+  /customers/export:
+    get:
+      tags: [Exports]
+      summary: Export filtered customers
+      description: Exports customers matching the supplied search, filter, and sorting criteria.
+      operationId: exportCustomers
+      parameters:
+        - $ref: '#/components/parameters/ExportFormat'
+        - $ref: '#/components/parameters/Keyword'
+        - $ref: '#/components/parameters/CustomerStatusQuery'
+        - $ref: '#/components/parameters/CategoryQuery'
+        - $ref: '#/components/parameters/SortBy'
+      responses:
+        '200':
+          description: Export file generated successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+
+  /customers/export/all:
+    get:
+      tags: [Exports]
+      summary: Export all customers
+      description: Exports the complete customer dataset in the requested format.
+      operationId: exportAllCustomers
+      parameters:
+        - $ref: '#/components/parameters/ExportFormat'
+      responses:
+        '202':
+          description: Export job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+
+  /customers/export/selected:
+    post:
+      tags: [Exports]
+      summary: Export selected customers
+      description: Exports only the customer records identified in the request.
+      operationId: exportSelectedCustomers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportSelectedRequest'
+      responses:
+        '202':
+          description: Export job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+
+  /exports/{exportId}/status:
+    get:
+      tags: [Exports]
+      summary: Get export job status
+      description: Returns the processing status and progress of an export job.
+      operationId: getExportStatus
+      parameters:
+        - $ref: '#/components/parameters/ExportId'
+      responses:
+        '200':
+          description: Export status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+
+  /exports/{exportId}/download:
+    get:
+      tags: [Exports]
+      summary: Download an export file
+      description: Downloads the generated file for a completed export job.
+      operationId: downloadExport
+      parameters:
+        - $ref: '#/components/parameters/ExportId'
+      responses:
+        '200':
+          description: Export file downloaded successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '409':
+          description: Export is not ready for download
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /customer-statuses:
+    get:
+      tags: [Customer Metadata]
+      summary: Get customer statuses
+      description: Returns all supported customer lifecycle statuses.
+      operationId: getCustomerStatuses
+      responses:
+        '200':
+          description: Customer statuses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CodeLabel'
+
+  /customer-categories:
+    get:
+      tags: [Customer Metadata]
+      summary: Get customer categories
+      description: Returns all supported customer business categories.
+      operationId: getCustomerCategories
+      responses:
+        '200':
+          description: Customer categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CodeLabel'
+
+  /customers/filter-options:
+    get:
+      tags: [Customer Metadata]
+      summary: Get customer filter options
+      description: Returns statuses, categories, date ranges, and other metadata required by the customer filter UI.
+      operationId: getCustomerFilterOptions
+      responses:
+        '200':
+          description: Filter options retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerFilterOptions'
+
+  /customers/sort-options:
+    get:
+      tags: [Customer Metadata]
+      summary: Get customer sorting options
+      description: Returns the customer fields that can be used for sorting.
+      operationId: getCustomerSortOptions
+      responses:
+        '200':
+          description: Sorting options retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CodeLabel'
+
+  /users/me:
+    get:
+      tags: [User Profile]
+      summary: Get current user profile
+      description: Returns profile information for the authenticated user.
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [User Profile]
+      summary: Update current user profile
+      description: Updates editable profile fields for the authenticated user.
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCurrentUserRequest'
+      responses:
+        '200':
+          description: Current user profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+
+  /users/me/settings:
+    get:
+      tags: [User Profile]
+      summary: Get current user settings
+      description: Returns account, notification, locale, and appearance settings for the current user.
+      operationId: getCurrentUserSettings
+      responses:
+        '200':
+          description: User settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+    patch:
+      tags: [User Profile]
+      summary: Update current user settings
+      description: Updates one or more settings for the current user.
+      operationId: updateCurrentUserSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettings'
+      responses:
+        '200':
+          description: User settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+
+  /users/me/shortcuts:
+    get:
+      tags: [User Profile]
+      summary: Get keyboard shortcuts
+      description: Returns keyboard shortcuts supported by the dashboard.
+      operationId: getKeyboardShortcuts
+      responses:
+        '200':
+          description: Keyboard shortcuts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KeyboardShortcut'
+
+  /users/me/avatar:
+    post:
+      tags: [User Profile]
+      summary: Upload current user avatar
+      description: Uploads and assigns a new avatar to the current user.
+      operationId: uploadCurrentUserAvatar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvatarResponse'
+    delete:
+      tags: [User Profile]
+      summary: Delete current user avatar
+      description: Removes the current user's custom avatar.
+      operationId: deleteCurrentUserAvatar
+      responses:
+        '204':
+          description: Avatar deleted successfully
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Log out
+      description: Invalidates the current authentication session or access token.
+      operationId: logout
+      responses:
+        '204':
+          description: Logout completed successfully
+
+  /dashboard/overview:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard overview
+      description: Returns high-level store metrics, recent activity, and summary cards.
+      operationId: getDashboardOverview
+      responses:
+        '200':
+          description: Dashboard overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardOverview'
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Get products
+      description: Returns a paginated list of products.
+      operationId: getProducts
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Keyword'
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericPage'
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Get orders
+      description: Returns a paginated list of customer orders.
+      operationId: getOrders
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericPage'
+
+  /subscriptions:
+    get:
+      tags: [Subscriptions]
+      summary: Get subscriptions
+      description: Returns a paginated list of subscriptions.
+      operationId: getSubscriptions
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Subscriptions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericPage'
+
+  /discounts:
+    get:
+      tags: [Discounts]
+      summary: Get discounts
+      description: Returns a paginated list of discount codes and promotions.
+      operationId: getDiscounts
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Discounts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericPage'
+
+  /licenses:
+    get:
+      tags: [Licenses]
+      summary: Get licenses
+      description: Returns a paginated list of product or customer licenses.
+      operationId: getLicenses
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Licenses retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericPage'
+
+  /emails:
+    get:
+      tags: [Emails]
+      summary: Get email campaigns
+      description: Returns a paginated list of emails or marketing campaigns.
+      operationId: getEmails
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Emails retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericPage'
+
+  /reports:
+    get:
+      tags: [Reports]
+      summary: Get reports
+      description: Returns available reports and generated report records.
+      operationId: getReports
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericPage'
+
+  /designs:
+    get:
+      tags: [Designs]
+      summary: Get store designs
+      description: Returns themes, layouts, and design configurations for the store.
+      operationId: getDesigns
+      responses:
+        '200':
+          description: Store designs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+
+  /store/settings:
+    get:
+      tags: [Store Settings]
+      summary: Get store settings
+      description: Returns the current configuration of the online store.
+      operationId: getStoreSettings
+      responses:
+        '200':
+          description: Store settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreSettings'
+    patch:
+      tags: [Store Settings]
+      summary: Update store settings
+      description: Updates one or more online store configuration fields.
+      operationId: updateStoreSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreSettings'
+      responses:
+        '200':
+          description: Store settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreSettings'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CustomerId:
+      name: customerId
+      in: path
+      required: true
+      description: Unique customer identifier
+      schema:
+        type: string
+        example: cus_001
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: Unique user identifier
+      schema:
+        type: string
+        example: usr_001
+    ExportId:
+      name: exportId
+      in: path
+      required: true
+      description: Unique export job identifier
+      schema:
+        type: string
+        example: exp_001
+    Page:
+      name: page
+      in: query
+      description: Zero-based page index
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Size:
+      name: size
+      in: query
+      description: Number of records per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SortBy:
+      name: sortBy
+      in: query
+      description: Field used for sorting
+      schema:
+        type: string
+        default: companyName
+    SortDirection:
+      name: sortDirection
+      in: query
+      description: Sorting direction
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+    Keyword:
+      name: keyword
+      in: query
+      description: Optional search keyword
+      schema:
+        type: string
+    KeywordRequired:
+      name: keyword
+      in: query
+      required: true
+      description: Search keyword
+      schema:
+        type: string
+        minLength: 1
+    CustomerStatusQuery:
+      name: status
+      in: query
+      description: Customer lifecycle status
+      schema:
+        $ref: '#/components/schemas/CustomerStatus'
+    CategoryQuery:
+      name: category
+      in: query
+      description: Customer business category
+      schema:
+        type: string
+    FromDate:
+      name: from
+      in: query
+      description: Start date of the statistics period
+      schema:
+        type: string
+        format: date
+    ToDate:
+      name: to
+      in: query
+      description: End date of the statistics period
+      schema:
+        type: string
+        format: date
+    ExportFormat:
+      name: format
+      in: query
+      required: true
+      description: Export file format
+      schema:
+        $ref: '#/components/schemas/ExportFormat'
+
+  responses:
+    BadRequest:
+      description: The request is invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Authentication is required or the token is invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Conflict:
+      description: The request conflicts with an existing resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    InternalServerError:
+      description: An unexpected server error occurred
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+  schemas:
+    CustomerStatus:
+      type: string
+      enum:
+        - CUSTOMER
+        - MEMBER
+        - ACTIVE
+        - INACTIVE
+        - CHURNED
+        - ARCHIVED
+
+    ExportFormat:
+      type: string
+      enum: [CSV, XLSX, PDF, JSON]
+
+    Customer:
+      type: object
+      required:
+        - id
+        - companyName
+        - domain
+        - status
+      properties:
+        id:
+          type: string
+          example: cus_001
+        companyName:
+          type: string
+          example: Framer
+        domain:
+          type: string
+          example: framer.com
+        logoUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: https://cdn.example.com/logos/framer.png
+        status:
+          $ref: '#/components/schemas/CustomerStatus'
+        category:
+          type: string
+          example: Design Tools
+        description:
+          type: string
+          example: Make beautiful websites in minutes.
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerUserSummary'
+        totalUsers:
+          type: integer
+          minimum: 0
+          example: 8
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - companyName
+        - domain
+        - status
+      properties:
+        companyName:
+          type: string
+          minLength: 1
+          maxLength: 150
+          example: Framer
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: framer.com
+        logoUrl:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          $ref: '#/components/schemas/CustomerStatus'
+        category:
+          type: string
+          maxLength: 100
+          example: Design Tools
+        description:
+          type: string
+          maxLength: 1000
+          example: Make beautiful websites in minutes.
+
+    UpdateCustomerRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateCustomerRequest'
+
+    PatchCustomerRequest:
+      type: object
+      minProperties: 1
+      properties:
+        companyName:
+          type: string
+          maxLength: 150
+        domain:
+          type: string
+          maxLength: 255
+        logoUrl:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          $ref: '#/components/schemas/CustomerStatus'
+        category:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+
+    CustomerPage:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 8468
+        totalPages:
+          type: integer
+          example: 424
+        first:
+          type: boolean
+          example: true
+        last:
+          type: boolean
+          example: false
+
+    MetricStatistic:
+      type: object
+      properties:
+        value:
+          type: integer
+          format: int64
+          example: 8468
+        growthRate:
+          type: number
+          format: double
+          example: 20.0
+        comparisonPeriod:
+          type: string
+          example: PREVIOUS_MONTH
+
+    ActiveCustomerStatistic:
+      type: object
+      properties:
+        value:
+          type: integer
+          format: int64
+          example: 316
+        avatars:
+          type: array
+          items:
+            type: string
+            format: uri
+
+    CustomerStatistics:
+      type: object
+      properties:
+        totalCustomers:
+          $ref: '#/components/schemas/MetricStatistic'
+        members:
+          $ref: '#/components/schemas/MetricStatistic'
+        activeCustomers:
+          $ref: '#/components/schemas/ActiveCustomerStatistic'
+
+    CustomerIdsRequest:
+      type: object
+      required: [customerIds]
+      properties:
+        customerIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+          example: [cus_001, cus_002, cus_003]
+
+    UpdateStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/CustomerStatus'
+
+    BatchStatusRequest:
+      allOf:
+        - $ref: '#/components/schemas/CustomerIdsRequest'
+        - type: object
+          required: [status]
+          properties:
+            status:
+              $ref: '#/components/schemas/CustomerStatus'
+
+    BatchOperationResult:
+      type: object
+      properties:
+        requested:
+          type: integer
+          example: 3
+        successful:
+          type: integer
+          example: 3
+        failed:
+          type: integer
+          example: 0
+        failedIds:
+          type: array
+          items:
+            type: string
+
+    CustomerUserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: usr_001
+        fullName:
+          type: string
+          example: Alex Morgan
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+
+    CustomerUser:
+      type: object
+      required:
+        - id
+        - email
+        - fullName
+        - role
+      properties:
+        id:
+          type: string
+          example: usr_001
+        fullName:
+          type: string
+          example: Alex Morgan
+        email:
+          type: string
+          format: email
+          example: alex@example.com
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        role:
+          type: string
+          example: ADMIN
+        active:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateCustomerUserRequest:
+      type: object
+      required:
+        - fullName
+        - email
+        - role
+      properties:
+        fullName:
+          type: string
+          example: Alex Morgan
+        email:
+          type: string
+          format: email
+          example: alex@example.com
+        role:
+          type: string
+          example: MEMBER
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+
+    UpdateUserRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          example: ADMIN
+
+    CustomerUserPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerUser'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    CountResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int64
+          example: 8468
+
+    ExportSelectedRequest:
+      allOf:
+        - $ref: '#/components/schemas/CustomerIdsRequest'
+        - type: object
+          required: [format]
+          properties:
+            format:
+              $ref: '#/components/schemas/ExportFormat'
+
+    ExportJob:
+      type: object
+      properties:
+        id:
+          type: string
+          example: exp_001
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+          example: PROCESSING
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 65
+        format:
+          $ref: '#/components/schemas/ExportFormat'
+        downloadUrl:
+          type: string
+          format: uri
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+
+    CodeLabel:
+      type: object
+      properties:
+        code:
+          type: string
+          example: CUSTOMER
+        label:
+          type: string
+          example: Customer
+
+    CustomerFilterOptions:
+      type: object
+      properties:
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeLabel'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeLabel'
+        creationDateRange:
+          type: object
+          properties:
+            minimum:
+              type: string
+              format: date
+            maximum:
+              type: string
+              format: date
+
+    CurrentUser:
+      type: object
+      properties:
+        id:
+          type: string
+          example: usr_current
+        fullName:
+          type: string
+          example: Sophia Munn
+        email:
+          type: string
+          format: email
+          example: sophia@example.com
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        jobTitle:
+          type: string
+          nullable: true
+        organization:
+          type: string
+          nullable: true
+
+    UpdateCurrentUserRequest:
+      type: object
+      minProperties: 1
+      properties:
+        fullName:
+          type: string
+        jobTitle:
+          type: string
+          nullable: true
+        organization:
+          type: string
+          nullable: true
+
+    UserSettings:
+      type: object
+      properties:
+        locale:
+          type: string
+          example: en-US
+        timezone:
+          type: string
+          example: Asia/Ho_Chi_Minh
+        theme:
+          type: string
+          enum: [LIGHT, DARK, SYSTEM]
+          example: SYSTEM
+        emailNotifications:
+          type: boolean
+          example: true
+        pushNotifications:
+          type: boolean
+          example: true
+
+    KeyboardShortcut:
+      type: object
+      properties:
+        action:
+          type: string
+          example: Open command palette
+        keys:
+          type: array
+          items:
+            type: string
+          example: [CTRL, K]
+
+    AvatarResponse:
+      type: object
+      properties:
+        avatarUrl:
+          type: string
+          format: uri
+
+    DashboardOverview:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+          format: double
+        totalOrders:
+          type: integer
+          format: int64
+        totalCustomers:
+          type: integer
+          format: int64
+        activeSubscriptions:
+          type: integer
+          format: int64
+        recentActivity:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    GenericPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    StoreSettings:
+      type: object
+      properties:
+        storeName:
+          type: string
+          example: My online store
+        storeDomain:
+          type: string
+          example: store.example.com
+        defaultCurrency:
+          type: string
+          example: USD
+        locale:
+          type: string
+          example: en-US
+        timezone:
+          type: string
+          example: Asia/Ho_Chi_Minh
+        supportEmail:
+          type: string
+          format: email
+          example: support@example.com
+
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: The request contains invalid data.
+        path:
+          type: string
+          example: /api/v1/customers
+        details:
+          type: array
+          items:
+            type: string
+
+security:
+  - bearerAuth: []
