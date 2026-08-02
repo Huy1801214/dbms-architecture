@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import store_api.dto.request.AddCustomerUserRequest;
 import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
@@ -74,6 +75,19 @@ public class CustomerService {
 
         public List<CustomerUser> getCustomerUsers(String customerId) {
                 return customerRepository.findUsersByCustomerId(customerId);
+        }
+
+        public CustomerUser addCustomerUser(String customerId, AddCustomerUserRequest request) {
+                CustomerUser newUser = CustomerUser.builder()
+                                .fullName(request.getFullName())
+                                .email(request.getEmail())
+                                .avatarUrl(request.getAvatarUrl())
+                                .role(request.getRole())
+                                .active(true)
+                                .createdAt(OffsetDateTime.now())
+                                .build();
+
+                return customerRepository.addCustomerUser(customerId, newUser);
         }
 
         public CustomerUser updateCustomerUserRole(

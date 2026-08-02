@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PostConstruct;
@@ -346,6 +347,20 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                                 .build();
 
                 return List.of(u1, u2);
+        }
+
+        @Override
+        public CustomerUser addCustomerUser(String customerId, CustomerUser user) {
+                if (user.getId() == null) {
+                        user.setId("usr_" + UUID.randomUUID().toString().substring(0, 8));
+                }
+                if (user.getCreatedAt() == null) {
+                        user.setCreatedAt(OffsetDateTime.now());
+                }
+                if (user.getActive() == null) {
+                        user.setActive(true);
+                }
+                return user;
         }
 
 }

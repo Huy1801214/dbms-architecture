@@ -1,6 +1,7 @@
 package store_api.controller;
 
 import lombok.RequiredArgsConstructor;
+import store_api.dto.request.AddCustomerUserRequest;
 import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
@@ -104,6 +105,15 @@ public class CustomerController {
     public ResponseEntity<List<CustomerUser>> getCustomerUsers(
             @PathVariable String customerId) {
         return ResponseEntity.ok(customerService.getCustomerUsers(customerId));
+    }
+
+    @PostMapping("/{customerId}/users")
+    public ResponseEntity<CustomerUser> addCustomerUser(
+            @PathVariable String customerId,
+            @Valid @RequestBody AddCustomerUserRequest request) {
+        CustomerUser createdUser = customerService.addCustomerUser(customerId, request);
+        URI location = URI.create("/api/v1/customers/" + customerId + "/users/" + createdUser.getId());
+        return ResponseEntity.created(location).body(createdUser);
     }
 
     @PatchMapping("/{customerId}/users/{userId}/role")

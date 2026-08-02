@@ -35,5 +35,7 @@ public interface CustomerRepository {
 
     List<CustomerUser> findUsersByCustomerId(String customerId);
 
+    CustomerUser addCustomerUser(String customerId, CustomerUser user);
+
     Optional<CustomerUser> updateUserRole(String customerId, String userId, String role);
 }
