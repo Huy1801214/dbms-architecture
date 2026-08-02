@@ -23,5 +23,11 @@ public interface CustomerRepository {
 
     Optional<Customer> findById(String id);
 
+    List<Customer> findByIds(List<String> customerIds);
+
+    long deleteByIds(List<String> customerIds);
+
+    long updateStatusByIds(List<String> customerIds, CustomerStatus status);
+
     Optional<CustomerUser> updateUserRole(String customerId, String userId, String role);
 }

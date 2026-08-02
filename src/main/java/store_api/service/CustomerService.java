@@ -10,8 +10,12 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import store_api.dto.request.BatchDeleteCustomersRequest;
+import store_api.dto.request.BatchGetCustomersRequest;
+import store_api.dto.request.BatchUpdateCustomerStatusRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
+import store_api.dto.response.BatchOperationResponse;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.exception.CustomerDomainAlreadyExistsException;
 import store_api.exception.CustomerNotFoundException;
@@ -25,6 +29,28 @@ import store_api.repository.CustomerRepository;
 @RequiredArgsConstructor
 public class CustomerService {
         private final CustomerRepository customerRepository;
+
+        public List<Customer> getCustomersBatch(BatchGetCustomersRequest request) {
+                return customerRepository.findByIds(request.getCustomerIds());
+        }
+
+        public BatchOperationResponse deleteCustomersBatch(BatchDeleteCustomersRequest request) {
+                long deletedCount = customerRepository.deleteByIds(request.getCustomerIds());
+                return BatchOperationResponse.builder()
+                                .success(true)
+                                .affectedCount(deletedCount)
+                                .message("Successfully deleted " + deletedCount + " customers")
+                                .build();
+        }
+
+        public BatchOperationResponse updateCustomerStatusBatch(BatchUpdateCustomerStatusRequest request) {
+                long updatedCount = customerRepository.updateStatusByIds(request.getCustomerIds(), request.getStatus());
+                return BatchOperationResponse.builder()
+                                .success(true)
+                                .affectedCount(updatedCount)
+                                .message("Successfully updated status for " + updatedCount + " customers")
+                                .build();
+        }
 
         public CustomerUser updateCustomerUserRole(
                         String customerId,
