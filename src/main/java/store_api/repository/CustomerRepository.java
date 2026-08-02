@@ -33,5 +33,7 @@ public interface CustomerRepository {
 
     long restoreByIds(List<String> customerIds);
 
+    List<CustomerUser> findUsersByCustomerId(String customerId);
+
     Optional<CustomerUser> updateUserRole(String customerId, String userId, String role);
 }

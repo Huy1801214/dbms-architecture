@@ -100,6 +100,12 @@ public class CustomerController {
         return ResponseEntity.ok(customer);
     }
 
+    @GetMapping("/{customerId}/users")
+    public ResponseEntity<List<CustomerUser>> getCustomerUsers(
+            @PathVariable String customerId) {
+        return ResponseEntity.ok(customerService.getCustomerUsers(customerId));
+    }
+
     @PatchMapping("/{customerId}/users/{userId}/role")
     public ResponseEntity<CustomerUser> updateCustomerUserRole(
             @PathVariable String customerId,

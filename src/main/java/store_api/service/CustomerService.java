@@ -72,6 +72,10 @@ public class CustomerService {
                                 .build();
         }
 
+        public List<CustomerUser> getCustomerUsers(String customerId) {
+                return customerRepository.findUsersByCustomerId(customerId);
+        }
+
         public CustomerUser updateCustomerUserRole(
                         String customerId,
                         String userId,

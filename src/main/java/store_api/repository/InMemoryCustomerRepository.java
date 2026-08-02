@@ -323,4 +323,29 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                 return updateStatusByIds(customerIds, CustomerStatus.ACTIVE);
         }
 
+        @Override
+        public List<CustomerUser> findUsersByCustomerId(String customerId) {
+                CustomerUser u1 = CustomerUser.builder()
+                                .id("usr_001")
+                                .fullName("Alex Morgan")
+                                .email("alex@example.com")
+                                .avatarUrl("https://example.com/avatars/usr_001.png")
+                                .role("ADMIN")
+                                .active(true)
+                                .createdAt(OffsetDateTime.now())
+                                .build();
+
+                CustomerUser u2 = CustomerUser.builder()
+                                .id("usr_002")
+                                .fullName("Sarah Chen")
+                                .email("sarah@example.com")
+                                .avatarUrl("https://example.com/avatars/usr_002.png")
+                                .role("MEMBER")
+                                .active(true)
+                                .createdAt(OffsetDateTime.now())
+                                .build();
+
+                return List.of(u1, u2);
+        }
+
 }
