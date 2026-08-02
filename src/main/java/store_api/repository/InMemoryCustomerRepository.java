@@ -313,4 +313,9 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                 return count;
         }
 
+        @Override
+        public long archiveByIds(List<String> customerIds) {
+                return updateStatusByIds(customerIds, CustomerStatus.ARCHIVED);
+        }
+
 }

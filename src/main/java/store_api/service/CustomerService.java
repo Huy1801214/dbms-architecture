@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
 import store_api.dto.request.BatchUpdateCustomerStatusRequest;
@@ -49,6 +50,15 @@ public class CustomerService {
                                 .success(true)
                                 .affectedCount(updatedCount)
                                 .message("Successfully updated status for " + updatedCount + " customers")
+                                .build();
+        }
+
+        public BatchOperationResponse archiveCustomersBatch(BatchArchiveCustomersRequest request) {
+                long archivedCount = customerRepository.archiveByIds(request.getCustomerIds());
+                return BatchOperationResponse.builder()
+                                .success(true)
+                                .affectedCount(archivedCount)
+                                .message("Successfully archived " + archivedCount + " customers")
                                 .build();
         }
 

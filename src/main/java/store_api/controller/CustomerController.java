@@ -1,6 +1,7 @@
 package store_api.controller;
 
 import lombok.RequiredArgsConstructor;
+import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
 import store_api.dto.request.BatchUpdateCustomerStatusRequest;
@@ -126,5 +127,11 @@ public class CustomerController {
     public ResponseEntity<BatchOperationResponse> updateCustomerStatusBatch(
             @Valid @RequestBody BatchUpdateCustomerStatusRequest request) {
         return ResponseEntity.ok(customerService.updateCustomerStatusBatch(request));
+    }
+
+    @PostMapping("/batch/archive")
+    public ResponseEntity<BatchOperationResponse> archiveCustomersBatch(
+            @Valid @RequestBody BatchArchiveCustomersRequest request) {
+        return ResponseEntity.ok(customerService.archiveCustomersBatch(request));
     }
 }
