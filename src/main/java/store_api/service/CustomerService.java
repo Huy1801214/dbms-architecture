@@ -1,54 +1,103 @@
 package store_api.service;
 
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.response.CustomerPageResponse;
+import store_api.exception.CustomerDomainAlreadyExistsException;
 import store_api.model.customer.Customer;
 import store_api.repository.CustomerRepository;
 
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
-    private final CustomerRepository customerRepository;
+        private final CustomerRepository customerRepository;
 
-    public CustomerPageResponse getCustomers(int page, int size) {
-        if (page < 0) {
-            throw new IllegalArgumentException(
-                    "Page must be greater than or equal to 0");
+        public CustomerPageResponse getCustomers(int page, int size) {
+                if (page < 0) {
+                        throw new IllegalArgumentException(
+                                        "Page must be greater than or equal to 0");
+                }
+
+                if (size < 1 || size > 100) {
+                        throw new IllegalArgumentException(
+                                        "Size must be between 1 and 100");
+                }
+
+                List<Customer> customers = customerRepository.findAll()
+                                .stream()
+                                .sorted(Comparator.comparing(Customer::getCompanyName))
+                                .toList();
+
+                int totalElements = customers.size();
+
+                int totalPages = totalElements == 0
+                                ? 0
+                                : (int) Math.ceil((double) totalElements / size);
+
+                int fromIndex = Math.min(page * size, totalElements);
+                int toIndex = Math.min(fromIndex + size, totalElements);
+
+                List<Customer> content = customers.subList(fromIndex, toIndex);
+
+                return CustomerPageResponse.builder()
+                                .content(content)
+                                .page(page)
+                                .size(size)
+                                .totalElements(totalElements)
+                                .totalPages(totalPages)
+                                .first(page == 0)
+                                .last(totalPages == 0 || page >= totalPages - 1)
+                                .build();
         }
 
-        if (size < 1 || size > 100) {
-            throw new IllegalArgumentException(
-                    "Size must be between 1 and 100");
+        public Customer createCustomer(CreateCustomerRequest request) {
+                String normalizedCompanyName = request.getCompanyName().trim();
+                String normalizedDomain = request.getDomain().trim().toLowerCase();
+                if (customerRepository.existsByDomain(normalizedDomain)) {
+                        throw new CustomerDomainAlreadyExistsException(normalizedDomain);
+                }
+
+                OffsetDateTime now = OffsetDateTime.now();
+
+                Customer customer = Customer.builder()
+                                .id(generateCustomerId())
+                                .companyName(normalizedCompanyName)
+                                .domain(normalizedDomain)
+                                .logoUrl(trimToNull(request.getLogoUrl()))
+                                .status(request.getStatus())
+                                .category(trimToNull(request.getCategory()))
+                                .description(trimToNull(request.getDescription()))
+                                .users(new ArrayList<>())
+                                .totalUsers(0)
+                                .createdAt(now)
+                                .updatedAt(now)
+                                .deletedAt(null)
+                                .build();
+
+                return customerRepository.save(customer);
         }
 
-        List<Customer> customers = customerRepository.findAll()
-                .stream()
-                .sorted(Comparator.comparing(Customer::getCompanyName))
-                .toList();
+        private String generateCustomerId() {
+                return "cus_" + UUID.randomUUID();
+        }
 
-        int totalElements = customers.size();
+        private String trimToNull(String value) {
+                if (value == null) {
+                        return null;
+                }
 
-        int totalPages = totalElements == 0
-                ? 0
-                : (int) Math.ceil((double) totalElements / size);
+                String trimmedValue = value.trim();
 
-        int fromIndex = Math.min(page * size, totalElements);
-        int toIndex = Math.min(fromIndex + size, totalElements);
-
-        List<Customer> content = customers.subList(fromIndex, toIndex);
-
-        return CustomerPageResponse.builder()
-                .content(content)
-                .page(page)
-                .size(size)
-                .totalElements(totalElements)
-                .totalPages(totalPages)
-                .first(page == 0)
-                .last(totalPages == 0 || page >= totalPages - 1)
-                .build();
-    }
+                return trimmedValue.isEmpty()
+                                ? null
+                                : trimmedValue;
+        }
 }
