@@ -12,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Repository;
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
+import store_api.model.customer.CustomerUser;
 import store_api.model.customer.CustomerUserSummary;
 
 @Repository
@@ -201,6 +202,26 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                                 .build();
 
                 return Optional.of(customer);
+        }
+
+        @Override
+        public Optional<CustomerUser> updateUserRole(String customerId, String userId, String role) {
+                if (!"cus_001".equals(customerId)
+                                || !"usr_001".equals(userId)) {
+                        return Optional.empty();
+                }
+
+                CustomerUser user = CustomerUser.builder()
+                                .id(userId)
+                                .fullName("Alex Morgan")
+                                .email("alex@example.com")
+                                .avatarUrl("https://example.com/avatars/usr_001.png")
+                                .role(role)
+                                .active(true)
+                                .createdAt(OffsetDateTime.now())
+                                .build();
+
+                return Optional.of(user);
         }
 
 }

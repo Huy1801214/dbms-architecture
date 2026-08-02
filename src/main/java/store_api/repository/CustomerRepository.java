@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
+import store_api.model.customer.CustomerUser;
 
 public interface CustomerRepository {
     List<Customer> findAll();
@@ -21,4 +22,6 @@ public interface CustomerRepository {
     long count(String keyword, CustomerStatus status, String category);
 
     Optional<Customer> findById(String id);
+
+    Optional<CustomerUser> updateUserRole(String customerId, String userId, String role);
 }
