@@ -3,8 +3,6 @@ package dbms.catalog.schema.service;
 import dbms.catalog.base.entity.DatabaseObject;
 import dbms.catalog.base.visitor.DatabaseObjectIterator;
 
-import dbms.catalog.base.entity.DatabaseObject;
-import dbms.catalog.base.visitor.DatabaseObjectIterator;
 import java.util.List;
 
 public class SchemaObjectIterator implements DatabaseObjectIterator {

@@ -2,7 +2,6 @@ package dbms.catalog.index.context;
 
 import dbms.catalog.table.entity.Row;
 
-import dbms.catalog.table.entity.Row;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;

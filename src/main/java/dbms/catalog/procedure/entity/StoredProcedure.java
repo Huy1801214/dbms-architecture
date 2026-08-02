@@ -5,11 +5,6 @@ import dbms.catalog.base.enums.DropMode;
 import dbms.catalog.base.enums.LifecycleStatus;
 import dbms.catalog.base.visitor.DatabaseObjectVisitor;
 
-import dbms.catalog.base.entity.DatabaseObject;
-import dbms.catalog.base.visitor.DatabaseObjectVisitor;
-import dbms.catalog.base.enums.DropMode;
-import dbms.catalog.base.enums.LifecycleStatus;
-
 public class StoredProcedure extends DatabaseObject {
     public String code;
 

@@ -9,15 +9,6 @@ import dbms.catalog.table.entity.Table;
 import dbms.catalog.view.dto.ViewCreateRequest;
 import dbms.catalog.view.entity.View;
 
-import dbms.catalog.table.entity.Table;
-import dbms.catalog.table.dto.TableCreateRequest;
-import dbms.catalog.view.entity.View;
-import dbms.catalog.view.dto.ViewCreateRequest;
-import dbms.catalog.procedure.entity.StoredProcedure;
-import dbms.catalog.procedure.dto.ProcedureCreateRequest;
-import dbms.catalog.sequence.entity.Sequence;
-import dbms.catalog.sequence.dto.SequenceCreateRequest;
-
 public interface DatabaseObjectFactory {
     Table createTable(TableCreateRequest request);
     View createView(ViewCreateRequest request);

@@ -1,7 +1,5 @@
 package dbms.query.parser;
 
-import java.util.Objects;
-
 public class Token {
     private final TokenType type;
     private final String value;

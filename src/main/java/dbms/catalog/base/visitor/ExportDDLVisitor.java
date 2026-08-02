@@ -5,11 +5,6 @@ import dbms.catalog.sequence.entity.Sequence;
 import dbms.catalog.table.entity.Table;
 import dbms.catalog.view.entity.View;
 
-import dbms.catalog.table.entity.Table;
-import dbms.catalog.view.entity.View;
-import dbms.catalog.procedure.entity.StoredProcedure;
-import dbms.catalog.sequence.entity.Sequence;
-
 public class ExportDDLVisitor implements DatabaseObjectVisitor {
     private StringBuilder result;
 

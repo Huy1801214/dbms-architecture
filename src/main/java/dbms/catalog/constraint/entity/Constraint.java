@@ -6,9 +6,6 @@ import dbms.catalog.table.entity.Column;
 import dbms.catalog.table.entity.Row;
 import dbms.catalog.table.entity.Table;
 
-import dbms.catalog.table.entity.Column;
-import dbms.catalog.table.entity.Row;
-import dbms.catalog.table.entity.Table;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;

@@ -13,11 +13,6 @@ import dbms.catalog.table.enums.DataType;
 
 import org.junit.jupiter.api.Test;
 
-import dbms.catalog.table.entity.Column;
-import dbms.catalog.table.enums.DataType;
-import dbms.catalog.table.entity.Row;
-import dbms.catalog.table.entity.Table;
-
 import java.util.List;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -201,5 +196,4 @@ public class ConstraintTest {
         assertThrows(IllegalArgumentException.class, () -> table.validate(row));
     }
 }
-
 
