@@ -1,9 +1,11 @@
 package store_api.repository;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PostConstruct;
@@ -136,6 +138,69 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                                 .build();
 
                 return List.of(figma, framer);
+        }
+
+        @Override
+        public List<Customer> filter(CustomerStatus status, String category, LocalDate createdFrom,
+                        LocalDate createdTo) {
+                Customer figma = Customer.builder()
+                                .id("cus_001")
+                                .companyName("Figma")
+                                .domain("figma.com")
+                                .status(CustomerStatus.ACTIVE)
+                                .category("Design Tools")
+                                .description("Collaborative interface design platform.")
+                                .users(List.of())
+                                .totalUsers(10)
+                                .createdAt(OffsetDateTime.now())
+                                .updatedAt(OffsetDateTime.now())
+                                .deletedAt(null)
+                                .build();
+
+                Customer stripe = Customer.builder()
+                                .id("cus_002")
+                                .companyName("Stripe")
+                                .domain("stripe.com")
+                                .status(CustomerStatus.ACTIVE)
+                                .category("Financial Tools")
+                                .description("Payment infrastructure for online businesses.")
+                                .users(List.of())
+                                .totalUsers(8)
+                                .createdAt(OffsetDateTime.now())
+                                .updatedAt(OffsetDateTime.now())
+                                .deletedAt(null)
+                                .build();
+
+                return List.of(figma, stripe);
+        }
+
+        @Override
+        public long count(String keyword, CustomerStatus status, String category) {
+                return 125L;
+        }
+
+        @Override
+        public Optional<Customer> findById(String customerId) {
+                if (!"cus_001".equals(customerId)) {
+                        return Optional.empty();
+                }
+
+                Customer customer = Customer.builder()
+                                .id("cus_001")
+                                .companyName("Figma")
+                                .domain("figma.com")
+                                .logoUrl("https://example.com/logos/figma.png")
+                                .status(CustomerStatus.ACTIVE)
+                                .category("Design Tools")
+                                .description("The collaborative interface design tool.")
+                                .users(List.of())
+                                .totalUsers(10)
+                                .createdAt(OffsetDateTime.now())
+                                .updatedAt(OffsetDateTime.now())
+                                .deletedAt(null)
+                                .build();
+
+                return Optional.of(customer);
         }
 
 }

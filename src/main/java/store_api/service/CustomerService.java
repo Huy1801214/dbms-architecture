@@ -1,5 +1,6 @@
 package store_api.service;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -12,13 +13,40 @@ import org.springframework.stereotype.Service;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.exception.CustomerDomainAlreadyExistsException;
+import store_api.exception.CustomerNotFoundException;
 import store_api.model.customer.Customer;
+import store_api.model.customer.CustomerStatus;
 import store_api.repository.CustomerRepository;
 
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
         private final CustomerRepository customerRepository;
+
+        public Customer getCustomerById(String customerId) {
+                return customerRepository.findById(customerId)
+                                .orElseThrow(
+                                                () -> new CustomerNotFoundException(customerId));
+        }
+
+        public long countCustomer(String keyword, CustomerStatus status, String category) {
+                return customerRepository.count(keyword, status, category);
+        }
+
+        public CustomerPageResponse filterCustomers(CustomerStatus status, String category,
+                        LocalDate createdFrom, LocalDate createdTo, int page, int size) {
+                List<Customer> customers = customerRepository.filter(status, category, createdFrom, createdTo);
+
+                return CustomerPageResponse.builder()
+                                .content(customers)
+                                .page(page)
+                                .size(size)
+                                .totalElements(customers.size())
+                                .totalPages(1)
+                                .first(true)
+                                .last(true)
+                                .build();
+        }
 
         public CustomerPageResponse searchCustomers(String keyword, int page, int size) {
                 List<Customer> customers = customerRepository.search(keyword, page, size);
