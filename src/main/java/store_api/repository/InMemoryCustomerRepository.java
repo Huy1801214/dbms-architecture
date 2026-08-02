@@ -173,4 +173,9 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                 return List.of(figma, stripe);
         }
 
+        @Override
+        public long count(String keyword, CustomerStatus status, String category) {
+                return 125L;
+        }
+
 }

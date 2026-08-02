@@ -2,6 +2,7 @@ package store_api.controller;
 
 import lombok.RequiredArgsConstructor;
 import store_api.dto.request.CreateCustomerRequest;
+import store_api.dto.response.CountResponse;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
@@ -68,5 +69,14 @@ public class CustomerController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
                 customerService.filterCustomers(status, category, createdFrom, createdTo, page, size));
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<CountResponse> countCustomer(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) CustomerStatus status,
+            @RequestParam(required = false) String category) {
+        return ResponseEntity.ok(
+                new CountResponse(customerService.countCustomer(keyword, status, category)));
     }
 }

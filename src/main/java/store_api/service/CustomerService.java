@@ -22,6 +22,10 @@ import store_api.repository.CustomerRepository;
 public class CustomerService {
         private final CustomerRepository customerRepository;
 
+        public long countCustomer(String keyword, CustomerStatus status, String category) {
+                return customerRepository.count(keyword, status, category);
+        }
+
         public CustomerPageResponse filterCustomers(CustomerStatus status, String category,
                         LocalDate createdFrom, LocalDate createdTo, int page, int size) {
                 List<Customer> customers = customerRepository.filter(status, category, createdFrom, createdTo);

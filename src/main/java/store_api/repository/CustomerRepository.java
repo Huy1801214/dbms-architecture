@@ -15,4 +15,6 @@ public interface CustomerRepository {
     List<Customer> search(String keyword, int page, int size);
 
     List<Customer> filter(CustomerStatus status, String category, LocalDate createdFrom, LocalDate createdTo);
+
+    long count(String keyword, CustomerStatus status, String category);
 }
