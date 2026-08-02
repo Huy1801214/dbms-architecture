@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.model.customer.Customer;
+import store_api.model.customer.CustomerStatus;
 import store_api.service.CustomerService;
 
 import java.net.URI;
+import java.time.LocalDate;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,5 +51,22 @@ public class CustomerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(customerService.searchCustomers(keyword, page, size));
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<CustomerPageResponse> filterCustomers(
+            @RequestParam(required = false) CustomerStatus status,
+
+            @RequestParam(required = false) String category,
+
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
+
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
+
+            @RequestParam(defaultValue = "0") int page,
+
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(
+                customerService.filterCustomers(status, category, createdFrom, createdTo, page, size));
     }
 }

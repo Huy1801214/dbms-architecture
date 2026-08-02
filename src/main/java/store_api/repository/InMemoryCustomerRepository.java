@@ -1,5 +1,6 @@
 package store_api.repository;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +137,40 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                                 .build();
 
                 return List.of(figma, framer);
+        }
+
+        @Override
+        public List<Customer> filter(CustomerStatus status, String category, LocalDate createdFrom,
+                        LocalDate createdTo) {
+                Customer figma = Customer.builder()
+                                .id("cus_001")
+                                .companyName("Figma")
+                                .domain("figma.com")
+                                .status(CustomerStatus.ACTIVE)
+                                .category("Design Tools")
+                                .description("Collaborative interface design platform.")
+                                .users(List.of())
+                                .totalUsers(10)
+                                .createdAt(OffsetDateTime.now())
+                                .updatedAt(OffsetDateTime.now())
+                                .deletedAt(null)
+                                .build();
+
+                Customer stripe = Customer.builder()
+                                .id("cus_002")
+                                .companyName("Stripe")
+                                .domain("stripe.com")
+                                .status(CustomerStatus.ACTIVE)
+                                .category("Financial Tools")
+                                .description("Payment infrastructure for online businesses.")
+                                .users(List.of())
+                                .totalUsers(8)
+                                .createdAt(OffsetDateTime.now())
+                                .updatedAt(OffsetDateTime.now())
+                                .deletedAt(null)
+                                .build();
+
+                return List.of(figma, stripe);
         }
 
 }
