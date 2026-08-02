@@ -1,9 +1,11 @@
 package store_api.controller;
 
 import lombok.RequiredArgsConstructor;
+import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
+import store_api.dto.response.BatchOperationResponse;
 import store_api.dto.response.CountResponse;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.model.customer.Customer;
@@ -18,6 +20,7 @@ import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -110,5 +113,11 @@ public class CustomerController {
     public ResponseEntity<List<Customer>> getCustomersBatch(
             @Valid @RequestBody BatchGetCustomersRequest request) {
         return ResponseEntity.ok(customerService.getCustomersBatch(request));
+    }
+
+    @DeleteMapping("/batch")
+    public ResponseEntity<BatchOperationResponse> deleteCustomersBatch(
+            @Valid @RequestBody BatchDeleteCustomersRequest request) {
+        return ResponseEntity.ok(customerService.deleteCustomersBatch(request));
     }
 }

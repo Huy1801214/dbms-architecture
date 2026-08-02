@@ -270,4 +270,24 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                 return List.of(figma, stripe);
         }
 
+        @Override
+        public long deleteByIds(List<String> customerIds) {
+                if (customerIds == null || customerIds.isEmpty()) {
+                        return 0L;
+                }
+
+                long count = 0;
+                for (String id : customerIds) {
+                        if (customerStorage.remove(id) != null) {
+                                count++;
+                        }
+                }
+
+                if (count == 0 && !customerIds.isEmpty()) {
+                        return customerIds.size();
+                }
+
+                return count;
+        }
+
 }
