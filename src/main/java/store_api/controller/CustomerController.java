@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
+import store_api.dto.request.BatchRestoreCustomersRequest;
 import store_api.dto.request.BatchUpdateCustomerStatusRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
@@ -133,5 +134,11 @@ public class CustomerController {
     public ResponseEntity<BatchOperationResponse> archiveCustomersBatch(
             @Valid @RequestBody BatchArchiveCustomersRequest request) {
         return ResponseEntity.ok(customerService.archiveCustomersBatch(request));
+    }
+
+    @PostMapping("/batch/restore")
+    public ResponseEntity<BatchOperationResponse> restoreCustomersBatch(
+            @Valid @RequestBody BatchRestoreCustomersRequest request) {
+        return ResponseEntity.ok(customerService.restoreCustomersBatch(request));
     }
 }

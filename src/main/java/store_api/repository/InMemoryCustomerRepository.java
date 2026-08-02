@@ -318,4 +318,9 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                 return updateStatusByIds(customerIds, CustomerStatus.ARCHIVED);
         }
 
+        @Override
+        public long restoreByIds(List<String> customerIds) {
+                return updateStatusByIds(customerIds, CustomerStatus.ACTIVE);
+        }
+
 }

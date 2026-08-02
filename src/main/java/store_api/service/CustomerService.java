@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
+import store_api.dto.request.BatchRestoreCustomersRequest;
 import store_api.dto.request.BatchUpdateCustomerStatusRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
@@ -59,6 +60,15 @@ public class CustomerService {
                                 .success(true)
                                 .affectedCount(archivedCount)
                                 .message("Successfully archived " + archivedCount + " customers")
+                                .build();
+        }
+
+        public BatchOperationResponse restoreCustomersBatch(BatchRestoreCustomersRequest request) {
+                long restoredCount = customerRepository.restoreByIds(request.getCustomerIds());
+                return BatchOperationResponse.builder()
+                                .success(true)
+                                .affectedCount(restoredCount)
+                                .message("Successfully restored " + restoredCount + " customers")
                                 .build();
         }
 
