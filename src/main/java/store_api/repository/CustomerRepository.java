@@ -9,4 +9,6 @@ public interface CustomerRepository {
     boolean existsByDomain(String domain);
 
     Customer save(Customer customer);
+
+    List<Customer> search(String keyword, int page, int size);
 }

@@ -20,6 +20,20 @@ import store_api.repository.CustomerRepository;
 public class CustomerService {
         private final CustomerRepository customerRepository;
 
+        public CustomerPageResponse searchCustomers(String keyword, int page, int size) {
+                List<Customer> customers = customerRepository.search(keyword, page, size);
+
+                return CustomerPageResponse.builder()
+                                .content(customers)
+                                .page(page)
+                                .size(size)
+                                .totalElements(customers.size())
+                                .totalPages(1)
+                                .first(true)
+                                .last(true)
+                                .build();
+        }
+
         public CustomerPageResponse getCustomers(int page, int size) {
                 if (page < 0) {
                         throw new IllegalArgumentException(

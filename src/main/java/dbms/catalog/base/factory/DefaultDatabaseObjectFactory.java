@@ -9,14 +9,6 @@ import dbms.catalog.table.entity.Table;
 import dbms.catalog.view.dto.ViewCreateRequest;
 import dbms.catalog.view.entity.View;
 
-import dbms.catalog.table.entity.Table;
-import dbms.catalog.table.dto.TableCreateRequest;
-import dbms.catalog.view.entity.View;
-import dbms.catalog.view.dto.ViewCreateRequest;
-import dbms.catalog.procedure.entity.StoredProcedure;
-import dbms.catalog.procedure.dto.ProcedureCreateRequest;
-import dbms.catalog.sequence.entity.Sequence;
-import dbms.catalog.sequence.dto.SequenceCreateRequest;
 import java.util.UUID;
 
 public class DefaultDatabaseObjectFactory implements DatabaseObjectFactory {
@@ -42,6 +34,7 @@ public class DefaultDatabaseObjectFactory implements DatabaseObjectFactory {
     @Override
     public Sequence createSequence(SequenceCreateRequest request) {
         String id = request != null && request.name != null ? request.name : UUID.randomUUID().toString();
-        return new Sequence(id, request != null ? request.name : null, request != null ? request.start : 1, request != null ? request.increment : 1);
+        return new Sequence(id, request != null ? request.name : null, request != null ? request.start : 1,
+                request != null ? request.increment : 1);
     }
 }
