@@ -1,8 +1,11 @@
 package store_api.controller;
 
 import lombok.RequiredArgsConstructor;
+import store_api.dto.request.AddCustomerUserRequest;
+import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
+import store_api.dto.request.BatchRestoreCustomersRequest;
 import store_api.dto.request.BatchUpdateCustomerStatusRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
@@ -98,6 +101,21 @@ public class CustomerController {
         return ResponseEntity.ok(customer);
     }
 
+    @GetMapping("/{customerId}/users")
+    public ResponseEntity<List<CustomerUser>> getCustomerUsers(
+            @PathVariable String customerId) {
+        return ResponseEntity.ok(customerService.getCustomerUsers(customerId));
+    }
+
+    @PostMapping("/{customerId}/users")
+    public ResponseEntity<CustomerUser> addCustomerUser(
+            @PathVariable String customerId,
+            @Valid @RequestBody AddCustomerUserRequest request) {
+        CustomerUser createdUser = customerService.addCustomerUser(customerId, request);
+        URI location = URI.create("/api/v1/customers/" + customerId + "/users/" + createdUser.getId());
+        return ResponseEntity.created(location).body(createdUser);
+    }
+
     @PatchMapping("/{customerId}/users/{userId}/role")
     public ResponseEntity<CustomerUser> updateCustomerUserRole(
             @PathVariable String customerId,
@@ -126,5 +144,17 @@ public class CustomerController {
     public ResponseEntity<BatchOperationResponse> updateCustomerStatusBatch(
             @Valid @RequestBody BatchUpdateCustomerStatusRequest request) {
         return ResponseEntity.ok(customerService.updateCustomerStatusBatch(request));
+    }
+
+    @PostMapping("/batch/archive")
+    public ResponseEntity<BatchOperationResponse> archiveCustomersBatch(
+            @Valid @RequestBody BatchArchiveCustomersRequest request) {
+        return ResponseEntity.ok(customerService.archiveCustomersBatch(request));
+    }
+
+    @PostMapping("/batch/restore")
+    public ResponseEntity<BatchOperationResponse> restoreCustomersBatch(
+            @Valid @RequestBody BatchRestoreCustomersRequest request) {
+        return ResponseEntity.ok(customerService.restoreCustomersBatch(request));
     }
 }

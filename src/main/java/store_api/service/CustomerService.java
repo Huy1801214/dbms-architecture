@@ -10,8 +10,11 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import store_api.dto.request.AddCustomerUserRequest;
+import store_api.dto.request.BatchArchiveCustomersRequest;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
+import store_api.dto.request.BatchRestoreCustomersRequest;
 import store_api.dto.request.BatchUpdateCustomerStatusRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
@@ -50,6 +53,41 @@ public class CustomerService {
                                 .affectedCount(updatedCount)
                                 .message("Successfully updated status for " + updatedCount + " customers")
                                 .build();
+        }
+
+        public BatchOperationResponse archiveCustomersBatch(BatchArchiveCustomersRequest request) {
+                long archivedCount = customerRepository.archiveByIds(request.getCustomerIds());
+                return BatchOperationResponse.builder()
+                                .success(true)
+                                .affectedCount(archivedCount)
+                                .message("Successfully archived " + archivedCount + " customers")
+                                .build();
+        }
+
+        public BatchOperationResponse restoreCustomersBatch(BatchRestoreCustomersRequest request) {
+                long restoredCount = customerRepository.restoreByIds(request.getCustomerIds());
+                return BatchOperationResponse.builder()
+                                .success(true)
+                                .affectedCount(restoredCount)
+                                .message("Successfully restored " + restoredCount + " customers")
+                                .build();
+        }
+
+        public List<CustomerUser> getCustomerUsers(String customerId) {
+                return customerRepository.findUsersByCustomerId(customerId);
+        }
+
+        public CustomerUser addCustomerUser(String customerId, AddCustomerUserRequest request) {
+                CustomerUser newUser = CustomerUser.builder()
+                                .fullName(request.getFullName())
+                                .email(request.getEmail())
+                                .avatarUrl(request.getAvatarUrl())
+                                .role(request.getRole())
+                                .active(true)
+                                .createdAt(OffsetDateTime.now())
+                                .build();
+
+                return customerRepository.addCustomerUser(customerId, newUser);
         }
 
         public CustomerUser updateCustomerUserRole(

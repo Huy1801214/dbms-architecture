@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PostConstruct;
@@ -311,6 +312,55 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                 }
 
                 return count;
+        }
+
+        @Override
+        public long archiveByIds(List<String> customerIds) {
+                return updateStatusByIds(customerIds, CustomerStatus.ARCHIVED);
+        }
+
+        @Override
+        public long restoreByIds(List<String> customerIds) {
+                return updateStatusByIds(customerIds, CustomerStatus.ACTIVE);
+        }
+
+        @Override
+        public List<CustomerUser> findUsersByCustomerId(String customerId) {
+                CustomerUser u1 = CustomerUser.builder()
+                                .id("usr_001")
+                                .fullName("Alex Morgan")
+                                .email("alex@example.com")
+                                .avatarUrl("https://example.com/avatars/usr_001.png")
+                                .role("ADMIN")
+                                .active(true)
+                                .createdAt(OffsetDateTime.now())
+                                .build();
+
+                CustomerUser u2 = CustomerUser.builder()
+                                .id("usr_002")
+                                .fullName("Sarah Chen")
+                                .email("sarah@example.com")
+                                .avatarUrl("https://example.com/avatars/usr_002.png")
+                                .role("MEMBER")
+                                .active(true)
+                                .createdAt(OffsetDateTime.now())
+                                .build();
+
+                return List.of(u1, u2);
+        }
+
+        @Override
+        public CustomerUser addCustomerUser(String customerId, CustomerUser user) {
+                if (user.getId() == null) {
+                        user.setId("usr_" + UUID.randomUUID().toString().substring(0, 8));
+                }
+                if (user.getCreatedAt() == null) {
+                        user.setCreatedAt(OffsetDateTime.now());
+                }
+                if (user.getActive() == null) {
+                        user.setActive(true);
+                }
+                return user;
         }
 
 }

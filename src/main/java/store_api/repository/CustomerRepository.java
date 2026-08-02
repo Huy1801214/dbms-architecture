@@ -29,5 +29,13 @@ public interface CustomerRepository {
 
     long updateStatusByIds(List<String> customerIds, CustomerStatus status);
 
+    long archiveByIds(List<String> customerIds);
+
+    long restoreByIds(List<String> customerIds);
+
+    List<CustomerUser> findUsersByCustomerId(String customerId);
+
+    CustomerUser addCustomerUser(String customerId, CustomerUser user);
+
     Optional<CustomerUser> updateUserRole(String customerId, String userId, String role);
 }
