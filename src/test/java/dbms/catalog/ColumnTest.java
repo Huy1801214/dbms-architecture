@@ -6,10 +6,6 @@ import dbms.catalog.table.enums.DataType;
 
 import org.junit.jupiter.api.Test;
 
-import dbms.catalog.table.entity.Column;
-import dbms.catalog.table.enums.ColumnStatus;
-import dbms.catalog.table.enums.DataType;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ColumnTest {

@@ -1,7 +1,6 @@
 package dbms.server;
 
 import dbms.catalog.database.entity.Database;
-import dbms.catalog.database.enums.DatabaseStatus;
 
 import java.util.List;
 import java.util.Map;

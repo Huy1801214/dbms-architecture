@@ -17,15 +17,6 @@ import dbms.catalog.table.validator.RowValidationHandler;
 import dbms.catalog.table.validator.UniqueValidator;
 import dbms.storage.backend.StorageBackend;
 
-import dbms.catalog.base.entity.DatabaseObject;
-import dbms.catalog.base.visitor.DatabaseObjectVisitor;
-import dbms.catalog.base.enums.LifecycleStatus;
-import dbms.catalog.base.enums.DropMode;
-import dbms.catalog.constraint.entity.Constraint;
-import dbms.catalog.index.entity.Index;
-import dbms.catalog.index.context.IndexDefinitionContext;
-import dbms.storage.backend.StorageBackend;
-
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;

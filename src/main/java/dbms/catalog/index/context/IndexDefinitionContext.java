@@ -4,7 +4,6 @@ import dbms.catalog.index.entity.Index;
 import dbms.catalog.index.enums.IndexType;
 import dbms.catalog.table.entity.Column;
 
-import dbms.catalog.table.entity.Column;
 import java.util.List;
 import java.util.UUID;
 

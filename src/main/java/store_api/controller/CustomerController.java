@@ -41,4 +41,12 @@ public class CustomerController {
         URI location = URI.create("/api/v1/customers/" + cus.getId());
         return ResponseEntity.created(location).body(cus);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<CustomerPageResponse> searchCustomers(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(customerService.searchCustomers(keyword, page, size));
+    }
 }

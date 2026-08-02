@@ -1,6 +1,5 @@
 package dbms.replication;
 
-import dbms.recovery.WALManager;
 import java.util.List;
 
 public class ReplicationManager {

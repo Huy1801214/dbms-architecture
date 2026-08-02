@@ -7,8 +7,6 @@ import dbms.catalog.index.enums.IndexStatus;
 import dbms.catalog.index.enums.IndexType;
 import dbms.catalog.table.entity.Row;
 
-import dbms.catalog.table.entity.Row;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 

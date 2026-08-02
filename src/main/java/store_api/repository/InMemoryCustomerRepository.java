@@ -4,14 +4,15 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.stereotype.Repository;
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
 import store_api.model.customer.CustomerUserSummary;
 
+@Repository
 public class InMemoryCustomerRepository implements CustomerRepository {
         private final Map<String, Customer> customerStorage = new ConcurrentHashMap<>();
 
@@ -98,6 +99,43 @@ public class InMemoryCustomerRepository implements CustomerRepository {
         public Customer save(Customer customer) {
                 customerStorage.put(customer.getId(), customer);
                 return customer;
+        }
+
+        @Override
+        public List<Customer> search(String keyword, int page, int size) {
+                OffsetDateTime now = OffsetDateTime.now();
+
+                Customer figma = Customer.builder()
+                                .id("cus_001")
+                                .companyName("Figma")
+                                .domain("figma.com")
+                                .logoUrl("https://example.com/logos/figma.png")
+                                .status(CustomerStatus.CUSTOMER)
+                                .category("Design Tools")
+                                .description("The collaborative interface design tool.")
+                                .users(List.of())
+                                .totalUsers(10)
+                                .createdAt(now)
+                                .updatedAt(now)
+                                .deletedAt(null)
+                                .build();
+
+                Customer framer = Customer.builder()
+                                .id("cus_002")
+                                .companyName("Framer")
+                                .domain("framer.com")
+                                .logoUrl("https://example.com/logos/framer.png")
+                                .status(CustomerStatus.CUSTOMER)
+                                .category("Design Tools")
+                                .description("Make beautiful websites in minutes.")
+                                .users(List.of())
+                                .totalUsers(8)
+                                .createdAt(now)
+                                .updatedAt(now)
+                                .deletedAt(null)
+                                .build();
+
+                return List.of(figma, framer);
         }
 
 }
