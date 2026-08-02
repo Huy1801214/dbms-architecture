@@ -11,17 +11,36 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import store_api.dto.request.CreateCustomerRequest;
+import store_api.dto.request.UpdateUserRoleRequest;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.exception.CustomerDomainAlreadyExistsException;
 import store_api.exception.CustomerNotFoundException;
+import store_api.exception.CustomerUserNotFoundException;
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
+import store_api.model.customer.CustomerUser;
 import store_api.repository.CustomerRepository;
 
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
         private final CustomerRepository customerRepository;
+
+        public CustomerUser updateCustomerUserRole(
+                        String customerId,
+                        String userId,
+                        UpdateUserRoleRequest request) {
+                String normalizedRole = request.getRole().trim().toUpperCase();
+
+                return customerRepository
+                                .updateUserRole(
+                                                customerId,
+                                                userId,
+                                                normalizedRole)
+                                .orElseThrow(() -> new CustomerUserNotFoundException(
+                                                customerId,
+                                                userId));
+        }
 
         public Customer getCustomerById(String customerId) {
                 return customerRepository.findById(customerId)

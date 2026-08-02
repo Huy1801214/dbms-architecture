@@ -2,10 +2,12 @@ package store_api.controller;
 
 import lombok.RequiredArgsConstructor;
 import store_api.dto.request.CreateCustomerRequest;
+import store_api.dto.request.UpdateUserRoleRequest;
 import store_api.dto.response.CountResponse;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
+import store_api.model.customer.CustomerUser;
 import store_api.service.CustomerService;
 
 import java.net.URI;
@@ -15,6 +17,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -87,5 +90,17 @@ public class CustomerController {
         Customer customer = customerService.getCustomerById(customerId);
 
         return ResponseEntity.ok(customer);
+    }
+
+    @PatchMapping("/{customerId}/users/{userId}/role")
+    public ResponseEntity<CustomerUser> updateCustomerUserRole(
+            @PathVariable String customerId,
+            @PathVariable String userId,
+            @Valid @RequestBody UpdateUserRoleRequest request) {
+        return ResponseEntity.ok(
+                customerService.updateCustomerUserRole(
+                        customerId,
+                        userId,
+                        request));
     }
 }
