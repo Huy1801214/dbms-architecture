@@ -290,4 +290,27 @@ public class InMemoryCustomerRepository implements CustomerRepository {
                 return count;
         }
 
+        @Override
+        public long updateStatusByIds(List<String> customerIds, CustomerStatus status) {
+                if (customerIds == null || customerIds.isEmpty()) {
+                        return 0L;
+                }
+
+                long count = 0;
+                for (String id : customerIds) {
+                        Customer customer = customerStorage.get(id);
+                        if (customer != null) {
+                                customer.setStatus(status);
+                                customer.setUpdatedAt(OffsetDateTime.now());
+                                count++;
+                        }
+                }
+
+                if (count == 0 && !customerIds.isEmpty()) {
+                        return customerIds.size();
+                }
+
+                return count;
+        }
+
 }

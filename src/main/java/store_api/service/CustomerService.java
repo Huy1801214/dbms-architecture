@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
+import store_api.dto.request.BatchUpdateCustomerStatusRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
 import store_api.dto.response.BatchOperationResponse;
@@ -39,6 +40,15 @@ public class CustomerService {
                                 .success(true)
                                 .affectedCount(deletedCount)
                                 .message("Successfully deleted " + deletedCount + " customers")
+                                .build();
+        }
+
+        public BatchOperationResponse updateCustomerStatusBatch(BatchUpdateCustomerStatusRequest request) {
+                long updatedCount = customerRepository.updateStatusByIds(request.getCustomerIds(), request.getStatus());
+                return BatchOperationResponse.builder()
+                                .success(true)
+                                .affectedCount(updatedCount)
+                                .message("Successfully updated status for " + updatedCount + " customers")
                                 .build();
         }
 

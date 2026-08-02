@@ -3,6 +3,7 @@ package store_api.controller;
 import lombok.RequiredArgsConstructor;
 import store_api.dto.request.BatchDeleteCustomersRequest;
 import store_api.dto.request.BatchGetCustomersRequest;
+import store_api.dto.request.BatchUpdateCustomerStatusRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
 import store_api.dto.response.BatchOperationResponse;
@@ -119,5 +120,11 @@ public class CustomerController {
     public ResponseEntity<BatchOperationResponse> deleteCustomersBatch(
             @Valid @RequestBody BatchDeleteCustomersRequest request) {
         return ResponseEntity.ok(customerService.deleteCustomersBatch(request));
+    }
+
+    @PatchMapping("/batch/status")
+    public ResponseEntity<BatchOperationResponse> updateCustomerStatusBatch(
+            @Valid @RequestBody BatchUpdateCustomerStatusRequest request) {
+        return ResponseEntity.ok(customerService.updateCustomerStatusBatch(request));
     }
 }

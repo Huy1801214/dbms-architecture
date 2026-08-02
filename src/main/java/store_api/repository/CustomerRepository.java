@@ -27,5 +27,7 @@ public interface CustomerRepository {
 
     long deleteByIds(List<String> customerIds);
 
+    long updateStatusByIds(List<String> customerIds, CustomerStatus status);
+
     Optional<CustomerUser> updateUserRole(String customerId, String userId, String role);
 }
