@@ -23,5 +23,7 @@ public interface CustomerRepository {
 
     Optional<Customer> findById(String id);
 
+    List<Customer> findByIds(List<String> customerIds);
+
     Optional<CustomerUser> updateUserRole(String customerId, String userId, String role);
 }

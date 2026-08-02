@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import store_api.dto.request.BatchGetCustomersRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
 import store_api.dto.response.CustomerPageResponse;
@@ -25,6 +26,10 @@ import store_api.repository.CustomerRepository;
 @RequiredArgsConstructor
 public class CustomerService {
         private final CustomerRepository customerRepository;
+
+        public List<Customer> getCustomersBatch(BatchGetCustomersRequest request) {
+                return customerRepository.findByIds(request.getCustomerIds());
+        }
 
         public CustomerUser updateCustomerUserRole(
                         String customerId,

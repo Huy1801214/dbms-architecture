@@ -1,6 +1,7 @@
 package store_api.controller;
 
 import lombok.RequiredArgsConstructor;
+import store_api.dto.request.BatchGetCustomersRequest;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.request.UpdateUserRoleRequest;
 import store_api.dto.response.CountResponse;
@@ -12,6 +13,7 @@ import store_api.service.CustomerService;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -102,5 +104,11 @@ public class CustomerController {
                         customerId,
                         userId,
                         request));
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<Customer>> getCustomersBatch(
+            @Valid @RequestBody BatchGetCustomersRequest request) {
+        return ResponseEntity.ok(customerService.getCustomersBatch(request));
     }
 }
