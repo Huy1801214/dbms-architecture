@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import store_api.dto.request.CreateCustomerRequest;
 import store_api.dto.response.CustomerPageResponse;
 import store_api.exception.CustomerDomainAlreadyExistsException;
+import store_api.exception.CustomerNotFoundException;
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
 import store_api.repository.CustomerRepository;
@@ -21,6 +22,12 @@ import store_api.repository.CustomerRepository;
 @RequiredArgsConstructor
 public class CustomerService {
         private final CustomerRepository customerRepository;
+
+        public Customer getCustomerById(String customerId) {
+                return customerRepository.findById(customerId)
+                                .orElseThrow(
+                                                () -> new CustomerNotFoundException(customerId));
+        }
 
         public long countCustomer(String keyword, CustomerStatus status, String category) {
                 return customerRepository.count(keyword, status, category);

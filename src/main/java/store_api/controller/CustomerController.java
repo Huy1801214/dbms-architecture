@@ -15,6 +15,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -78,5 +79,13 @@ public class CustomerController {
             @RequestParam(required = false) String category) {
         return ResponseEntity.ok(
                 new CountResponse(customerService.countCustomer(keyword, status, category)));
+    }
+
+    @GetMapping("/{customerId}")
+    public ResponseEntity<Customer> getCustomerById(
+            @PathVariable String customerId) {
+        Customer customer = customerService.getCustomerById(customerId);
+
+        return ResponseEntity.ok(customer);
     }
 }

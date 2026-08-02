@@ -2,6 +2,8 @@ package store_api.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+
 import store_api.model.customer.Customer;
 import store_api.model.customer.CustomerStatus;
 
@@ -17,4 +19,6 @@ public interface CustomerRepository {
     List<Customer> filter(CustomerStatus status, String category, LocalDate createdFrom, LocalDate createdTo);
 
     long count(String keyword, CustomerStatus status, String category);
+
+    Optional<Customer> findById(String id);
 }
